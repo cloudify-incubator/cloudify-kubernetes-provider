@@ -98,5 +98,21 @@ func main() {
     var password = "secret"
     var tenant = "default_tenant"
     fmt.Println(GetVersion(host, user, password, tenant))
-    fmt.Println(GetStatus(host, user, password, tenant))
+    stat := GetStatus(host, user, password, tenant)
+    fmt.Println("Manager status: " + stat.Status)
+
+    for _, service := range stat.Services {
+        fmt.Println("- Name: " + service.DisplayName)
+        fmt.Println("  Intances: ")
+        for _, instance := range service.Instances {
+            fmt.Println("  - LoadState: ", instance.LoadState)
+            fmt.Println("    Description: ", instance.Description)
+            fmt.Println("    State: ", instance.State)
+            fmt.Println("    MainPID: ", instance.MainPID)
+            fmt.Println("    Id: ", instance.Id)
+            fmt.Println("    ActiveState: ", instance.ActiveState)
+            fmt.Println("    SubState: ", instance.SubState)
+        }
+
+    }
 }
