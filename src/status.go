@@ -3,10 +3,11 @@ package main
 import (
     "fmt"
     "log"
+    "flag"
     "net/http"
     "io/ioutil"
-    "encoding/base64"
     "encoding/json"
+    "encoding/base64"
 )
 
 func Get(url string, user string, password string, tenant string) []byte {
@@ -93,26 +94,39 @@ func GetStatus(host string, user string, password string, tenant string) Cloudif
 }
 
 func main() {
-    var host = "localhost"
-    var user = "admin"
-    var password = "secret"
-    var tenant = "default_tenant"
-    fmt.Println(GetVersion(host, user, password, tenant))
-    stat := GetStatus(host, user, password, tenant)
-    fmt.Println("Manager status: " + stat.Status)
+    var host string
+    var user string
+    var password string
+    var tenant string
+    var command string
 
-    for _, service := range stat.Services {
-        fmt.Println("- Name: " + service.DisplayName)
-        fmt.Println("  Intances: ")
-        for _, instance := range service.Instances {
-            fmt.Println("  - LoadState: ", instance.LoadState)
-            fmt.Println("    Description: ", instance.Description)
-            fmt.Println("    State: ", instance.State)
-            fmt.Println("    MainPID: ", instance.MainPID)
-            fmt.Println("    Id: ", instance.Id)
-            fmt.Println("    ActiveState: ", instance.ActiveState)
-            fmt.Println("    SubState: ", instance.SubState)
+    flag.StringVar(&host, "host", "localhost", "Manager host name")
+    flag.StringVar(&user, "user", "admin", "Manager user name")
+    flag.StringVar(&password, "password", "secret", "Manager user password")
+    flag.StringVar(&tenant, "tenant", "default_tenant", "Manager tenant")
+    flag.StringVar(&command, "command", "version", "Command for run")
+    flag.Parse()
+
+    switch command {
+        case "version": fmt.Println(GetVersion(host, user, password, tenant))
+        case "status": {
+            stat := GetStatus(host, user, password, tenant)
+            fmt.Println("Manager status: " + stat.Status)
+
+            for _, service := range stat.Services {
+                fmt.Println("- Name: " + service.DisplayName)
+                fmt.Println("  Intances: ")
+                for _, instance := range service.Instances {
+                    fmt.Println("  - LoadState: ", instance.LoadState)
+                    fmt.Println("    Description: ", instance.Description)
+                    fmt.Println("    State: ", instance.State)
+                    fmt.Println("    MainPID: ", instance.MainPID)
+                    fmt.Println("    Id: ", instance.Id)
+                    fmt.Println("    ActiveState: ", instance.ActiveState)
+                    fmt.Println("    SubState: ", instance.SubState)
+                }
+            }
         }
-
+        default: fmt.Println("Supported only: status, version")
     }
 }
