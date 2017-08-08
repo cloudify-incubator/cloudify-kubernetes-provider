@@ -15,10 +15,13 @@ func Get(url string, user string, password string, tenant string) []byte {
     var auth_string string
     auth_string = user + ":" + password
     req, err := http.NewRequest("GET", url, nil)
-    req.Header.Add("Authorization", "Basic " + base64.StdEncoding.EncodeToString([]byte(auth_string)))
-    req.Header.Add("Tenant", tenant)
     if err != nil {
         log.Fatal(err)
+    }
+
+    req.Header.Add("Authorization", "Basic " + base64.StdEncoding.EncodeToString([]byte(auth_string)))
+    if len(tenant) > 0 {
+        req.Header.Add("Tenant", tenant)
     }
 
     resp, err := client.Do(req)
@@ -34,7 +37,7 @@ func Get(url string, user string, password string, tenant string) []byte {
     return body
 }
 
-type Version struct {
+type CloudifyVersion struct {
     Date        string `json:"date"`
     Edition     string `json:"edition"`
     Community   string `json:"community"`
@@ -43,10 +46,10 @@ type Version struct {
     Commit      string `json:"commit"`
 }
 
-func GetVersion(host string, user string, password string, tenant string) Version {
+func GetVersion(host string, user string, password string, tenant string) CloudifyVersion {
     body := Get("http://" + host + "/api/v3.1/version", "admin", "secret", "default_tenant")
 
-    var ver Version
+    var ver CloudifyVersion
 
     err := json.Unmarshal(body, &ver)
     if err != nil {
@@ -56,10 +59,44 @@ func GetVersion(host string, user string, password string, tenant string) Versio
     return ver
 }
 
+type CloudifyInstanceStatus struct {
+    LoadState   string `json:"LoadState"`
+    Description string `json:"Description"`
+    State       string `json:"state"`
+    MainPID     uint   `json:"MainPID"`
+    Id          string `json:"Id"`
+    ActiveState string `json:"ActiveState"`
+    SubState    string `json:"SubState"`
+}
+
+type CloudifyInstanceService struct {
+    Instances   []CloudifyInstanceStatus `json:"instances"`
+    DisplayName string                   `json:"display_name"`
+}
+
+type CloudifyStatus struct {
+    Status      string                      `json:"status"`
+    Services    []CloudifyInstanceService   `json:"services"`
+}
+
+func GetStatus(host string, user string, password string, tenant string) CloudifyStatus {
+    body := Get("http://" + host + "/api/v3.1/status", "admin", "secret", "default_tenant")
+
+    var stat CloudifyStatus
+
+    err := json.Unmarshal(body, &stat)
+    if err != nil {
+        log.Fatal(err)
+    }
+
+    return stat
+}
+
 func main() {
     var host = "localhost"
     var user = "admin"
     var password = "secret"
     var tenant = "default_tenant"
     fmt.Println(GetVersion(host, user, password, tenant))
+    fmt.Println(GetStatus(host, user, password, tenant))
 }
