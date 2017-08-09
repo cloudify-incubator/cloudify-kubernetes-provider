@@ -8,6 +8,8 @@ import (
 	"io/ioutil"
 	"log"
 	"net/http"
+	"strings"
+	"unicode/utf8"
 )
 
 func Get(url string, user string, password string, tenant string) []byte {
@@ -86,6 +88,18 @@ type CloudifyInstanceStatus struct {
 type CloudifyInstanceService struct {
 	Instances   []CloudifyInstanceStatus `json:"instances"`
 	DisplayName string                   `json:"display_name"`
+}
+
+func (s CloudifyInstanceService) Status() string {
+	var state string = "unknown"
+
+	for _, instance := range s.Instances {
+		if state != "failed" {
+			state = instance.State
+		}
+	}
+
+	return state
 }
 
 type CloudifyStatus struct {
@@ -200,6 +214,55 @@ func GetDeployments(host string, user string, password string, tenant string) Cl
 	return deployments
 }
 
+func PrintBottomLine(columnSizes []int) {
+	fmt.Printf("+")
+	for _, size := range columnSizes {
+		fmt.Print(strings.Repeat("-", size+2))
+		fmt.Printf("+")
+	}
+	fmt.Printf("\n")
+}
+
+func PrintLine(columnSizes []int, lines []string) {
+	fmt.Printf("|")
+	for col, size := range columnSizes {
+		fmt.Print(" " + lines[col] + " ")
+		fmt.Print(strings.Repeat(" ", size-utf8.RuneCountInString(lines[col])))
+		fmt.Printf("|")
+	}
+	fmt.Printf("\n")
+}
+
+func PrintTable(titles []string, lines [][]string) {
+	columnSizes := make([]int, len(titles))
+
+	// column title sizes
+	for col, name := range titles {
+		if columnSizes[col] < utf8.RuneCountInString(name) {
+			columnSizes[col] = utf8.RuneCountInString(name)
+		}
+	}
+
+	// column value sizes
+	for _, values := range lines {
+		for col, name := range values {
+			if columnSizes[col] < utf8.RuneCountInString(name) {
+				columnSizes[col] = utf8.RuneCountInString(name)
+			}
+		}
+	}
+
+	PrintBottomLine(columnSizes)
+	// titles
+	PrintLine(columnSizes, titles)
+	PrintBottomLine(columnSizes)
+	// lines
+	for _, values := range lines {
+		PrintLine(columnSizes, values)
+	}
+	PrintBottomLine(columnSizes)
+}
+
 func main() {
 	var host string
 	var user string
@@ -218,27 +281,23 @@ func main() {
 	case "version":
 		{
 			ver := GetVersion(host, user, password, tenant)
-			fmt.Printf("Version: %v\n", ver.Version)
-			fmt.Printf("Edition: %s\n", ver.Edition)
+			fmt.Printf("Retrieving manager services version... [ip=%v]\n", host)
+			PrintTable([]string{"Version", "Edition"}, [][]string{{ver.Version, ver.Edition}})
 		}
 	case "status":
 		{
 			stat := GetStatus(host, user, password, tenant)
-			fmt.Println("Manager status: " + stat.Status)
 
-			for _, service := range stat.Services {
-				fmt.Println("- Name: " + service.DisplayName)
-				fmt.Println("  Intances: ")
-				for _, instance := range service.Instances {
-					fmt.Println("  - LoadState: ", instance.LoadState)
-					fmt.Println("    Description: ", instance.Description)
-					fmt.Println("    State: ", instance.State)
-					fmt.Println("    MainPID: ", instance.MainPID)
-					fmt.Println("    Id: ", instance.Id)
-					fmt.Println("    ActiveState: ", instance.ActiveState)
-					fmt.Println("    SubState: ", instance.SubState)
-				}
+			fmt.Printf("Retrieving manager services status... [ip=%v]\n", host)
+			fmt.Printf("Manager status: %v\n", stat.Status)
+			fmt.Printf("Services:\n")
+			var lines [][]string = make([][]string, len(stat.Services))
+			for pos, service := range stat.Services {
+				lines[pos] = make([]string, 2)
+				lines[pos][0] = service.DisplayName
+				lines[pos][1] = service.Status()
 			}
+			PrintTable([]string{"service", "status"}, lines)
 		}
 	case "blueprints":
 		{
