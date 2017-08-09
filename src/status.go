@@ -121,9 +121,25 @@ type CloudifyMetadata struct {
 	Pagination CloudifyPagination `json:"pagination"`
 }
 
+type CloudifyResource struct {
+	Id              string `json:"id"`
+	Description     string `json:"description"`
+	Tenant          string `json:"tenant_name"`
+	CreatedAt       string `json:"created_at"`
+	UpdatedAt       string `json:"updated_at"`
+	CreatedBy       string `json:"created_by"`
+	PrivateResource bool   `json:"private_resource"`
+}
+type CloudifyBlueprint struct {
+	CloudifyResource
+	MainFileName string `json:"main_file_name"`
+	// TODO describe "plan" struct
+}
+
 type CloudifyBlueprints struct {
 	CloudifyBaseMessage
-	Metadata CloudifyMetadata `json:"metadata"`
+	Metadata CloudifyMetadata    `json:"metadata"`
+	Items    []CloudifyBlueprint `json:"items"`
 }
 
 func GetBlueprints(host string, user string, password string, tenant string) CloudifyBlueprints {
@@ -143,9 +159,28 @@ func GetBlueprints(host string, user string, password string, tenant string) Clo
 	return blueprints
 }
 
+type CloudifyWorkflow struct {
+	CreatedAt string `json:"created_at"`
+	Name      string `json:"name"`
+	// TODO describe "parameters" srtuct
+}
+
+type CloudifyDeployment struct {
+	CloudifyResource
+	Permalink   string             `json:"permalink"`
+	BlueprintId string             `json:"blueprint_id"`
+	Workflows   []CloudifyWorkflow `json:"workflows"`
+	// TODO describe "inputs" srtuct
+	// TODO describe "policy_types" struct
+	// TODO describe "policy_triggers" struct
+	// TODO describe "groups" struct
+	// TODO describe "scaling_groups" struct
+	// TODO describe "outputs" struct
+}
 type CloudifyDeployments struct {
 	CloudifyBaseMessage
-	Metadata CloudifyMetadata `json:"metadata"`
+	Metadata CloudifyMetadata     `json:"metadata"`
+	Items    []CloudifyDeployment `json:"items"`
 }
 
 func GetDeployments(host string, user string, password string, tenant string) CloudifyDeployments {
