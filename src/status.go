@@ -301,11 +301,34 @@ func main() {
 		}
 	case "blueprints":
 		{
-			fmt.Printf("%+v\n", GetBlueprints(host, user, password, tenant))
+			blueprints := GetBlueprints(host, user, password, tenant)
+			var lines [][]string = make([][]string, len(blueprints.Items))
+			for pos, blueprint := range blueprints.Items {
+				lines[pos] = make([]string, 7)
+				lines[pos][0] = blueprint.Id
+				lines[pos][1] = blueprint.Description
+				lines[pos][2] = blueprint.MainFileName
+				lines[pos][3] = blueprint.CreatedAt
+				lines[pos][4] = blueprint.UpdatedAt
+				lines[pos][5] = blueprint.Tenant
+				lines[pos][6] = blueprint.CreatedBy
+			}
+			PrintTable([]string{"id", "description", "main_file_name", "created_at", "updated_at", "tenant_name", "created_by"}, lines)
 		}
 	case "deployments":
 		{
-			fmt.Printf("%+v\n", GetDeployments(host, user, password, tenant))
+			deployments := GetDeployments(host, user, password, tenant)
+			var lines [][]string = make([][]string, len(deployments.Items))
+			for pos, deployment := range deployments.Items {
+				lines[pos] = make([]string, 6)
+				lines[pos][0] = deployment.Id
+				lines[pos][1] = deployment.BlueprintId
+				lines[pos][2] = deployment.CreatedAt
+				lines[pos][3] = deployment.UpdatedAt
+				lines[pos][4] = deployment.Tenant
+				lines[pos][5] = deployment.CreatedBy
+			}
+			PrintTable([]string{"id", "blueprint_id", "created_at", "updated_at", "tenant_name", "created_by"}, lines)
 		}
 	default:
 		fmt.Println("Supported only: status, version")
