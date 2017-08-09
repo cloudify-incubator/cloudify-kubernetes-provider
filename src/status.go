@@ -191,6 +191,7 @@ type CloudifyDeployment struct {
 	// TODO describe "scaling_groups" struct
 	// TODO describe "outputs" struct
 }
+
 type CloudifyDeployments struct {
 	CloudifyBaseMessage
 	Metadata CloudifyMetadata     `json:"metadata"`
@@ -212,6 +213,40 @@ func GetDeployments(host string, user string, password string, tenant string) Cl
 	}
 
 	return deployments
+}
+
+type CloudifyExecution struct {
+	CloudifyResource
+	IsSystemWorkflow bool   `json:"is_system_workflow"`
+	BlueprintId      string `json:"blueprint_id"`
+	WorkflowId       string `json:"workflow_id"`
+	Error            string `json:"error"`
+	DeploymentId     string `json:"deployment_id"`
+	Status           string `json:"status"`
+	// TODO describe "parameters" struct
+}
+
+type CloudifyExecutions struct {
+	CloudifyBaseMessage
+	Metadata CloudifyMetadata    `json:"metadata"`
+	Items    []CloudifyExecution `json:"items"`
+}
+
+func GetExecutions(host string, user string, password string, tenant string) CloudifyExecutions {
+	body := Get("http://"+host+"/api/v3.1/executions", user, password, tenant)
+
+	var executions CloudifyExecutions
+
+	err := json.Unmarshal(body, &executions)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	if len(executions.ErrorCode) > 0 {
+		log.Fatal(executions.Message)
+	}
+
+	return executions
 }
 
 func PrintBottomLine(columnSizes []int) {
@@ -330,7 +365,24 @@ func main() {
 			}
 			PrintTable([]string{"id", "blueprint_id", "created_at", "updated_at", "tenant_name", "created_by"}, lines)
 		}
+	case "executions":
+		{
+			executions := GetExecutions(host, user, password, tenant)
+			var lines [][]string = make([][]string, len(executions.Items))
+			for pos, execution := range executions.Items {
+				lines[pos] = make([]string, 8)
+				lines[pos][0] = execution.Id
+				lines[pos][1] = execution.WorkflowId
+				lines[pos][2] = execution.Status
+				lines[pos][3] = execution.DeploymentId
+				lines[pos][4] = execution.CreatedAt
+				lines[pos][5] = execution.Error
+				lines[pos][6] = execution.Tenant
+				lines[pos][7] = execution.CreatedBy
+			}
+			PrintTable([]string{"id", "workflow_id", "status", "deployment_id", "created_at", "error", "tenant_name", "created_by"}, lines)
+		}
 	default:
-		fmt.Println("Supported only: status, version")
+		fmt.Println("Supported only: status, version, blueprints, deployments, executions")
 	}
 }
