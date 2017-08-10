@@ -10,6 +10,7 @@ import (
 	"io/ioutil"
 	"log"
 	"net/http"
+	"os"
 	"strings"
 	"unicode/utf8"
 )
@@ -359,28 +360,35 @@ func PrintTable(titles []string, lines [][]string) {
 	PrintBottomLine(columnSizes)
 }
 
-func main() {
-	var host string
-	var user string
-	var password string
-	var tenant string
-	var command string
+var host string
+var user string
+var password string
+var tenant string
 
-	flag.StringVar(&host, "host", "localhost", "Manager host name")
-	flag.StringVar(&user, "user", "admin", "Manager user name")
-	flag.StringVar(&password, "password", "secret", "Manager user password")
-	flag.StringVar(&tenant, "tenant", "default_tenant", "Manager tenant")
-	flag.StringVar(&command, "command", "help", "Command for run")
-	flag.Parse()
+func basicOptions(name string) *flag.FlagSet {
+	var commonFlagSet *flag.FlagSet
+	commonFlagSet = flag.NewFlagSet("name", flag.ExitOnError)
+	commonFlagSet.StringVar(&host, "host", "localhost", "Manager host name")
+	commonFlagSet.StringVar(&user, "user", "admin", "Manager user name")
+	commonFlagSet.StringVar(&password, "password", "secret", "Manager user password")
+	commonFlagSet.StringVar(&tenant, "tenant", "default_tenant", "Manager tenant")
+	return commonFlagSet
+}
 
-	switch command {
-	case "version":
-		{
-			ver := GetVersion(host, user, password, tenant)
-			fmt.Printf("Retrieving manager services version... [ip=%v]\n", host)
-			PrintTable([]string{"Version", "Edition"}, [][]string{{ver.Version, ver.Edition}})
-		}
-	case "status":
+func infoOptions() int {
+	defaultError := "state/version subcommand is required"
+
+	if len(os.Args) < 3 {
+		fmt.Println(defaultError)
+		os.Exit(1)
+	}
+
+	statusFlagSet := basicOptions("status")
+
+	statusFlagSet.Parse(os.Args[3:])
+
+	switch os.Args[2] {
+	case "state":
 		{
 			stat := GetStatus(host, user, password, tenant)
 
@@ -395,8 +403,39 @@ func main() {
 			}
 			PrintTable([]string{"service", "status"}, lines)
 		}
+	case "version":
+		{
+			ver := GetVersion(host, user, password, tenant)
+			fmt.Printf("Retrieving manager services version... [ip=%v]\n", host)
+			PrintTable([]string{"Version", "Edition"}, [][]string{{ver.Version, ver.Edition}})
+		}
+	default:
+		{
+			fmt.Println(defaultError)
+			return 1
+		}
+	}
+	return 0
+}
+
+func main() {
+	defaultError := "Supported only: status, version, blueprints, deployments, executions, executions-install"
+	if len(os.Args) < 2 {
+		fmt.Println(defaultError)
+		return
+	}
+
+	switch os.Args[1] {
+	case "status":
+		{
+			os.Exit(infoOptions())
+		}
 	case "blueprints":
 		{
+			statusFlagSet := basicOptions(os.Args[1])
+
+			statusFlagSet.Parse(os.Args[3:])
+
 			blueprints := GetBlueprints(host, user, password, tenant)
 			var lines [][]string = make([][]string, len(blueprints.Items))
 			for pos, blueprint := range blueprints.Items {
@@ -413,6 +452,10 @@ func main() {
 		}
 	case "deployments":
 		{
+			statusFlagSet := basicOptions(os.Args[1])
+
+			statusFlagSet.Parse(os.Args[3:])
+
 			deployments := GetDeployments(host, user, password, tenant)
 			var lines [][]string = make([][]string, len(deployments.Items))
 			for pos, deployment := range deployments.Items {
@@ -428,6 +471,10 @@ func main() {
 		}
 	case "executions":
 		{
+			statusFlagSet := basicOptions(os.Args[1])
+
+			statusFlagSet.Parse(os.Args[3:])
+
 			executions := GetExecutions(host, user, password, tenant)
 			var lines [][]string = make([][]string, len(executions.Items))
 			for pos, execution := range executions.Items {
@@ -445,6 +492,10 @@ func main() {
 		}
 	case "executions-install":
 		{
+			statusFlagSet := basicOptions(os.Args[1])
+
+			statusFlagSet.Parse(os.Args[3:])
+
 			var exec CloudifyExecutionPost
 			exec.WorkflowId = "install"
 			exec.DeploymentId = "deployment"
@@ -465,6 +516,9 @@ func main() {
 
 		}
 	default:
-		fmt.Println("Supported only: status, version, blueprints, deployments, executions, executions-install")
+		{
+			fmt.Println(defaultError)
+			os.Exit(1)
+		}
 	}
 }
