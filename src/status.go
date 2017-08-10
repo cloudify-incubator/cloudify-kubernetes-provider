@@ -1,10 +1,12 @@
 package main
 
 import (
+	"bytes"
 	"encoding/base64"
 	"encoding/json"
 	"flag"
 	"fmt"
+	"io"
 	"io/ioutil"
 	"log"
 	"net/http"
@@ -12,23 +14,48 @@ import (
 	"unicode/utf8"
 )
 
-func Get(url string, user string, password string, tenant string) []byte {
+func GetRequest(url, user, password, tenant, method string, body io.Reader) *http.Request {
 	log.Printf("Use: %v:%v@%v#%s\n", user, password, url, tenant)
-
-	client := &http.Client{}
 
 	var auth_string string
 	auth_string = user + ":" + password
-	req, err := http.NewRequest("GET", url, nil)
+	req, err := http.NewRequest(method, url, body)
 	if err != nil {
 		log.Fatal(err)
 	}
 
+	req.Header.Set("Content-Type", "application/json")
 	req.Header.Add("Authorization", "Basic "+base64.StdEncoding.EncodeToString([]byte(auth_string)))
 	if len(tenant) > 0 {
 		req.Header.Add("Tenant", tenant)
 	}
 
+	return req
+}
+
+func Get(url string, user string, password string, tenant string) []byte {
+	req := GetRequest(url, user, password, tenant, "GET", nil)
+
+	client := &http.Client{}
+	resp, err := client.Do(req)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	defer resp.Body.Close()
+	body, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	log.Printf("Response %s\n", string(body))
+	return body
+}
+
+func Post(url, user, password, tenant string, data []byte) []byte {
+	req := GetRequest(url, user, password, tenant, "POST", bytes.NewBuffer(data))
+
+	client := &http.Client{}
 	resp, err := client.Do(req)
 	if err != nil {
 		log.Fatal(err)
@@ -45,9 +72,9 @@ func Get(url string, user string, password string, tenant string) []byte {
 }
 
 type CloudifyBaseMessage struct {
-	Message         string `json:"message"`
-	ErrorCode       string `json:"error_code"`
-	ServerTraceback string `json:"server_traceback"`
+	Message         string `json:"message,omitempty"`
+	ErrorCode       string `json:"error_code,omitempty"`
+	ServerTraceback string `json:"server_traceback,omitempty"`
 }
 
 type CloudifyVersion struct {
@@ -59,7 +86,7 @@ type CloudifyVersion struct {
 	Commit  string `json:"commit"`
 }
 
-func GetVersion(host string, user string, password string, tenant string) CloudifyVersion {
+func GetVersion(host, user, password, tenant string) CloudifyVersion {
 	body := Get("http://"+host+"/api/v3.1/version", user, password, tenant)
 
 	var ver CloudifyVersion
@@ -108,7 +135,7 @@ type CloudifyStatus struct {
 	Services []CloudifyInstanceService `json:"services"`
 }
 
-func GetStatus(host string, user string, password string, tenant string) CloudifyStatus {
+func GetStatus(host, user, password, tenant string) CloudifyStatus {
 	body := Get("http://"+host+"/api/v3.1/status", user, password, tenant)
 
 	var stat CloudifyStatus
@@ -156,7 +183,7 @@ type CloudifyBlueprints struct {
 	Items    []CloudifyBlueprint `json:"items"`
 }
 
-func GetBlueprints(host string, user string, password string, tenant string) CloudifyBlueprints {
+func GetBlueprints(host, user, password, tenant string) CloudifyBlueprints {
 	body := Get("http://"+host+"/api/v3.1/blueprints", user, password, tenant)
 
 	var blueprints CloudifyBlueprints
@@ -179,12 +206,16 @@ type CloudifyWorkflow struct {
 	// TODO describe "parameters" srtuct
 }
 
+type CloudifyDeploymentPost struct {
+	BlueprintId string            `json:"blueprint_id"`
+	Inputs      map[string]string `json:"inputs"`
+}
+
 type CloudifyDeployment struct {
 	CloudifyResource
-	Permalink   string             `json:"permalink"`
-	BlueprintId string             `json:"blueprint_id"`
-	Workflows   []CloudifyWorkflow `json:"workflows"`
-	// TODO describe "inputs" srtuct
+	CloudifyDeploymentPost
+	Permalink string             `json:"permalink"`
+	Workflows []CloudifyWorkflow `json:"workflows"`
 	// TODO describe "policy_types" struct
 	// TODO describe "policy_triggers" struct
 	// TODO describe "groups" struct
@@ -198,7 +229,7 @@ type CloudifyDeployments struct {
 	Items    []CloudifyDeployment `json:"items"`
 }
 
-func GetDeployments(host string, user string, password string, tenant string) CloudifyDeployments {
+func GetDeployments(host, user, password, tenant string) CloudifyDeployments {
 	body := Get("http://"+host+"/api/v3.1/deployments", user, password, tenant)
 
 	var deployments CloudifyDeployments
@@ -215,13 +246,21 @@ func GetDeployments(host string, user string, password string, tenant string) Cl
 	return deployments
 }
 
+type CloudifyExecutionPost struct {
+	WorkflowId   string `json:"workflow_id"`
+	DeploymentId string `json:"deployment_id"`
+}
+
 type CloudifyExecution struct {
+	// can be response from api
+	CloudifyBaseMessage
+	// have id, owner information
 	CloudifyResource
+	// contain information from post
+	CloudifyExecutionPost
 	IsSystemWorkflow bool   `json:"is_system_workflow"`
-	BlueprintId      string `json:"blueprint_id"`
-	WorkflowId       string `json:"workflow_id"`
 	Error            string `json:"error"`
-	DeploymentId     string `json:"deployment_id"`
+	BlueprintId      string `json:"blueprint_id"`
 	Status           string `json:"status"`
 	// TODO describe "parameters" struct
 }
@@ -232,7 +271,7 @@ type CloudifyExecutions struct {
 	Items    []CloudifyExecution `json:"items"`
 }
 
-func GetExecutions(host string, user string, password string, tenant string) CloudifyExecutions {
+func GetExecutions(host, user, password, tenant string) CloudifyExecutions {
 	body := Get("http://"+host+"/api/v3.1/executions", user, password, tenant)
 
 	var executions CloudifyExecutions
@@ -247,6 +286,28 @@ func GetExecutions(host string, user string, password string, tenant string) Clo
 	}
 
 	return executions
+}
+
+func PostExecution(host, user, password, tenant string, exec CloudifyExecutionPost) CloudifyExecution {
+	json_data, err := json.Marshal(exec)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	body := Post("http://"+host+"/api/v3.1/executions", user, password, tenant, json_data)
+
+	var execution CloudifyExecution
+
+	err_post := json.Unmarshal(body, &execution)
+	if err_post != nil {
+		log.Fatal(err_post)
+	}
+
+	if len(execution.ErrorCode) > 0 {
+		log.Fatal(execution.Message)
+	}
+
+	return execution
 }
 
 func PrintBottomLine(columnSizes []int) {
@@ -309,7 +370,7 @@ func main() {
 	flag.StringVar(&user, "user", "admin", "Manager user name")
 	flag.StringVar(&password, "password", "secret", "Manager user password")
 	flag.StringVar(&tenant, "tenant", "default_tenant", "Manager tenant")
-	flag.StringVar(&command, "command", "version", "Command for run")
+	flag.StringVar(&command, "command", "help", "Command for run")
 	flag.Parse()
 
 	switch command {
@@ -382,7 +443,28 @@ func main() {
 			}
 			PrintTable([]string{"id", "workflow_id", "status", "deployment_id", "created_at", "error", "tenant_name", "created_by"}, lines)
 		}
+	case "executions-install":
+		{
+			var exec CloudifyExecutionPost
+			exec.WorkflowId = "install"
+			exec.DeploymentId = "deployment"
+
+			execution := PostExecution(host, user, password, tenant, exec)
+
+			var lines [][]string = make([][]string, 1)
+			lines[0] = make([]string, 8)
+			lines[0][0] = execution.Id
+			lines[0][1] = execution.WorkflowId
+			lines[0][2] = execution.Status
+			lines[0][3] = execution.DeploymentId
+			lines[0][4] = execution.CreatedAt
+			lines[0][5] = execution.Error
+			lines[0][6] = execution.Tenant
+			lines[0][7] = execution.CreatedBy
+			PrintTable([]string{"id", "workflow_id", "status", "deployment_id", "created_at", "error", "tenant_name", "created_by"}, lines)
+
+		}
 	default:
-		fmt.Println("Supported only: status, version, blueprints, deployments, executions")
+		fmt.Println("Supported only: status, version, blueprints, deployments, executions, executions-install")
 	}
 }
