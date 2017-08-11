@@ -7,7 +7,14 @@ sudo apt-get install gccgo-go golang-go
 
 # run
 ```shell
-go run src/status.go -host <your manager host> -user admin -password secret -tenant default_tenant -command status
+go build src/status.go
+
+./status blueprints list -host <your manager host> -user admin -password secret -tenant default_tenant
+./status deployments list -host <your manager host> -user admin -password secret -tenant default_tenant
+./status executions list -host <your manager host> -user admin -password secret -tenant default_tenant
+./status executions start uninstall -deployment deployment -host <your manager host> -user admin -password secret -tenant default_tenant
+./status status state -host <your manager host> -user admin -password secret -tenant default_tenant
+./status status version -host <your manager host> -user admin -password secret -tenant default_tenant
 ```
 # reformat code
 ```shell

@@ -380,12 +380,12 @@ func infoOptions() int {
 
 	if len(os.Args) < 3 {
 		fmt.Println(defaultError)
-		os.Exit(1)
+		return 1
 	}
 
-	statusFlagSet := basicOptions("status")
+	operFlagSet := basicOptions("status")
 
-	statusFlagSet.Parse(os.Args[3:])
+	operFlagSet.Parse(os.Args[3:])
 
 	switch os.Args[2] {
 	case "state":
@@ -418,24 +418,21 @@ func infoOptions() int {
 	return 0
 }
 
-func main() {
-	defaultError := "Supported only: status, version, blueprints, deployments, executions, executions-install"
-	if len(os.Args) < 2 {
+func blueprintsOptions() int {
+	defaultError := "list subcommand is required"
+
+	if len(os.Args) < 3 {
 		fmt.Println(defaultError)
-		return
+		return 1
 	}
 
-	switch os.Args[1] {
-	case "status":
-		{
-			os.Exit(infoOptions())
-		}
-	case "blueprints":
-		{
-			statusFlagSet := basicOptions(os.Args[1])
+	operFlagSet := basicOptions("blueprints")
 
-			statusFlagSet.Parse(os.Args[3:])
+	operFlagSet.Parse(os.Args[3:])
 
+	switch os.Args[2] {
+	case "list":
+		{
 			blueprints := GetBlueprints(host, user, password, tenant)
 			var lines [][]string = make([][]string, len(blueprints.Items))
 			for pos, blueprint := range blueprints.Items {
@@ -450,12 +447,30 @@ func main() {
 			}
 			PrintTable([]string{"id", "description", "main_file_name", "created_at", "updated_at", "tenant_name", "created_by"}, lines)
 		}
-	case "deployments":
+	default:
 		{
-			statusFlagSet := basicOptions(os.Args[1])
+			fmt.Println(defaultError)
+			return 1
+		}
+	}
+	return 0
+}
 
-			statusFlagSet.Parse(os.Args[3:])
+func deploymentsOptions() int {
+	defaultError := "list subcommand is required"
 
+	if len(os.Args) < 3 {
+		fmt.Println(defaultError)
+		return 1
+	}
+
+	operFlagSet := basicOptions("deployments")
+
+	operFlagSet.Parse(os.Args[3:])
+
+	switch os.Args[2] {
+	case "list":
+		{
 			deployments := GetDeployments(host, user, password, tenant)
 			var lines [][]string = make([][]string, len(deployments.Items))
 			for pos, deployment := range deployments.Items {
@@ -469,12 +484,29 @@ func main() {
 			}
 			PrintTable([]string{"id", "blueprint_id", "created_at", "updated_at", "tenant_name", "created_by"}, lines)
 		}
-	case "executions":
+	default:
 		{
-			statusFlagSet := basicOptions(os.Args[1])
+			fmt.Println(defaultError)
+			return 1
+		}
+	}
+	return 0
+}
 
-			statusFlagSet.Parse(os.Args[3:])
+func executionsOptions() int {
+	defaultError := "list/start subcommand is required"
 
+	if len(os.Args) < 3 {
+		fmt.Println(defaultError)
+		return 1
+	}
+
+	operFlagSet := basicOptions("executions")
+
+	switch os.Args[2] {
+	case "list":
+		{
+			operFlagSet.Parse(os.Args[3:])
 			executions := GetExecutions(host, user, password, tenant)
 			var lines [][]string = make([][]string, len(executions.Items))
 			for pos, execution := range executions.Items {
@@ -490,15 +522,21 @@ func main() {
 			}
 			PrintTable([]string{"id", "workflow_id", "status", "deployment_id", "created_at", "error", "tenant_name", "created_by"}, lines)
 		}
-	case "executions-install":
+	case "start":
 		{
-			statusFlagSet := basicOptions(os.Args[1])
 
-			statusFlagSet.Parse(os.Args[3:])
+			if len(os.Args) < 4 {
+				fmt.Println("Workflow Id requered")
+				return 1
+			}
+
+			var deployment string
+			operFlagSet.StringVar(&deployment, "deployment", "", "The unique identifier for the deployment")
+			operFlagSet.Parse(os.Args[4:])
 
 			var exec CloudifyExecutionPost
-			exec.WorkflowId = "install"
-			exec.DeploymentId = "deployment"
+			exec.WorkflowId = os.Args[3]
+			exec.DeploymentId = deployment
 
 			execution := PostExecution(host, user, password, tenant, exec)
 
@@ -513,7 +551,39 @@ func main() {
 			lines[0][6] = execution.Tenant
 			lines[0][7] = execution.CreatedBy
 			PrintTable([]string{"id", "workflow_id", "status", "deployment_id", "created_at", "error", "tenant_name", "created_by"}, lines)
+		}
+	default:
+		{
+			fmt.Println(defaultError)
+			return 1
+		}
+	}
+	return 0
+}
 
+func main() {
+	defaultError := "Supported only: status, version, blueprints, deployments, executions, executions-install"
+	if len(os.Args) < 2 {
+		fmt.Println(defaultError)
+		return
+	}
+
+	switch os.Args[1] {
+	case "status":
+		{
+			os.Exit(infoOptions())
+		}
+	case "blueprints":
+		{
+			os.Exit(blueprintsOptions())
+		}
+	case "deployments":
+		{
+			os.Exit(deploymentsOptions())
+		}
+	case "executions":
+		{
+			os.Exit(executionsOptions())
 		}
 	default:
 		{
