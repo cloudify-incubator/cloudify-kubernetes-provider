@@ -53,6 +53,25 @@ func Get(url string, user string, password string, tenant string) []byte {
 	return body
 }
 
+func Delete(url string, user string, password string, tenant string) []byte {
+	req := GetRequest(url, user, password, tenant, "DELETE", nil)
+
+	client := &http.Client{}
+	resp, err := client.Do(req)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	defer resp.Body.Close()
+	body, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	log.Printf("Response %s\n", string(body))
+	return body
+}
+
 func Post(url, user, password, tenant string, data []byte) []byte {
 	req := GetRequest(url, user, password, tenant, "POST", bytes.NewBuffer(data))
 
@@ -213,7 +232,11 @@ type CloudifyDeploymentPost struct {
 }
 
 type CloudifyDeployment struct {
+	// can be response from api
+	CloudifyBaseMessage
+	// have id, owner information
 	CloudifyResource
+	// contain information from post
 	CloudifyDeploymentPost
 	Permalink string             `json:"permalink"`
 	Workflows []CloudifyWorkflow `json:"workflows"`
@@ -245,6 +268,23 @@ func GetDeployments(host, user, password, tenant string) CloudifyDeployments {
 	}
 
 	return deployments
+}
+
+func DeleteDeployments(host, user, password, tenant, deployment_id string) CloudifyDeployment {
+	body := Delete("http://"+host+"/api/v3.1/deployments/"+deployment_id, user, password, tenant)
+
+	var deployment CloudifyDeployment
+
+	err := json.Unmarshal(body, &deployment)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	if len(deployment.ErrorCode) > 0 {
+		log.Fatal(deployment.Message)
+	}
+
+	return deployment
 }
 
 type CloudifyExecutionPost struct {
@@ -457,7 +497,7 @@ func blueprintsOptions() int {
 }
 
 func deploymentsOptions() int {
-	defaultError := "list subcommand is required"
+	defaultError := "list/create/delete subcommand is required"
 
 	if len(os.Args) < 3 {
 		fmt.Println(defaultError)
@@ -466,11 +506,10 @@ func deploymentsOptions() int {
 
 	operFlagSet := basicOptions("deployments")
 
-	operFlagSet.Parse(os.Args[3:])
-
 	switch os.Args[2] {
 	case "list":
 		{
+			operFlagSet.Parse(os.Args[3:])
 			deployments := GetDeployments(host, user, password, tenant)
 			var lines [][]string = make([][]string, len(deployments.Items))
 			for pos, deployment := range deployments.Items {
@@ -482,6 +521,25 @@ func deploymentsOptions() int {
 				lines[pos][4] = deployment.Tenant
 				lines[pos][5] = deployment.CreatedBy
 			}
+			PrintTable([]string{"id", "blueprint_id", "created_at", "updated_at", "tenant_name", "created_by"}, lines)
+		}
+	case "delete":
+		{
+			if len(os.Args) < 4 {
+				fmt.Println("Deployment Id requered")
+				return 1
+			}
+
+			operFlagSet.Parse(os.Args[4:])
+			deployment := DeleteDeployments(host, user, password, tenant, os.Args[3])
+			var lines [][]string = make([][]string, 1)
+			lines[1] = make([]string, 6)
+			lines[1][0] = deployment.Id
+			lines[1][1] = deployment.BlueprintId
+			lines[1][2] = deployment.CreatedAt
+			lines[1][3] = deployment.UpdatedAt
+			lines[1][4] = deployment.Tenant
+			lines[1][5] = deployment.CreatedBy
 			PrintTable([]string{"id", "blueprint_id", "created_at", "updated_at", "tenant_name", "created_by"}, lines)
 		}
 	default:
