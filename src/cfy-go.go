@@ -1,114 +1,15 @@
 package main
 
 import (
-	"bytes"
-	"encoding/base64"
+	"cloudify"
 	"encoding/json"
 	"flag"
 	"fmt"
-	"io"
-	"io/ioutil"
 	"log"
-	"net/http"
 	"os"
 	"strings"
 	"unicode/utf8"
 )
-
-func GetRequest(url, user, password, tenant, method string, body io.Reader) *http.Request {
-	log.Printf("Use: %v:%v@%v#%s\n", user, password, url, tenant)
-
-	var auth_string string
-	auth_string = user + ":" + password
-	req, err := http.NewRequest(method, url, body)
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	req.Header.Set("Content-Type", "application/json")
-	req.Header.Add("Authorization", "Basic "+base64.StdEncoding.EncodeToString([]byte(auth_string)))
-	if len(tenant) > 0 {
-		req.Header.Add("Tenant", tenant)
-	}
-
-	return req
-}
-
-func Get(url string, user string, password string, tenant string) []byte {
-	req := GetRequest(url, user, password, tenant, "GET", nil)
-
-	client := &http.Client{}
-	resp, err := client.Do(req)
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	defer resp.Body.Close()
-	body, err := ioutil.ReadAll(resp.Body)
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	log.Printf("Response %s\n", string(body))
-	return body
-}
-
-func Delete(url string, user string, password string, tenant string) []byte {
-	req := GetRequest(url, user, password, tenant, "DELETE", nil)
-
-	client := &http.Client{}
-	resp, err := client.Do(req)
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	defer resp.Body.Close()
-	body, err := ioutil.ReadAll(resp.Body)
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	log.Printf("Response %s\n", string(body))
-	return body
-}
-
-func Post(url, user, password, tenant string, data []byte) []byte {
-	req := GetRequest(url, user, password, tenant, "POST", bytes.NewBuffer(data))
-
-	client := &http.Client{}
-	resp, err := client.Do(req)
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	defer resp.Body.Close()
-	body, err := ioutil.ReadAll(resp.Body)
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	log.Printf("Response %s\n", string(body))
-	return body
-}
-
-func Put(url, user, password, tenant string, data []byte) []byte {
-	req := GetRequest(url, user, password, tenant, "PUT", bytes.NewBuffer(data))
-
-	client := &http.Client{}
-	resp, err := client.Do(req)
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	defer resp.Body.Close()
-	body, err := ioutil.ReadAll(resp.Body)
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	log.Printf("Response %s\n", string(body))
-	return body
-}
 
 type CloudifyBaseMessage struct {
 	Message         string `json:"message,omitempty"`
@@ -126,7 +27,7 @@ type CloudifyVersion struct {
 }
 
 func GetVersion(host, user, password, tenant string) CloudifyVersion {
-	body := Get("http://"+host+"/api/v3.1/version", user, password, tenant)
+	body := cloudify.Get("http://"+host+"/api/v3.1/version", user, password, tenant)
 
 	var ver CloudifyVersion
 
@@ -175,7 +76,7 @@ type CloudifyStatus struct {
 }
 
 func GetStatus(host, user, password, tenant string) CloudifyStatus {
-	body := Get("http://"+host+"/api/v3.1/status", user, password, tenant)
+	body := cloudify.Get("http://"+host+"/api/v3.1/status", user, password, tenant)
 
 	var stat CloudifyStatus
 
@@ -223,7 +124,7 @@ type CloudifyBlueprints struct {
 }
 
 func GetBlueprints(host, user, password, tenant string) CloudifyBlueprints {
-	body := Get("http://"+host+"/api/v3.1/blueprints", user, password, tenant)
+	body := cloudify.Get("http://"+host+"/api/v3.1/blueprints", user, password, tenant)
 
 	var blueprints CloudifyBlueprints
 
@@ -273,7 +174,7 @@ type CloudifyDeployments struct {
 }
 
 func GetDeployments(host, user, password, tenant string) CloudifyDeployments {
-	body := Get("http://"+host+"/api/v3.1/deployments", user, password, tenant)
+	body := cloudify.Get("http://"+host+"/api/v3.1/deployments", user, password, tenant)
 
 	var deployments CloudifyDeployments
 
@@ -290,7 +191,7 @@ func GetDeployments(host, user, password, tenant string) CloudifyDeployments {
 }
 
 func DeleteDeployments(host, user, password, tenant, deployment_id string) CloudifyDeployment {
-	body := Delete("http://"+host+"/api/v3.1/deployments/"+deployment_id, user, password, tenant)
+	body := cloudify.Delete("http://"+host+"/api/v3.1/deployments/"+deployment_id, user, password, tenant)
 
 	var deployment CloudifyDeployment
 
@@ -312,7 +213,7 @@ func CreateDeployments(host, user, password, tenant, deployment_id string, depl 
 		log.Fatal(err)
 	}
 
-	body := Put("http://"+host+"/api/v3.1/deployments/"+deployment_id, user, password, tenant, json_data)
+	body := cloudify.Put("http://"+host+"/api/v3.1/deployments/"+deployment_id, user, password, tenant, json_data)
 
 	var deployment CloudifyDeployment
 
@@ -354,7 +255,7 @@ type CloudifyExecutions struct {
 }
 
 func GetExecutions(host, user, password, tenant string) CloudifyExecutions {
-	body := Get("http://"+host+"/api/v3.1/executions", user, password, tenant)
+	body := cloudify.Get("http://"+host+"/api/v3.1/executions", user, password, tenant)
 
 	var executions CloudifyExecutions
 
@@ -376,7 +277,7 @@ func PostExecution(host, user, password, tenant string, exec CloudifyExecutionPo
 		log.Fatal(err)
 	}
 
-	body := Post("http://"+host+"/api/v3.1/executions", user, password, tenant, json_data)
+	body := cloudify.Post("http://"+host+"/api/v3.1/executions", user, password, tenant, json_data)
 
 	var execution CloudifyExecution
 

@@ -5,6 +5,7 @@
 sudo apt-get install gccgo-go golang-go
 export GOBIN=`pwd`/bin
 export PATH=$PATH:`pwd`/bin
+export GOPATH=`pwd`
 go install src/cfy-go.go
 ```
 
@@ -21,5 +22,6 @@ cfy-go status version -host <your manager host> -user admin -password secret -te
 ```
 # reformat code
 ```shell
-gofmt -w src/status.go
+gofmt -w src/*.go
+gofmt -w src/cloudify/*.go
 ```
