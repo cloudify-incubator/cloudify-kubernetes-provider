@@ -91,6 +91,25 @@ func Post(url, user, password, tenant string, data []byte) []byte {
 	return body
 }
 
+func Put(url, user, password, tenant string, data []byte) []byte {
+	req := GetRequest(url, user, password, tenant, "PUT", bytes.NewBuffer(data))
+
+	client := &http.Client{}
+	resp, err := client.Do(req)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	defer resp.Body.Close()
+	body, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	log.Printf("Response %s\n", string(body))
+	return body
+}
+
 type CloudifyBaseMessage struct {
 	Message         string `json:"message,omitempty"`
 	ErrorCode       string `json:"error_code,omitempty"`
@@ -278,6 +297,28 @@ func DeleteDeployments(host, user, password, tenant, deployment_id string) Cloud
 	err := json.Unmarshal(body, &deployment)
 	if err != nil {
 		log.Fatal(err)
+	}
+
+	if len(deployment.ErrorCode) > 0 {
+		log.Fatal(deployment.Message)
+	}
+
+	return deployment
+}
+
+func CreateDeployments(host, user, password, tenant, deployment_id string, depl CloudifyDeploymentPost) CloudifyDeployment {
+	json_data, err := json.Marshal(depl)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	body := Put("http://"+host+"/api/v3.1/deployments/"+deployment_id, user, password, tenant, json_data)
+
+	var deployment CloudifyDeployment
+
+	err_post := json.Unmarshal(body, &deployment)
+	if err_post != nil {
+		log.Fatal(err_post)
 	}
 
 	if len(deployment.ErrorCode) > 0 {
@@ -523,6 +564,33 @@ func deploymentsOptions() int {
 			}
 			PrintTable([]string{"id", "blueprint_id", "created_at", "updated_at", "tenant_name", "created_by"}, lines)
 		}
+	case "create":
+		{
+			if len(os.Args) < 4 {
+				fmt.Println("Deployment Id requered")
+				return 1
+			}
+
+			var blueprint string
+			operFlagSet.StringVar(&blueprint, "blueprint", "", "The unique identifier for the blueprint")
+
+			operFlagSet.Parse(os.Args[4:])
+
+			var depl CloudifyDeploymentPost
+			depl.BlueprintId = blueprint
+			depl.Inputs = map[string]string{}
+			deployment := CreateDeployments(host, user, password, tenant, os.Args[3], depl)
+
+			var lines [][]string = make([][]string, 1)
+			lines[0] = make([]string, 6)
+			lines[0][0] = deployment.Id
+			lines[0][1] = deployment.BlueprintId
+			lines[0][2] = deployment.CreatedAt
+			lines[0][3] = deployment.UpdatedAt
+			lines[0][4] = deployment.Tenant
+			lines[0][5] = deployment.CreatedBy
+			PrintTable([]string{"id", "blueprint_id", "created_at", "updated_at", "tenant_name", "created_by"}, lines)
+		}
 	case "delete":
 		{
 			if len(os.Args) < 4 {
@@ -533,13 +601,13 @@ func deploymentsOptions() int {
 			operFlagSet.Parse(os.Args[4:])
 			deployment := DeleteDeployments(host, user, password, tenant, os.Args[3])
 			var lines [][]string = make([][]string, 1)
-			lines[1] = make([]string, 6)
-			lines[1][0] = deployment.Id
-			lines[1][1] = deployment.BlueprintId
-			lines[1][2] = deployment.CreatedAt
-			lines[1][3] = deployment.UpdatedAt
-			lines[1][4] = deployment.Tenant
-			lines[1][5] = deployment.CreatedBy
+			lines[0] = make([]string, 6)
+			lines[0][0] = deployment.Id
+			lines[0][1] = deployment.BlueprintId
+			lines[0][2] = deployment.CreatedAt
+			lines[0][3] = deployment.UpdatedAt
+			lines[0][4] = deployment.Tenant
+			lines[0][5] = deployment.CreatedBy
 			PrintTable([]string{"id", "blueprint_id", "created_at", "updated_at", "tenant_name", "created_by"}, lines)
 		}
 	default:
