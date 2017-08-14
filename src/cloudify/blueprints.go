@@ -7,6 +7,9 @@ import (
 )
 
 type CloudifyBlueprint struct {
+	// can be response from api
+	rest.CloudifyBaseMessage
+	// have id, owner information
 	rest.CloudifyResource
 	MainFileName string `json:"main_file_name"`
 	// TODO describe "plan" struct
@@ -33,4 +36,21 @@ func GetBlueprints(host, user, password, tenant string) CloudifyBlueprints {
 	}
 
 	return blueprints
+}
+
+func DeleteBlueprints(host, user, password, tenant, blueprint_id string) CloudifyBlueprint {
+	body := rest.Delete("http://"+host+"/api/v3.1/blueprints/"+blueprint_id, user, password, tenant)
+
+	var blueprint CloudifyBlueprint
+
+	err := json.Unmarshal(body, &blueprint)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	if len(blueprint.ErrorCode) > 0 {
+		log.Fatal(blueprint.Message)
+	}
+
+	return blueprint
 }

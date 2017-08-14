@@ -67,7 +67,7 @@ func infoOptions() int {
 }
 
 func blueprintsOptions() int {
-	defaultError := "list subcommand is required"
+	defaultError := "list/delete subcommand is required"
 
 	if len(os.Args) < 3 {
 		fmt.Println(defaultError)
@@ -76,11 +76,10 @@ func blueprintsOptions() int {
 
 	operFlagSet := basicOptions("blueprints")
 
-	operFlagSet.Parse(os.Args[3:])
-
 	switch os.Args[2] {
 	case "list":
 		{
+			operFlagSet.Parse(os.Args[3:])
 			blueprints := cloudify.GetBlueprints(host, user, password, tenant)
 			var lines [][]string = make([][]string, len(blueprints.Items))
 			for pos, blueprint := range blueprints.Items {
@@ -93,6 +92,26 @@ func blueprintsOptions() int {
 				lines[pos][5] = blueprint.Tenant
 				lines[pos][6] = blueprint.CreatedBy
 			}
+			utils.PrintTable([]string{"id", "description", "main_file_name", "created_at", "updated_at", "tenant_name", "created_by"}, lines)
+		}
+	case "delete":
+		{
+			if len(os.Args) < 4 {
+				fmt.Println("Blueprint Id requered")
+				return 1
+			}
+
+			operFlagSet.Parse(os.Args[4:])
+			blueprint := cloudify.DeleteBlueprints(host, user, password, tenant, os.Args[3])
+			var lines [][]string = make([][]string, 1)
+			lines[0] = make([]string, 7)
+			lines[0][0] = blueprint.Id
+			lines[0][1] = blueprint.Description
+			lines[0][2] = blueprint.MainFileName
+			lines[0][3] = blueprint.CreatedAt
+			lines[0][4] = blueprint.UpdatedAt
+			lines[0][5] = blueprint.Tenant
+			lines[0][6] = blueprint.CreatedBy
 			utils.PrintTable([]string{"id", "description", "main_file_name", "created_at", "updated_at", "tenant_name", "created_by"}, lines)
 		}
 	default:
