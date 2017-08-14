@@ -4,6 +4,7 @@ import (
 	"cloudify/rest"
 	"encoding/json"
 	"log"
+	"net/url"
 )
 
 type CloudifyExecutionPost struct {
@@ -31,8 +32,13 @@ type CloudifyExecutions struct {
 	Items    []CloudifyExecution   `json:"items"`
 }
 
-func GetExecutions(host, user, password, tenant string) CloudifyExecutions {
-	body := rest.Get("http://"+host+"/api/v3.1/executions", user, password, tenant)
+// change params type if you want use non uniq values in params
+func GetExecutions(host, user, password, tenant string, params map[string]string) CloudifyExecutions {
+	values := url.Values{}
+	for key, value := range params {
+		values.Set(key, value)
+	}
+	body := rest.Get("http://"+host+"/api/v3.1/executions?"+values.Encode(), user, password, tenant)
 
 	var executions CloudifyExecutions
 

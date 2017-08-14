@@ -54,3 +54,13 @@ func PrintTable(titles []string, lines [][]string) {
 	}
 	printBottomLine(columnSizes)
 }
+
+// return clean list of arguments and options
+func CliArgumentsList(osArgs []string) (arguments []string, options []string) {
+	for pos, str := range osArgs {
+		if str[:1] == "-" {
+			return osArgs[:pos], osArgs[pos:]
+		}
+	}
+	return osArgs, []string{}
+}

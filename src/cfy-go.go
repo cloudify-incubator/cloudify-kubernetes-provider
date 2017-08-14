@@ -218,8 +218,15 @@ func executionsOptions(args, options []string) int {
 	switch args[2] {
 	case "list":
 		{
+			var deployment string
+			operFlagSet.StringVar(&deployment, "deployment", "", "The unique identifier for the deployment")
 			operFlagSet.Parse(options)
-			executions := cloudify.GetExecutions(host, user, password, tenant)
+
+			var options = map[string]string{}
+			if deployment != "" {
+				options["deployment_id"] = deployment
+			}
+			executions := cloudify.GetExecutions(host, user, password, tenant, options)
 			var lines [][]string = make([][]string, len(executions.Items))
 			for pos, execution := range executions.Items {
 				lines[pos] = make([]string, 8)
@@ -273,19 +280,9 @@ func executionsOptions(args, options []string) int {
 	return 0
 }
 
-// return clean list of arguments and options
-func argumentsList() (arguments []string, options []string) {
-	for pos, str := range os.Args {
-		if str[:1] == "-" {
-			return os.Args[:pos], os.Args[pos:]
-		}
-	}
-	return os.Args, []string{}
-}
-
 func main() {
 
-	args, options := argumentsList()
+	args, options := utils.CliArgumentsList(os.Args)
 	defaultError := "Supported only: status, version, blueprints, deployments, executions, executions-install"
 	if len(args) < 2 {
 		fmt.Println(defaultError)

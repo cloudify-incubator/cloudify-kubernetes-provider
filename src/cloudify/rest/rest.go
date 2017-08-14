@@ -28,7 +28,7 @@ func GetRequest(url, user, password, tenant, method string, body io.Reader) *htt
 	return req
 }
 
-func Get(url string, user string, password string, tenant string) []byte {
+func Get(url, user, password, tenant string) []byte {
 	req := GetRequest(url, user, password, tenant, "GET", nil)
 
 	client := &http.Client{}
@@ -47,7 +47,7 @@ func Get(url string, user string, password string, tenant string) []byte {
 	return body
 }
 
-func Delete(url string, user string, password string, tenant string) []byte {
+func Delete(url, user, password, tenant string) []byte {
 	req := GetRequest(url, user, password, tenant, "DELETE", nil)
 
 	client := &http.Client{}
