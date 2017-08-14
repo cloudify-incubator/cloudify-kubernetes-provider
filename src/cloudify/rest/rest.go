@@ -1,4 +1,4 @@
-package cloudify
+package rest
 
 import (
 	"bytes"
