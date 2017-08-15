@@ -1,5 +1,13 @@
 # cloudify-rest-go-client
 
+# install golang to centos
+```shell
+#https://go-repo.io/
+rpm --import https://mirror.go-repo.io/centos/RPM-GPG-KEY-GO-REPO
+curl -s https://mirror.go-repo.io/centos/go-repo.repo | tee /etc/yum.repos.d/go-repo.repo
+yum install golang
+```
+
 # install
 
 ```shell
@@ -8,6 +16,14 @@ export GOBIN=`pwd`/bin
 export PATH=$PATH:`pwd`/bin
 export GOPATH=`pwd`
 make all
+```
+
+# kubernetes
+```shell
+go get -d k8s.io/kubernetes
+cd src/k8s.io/kubernetes
+make 
+cd $GOPATH
 ```
 
 # reformat code

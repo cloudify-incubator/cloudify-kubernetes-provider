@@ -21,7 +21,3 @@ all: bin/cfy-go
 
 test:
 	go test ./src/cloudify/utils/
-
-kubernetes:
-	# go get -u github.com/tools/godep
-	go get -d k8s.io/kubernetes
