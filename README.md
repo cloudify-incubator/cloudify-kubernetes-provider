@@ -1,13 +1,19 @@
 # cloudify-rest-go-client
 
-# install golang to centos
+# install golang to centos(only for kubenetes build)
 ```shell
 #https://go-repo.io/
 rpm --import https://mirror.go-repo.io/centos/RPM-GPG-KEY-GO-REPO
 curl -s https://mirror.go-repo.io/centos/go-repo.repo | tee /etc/yum.repos.d/go-repo.repo
 yum install golang
 ```
-
+# install golang to ubuntu(only for kubenetes build)
+```shell
+# https://github.com/golang/go/wiki/Ubuntu
+sudo add-apt-repository ppa:longsleep/golang-backports
+sudo apt-get update
+sudo apt-get install golang-go
+```
 # install
 
 ```shell
@@ -22,7 +28,7 @@ make all
 ```shell
 go get -d k8s.io/kubernetes
 cd src/k8s.io/kubernetes
-make 
+make
 cd $GOPATH
 ```
 
