@@ -22,6 +22,11 @@ make reformat
     * `-user`: manager user
     * `-password`: manager password
     * `-tenant`: manager tenant
+* Example:
+
+```shell
+cfy-go status version -host <your manager host> -user admin -password secret -tenant default_tenant
+```
 
 ## agents
 Handle a deployment's agents
@@ -40,7 +45,7 @@ Create pip-requirements
 Delete a blueprint [manager only]
 
 ```shell
-cfy-go blueprints delete blueprint -host <your manager host> -user admin -password secret -tenant default_tenant
+cfy-go blueprints delete blueprint
 ```
 
 ### download
@@ -64,7 +69,7 @@ List blueprints [manager only]
 * Partially implemented, pagination is unsupported
 
 ```shell
-cfy-go blueprints list -host <your manager host> -user admin -password secret -tenant default_tenant
+cfy-go blueprints list
 ```
 
 ### package
@@ -101,14 +106,14 @@ Create a deployment [manager only]
 * Partially implemented, set inputs is not supported. Internally supported only map string<->string.
 
 ```shell
-cfy-go deployments create deployment -host <your manager host> -user admin -password secret -tenant default_tenant -blueprint blueprint
+cfy-go deployments create deployment  -blueprint blueprint
 ```
 
 ### delete
 Delete a deployment [manager only]
 
 ```shell
-cfy-go deployments delete  deployment -host <your manager host> -user admin -password secret -tenant default_tenant
+cfy-go deployments delete  deployment
 ```
 
 ### inputs
@@ -120,7 +125,7 @@ List deployments [manager only]
 * Partially implemented, pagination is unsupported
 
 ```shell
-cfy-go deployments list -host <your manager host> -user admin -password secret -tenant default_tenant
+cfy-go deployments list
 ```
 
 ### outputs
@@ -161,8 +166,8 @@ List deployment executions [manager only]
 * Partially implemented, pagination is unsupported
 
 ```shell
-cfy-go executions list -host <your manager host> -user admin -password secret -tenant default_tenant
-cfy-go executions list -host=<your manager host> -user admin -password secret -tenant default_tenant -deployment deployment
+cfy-go executions list
+cfy-go executions list -deployment deployment
 
 ```
 
@@ -171,7 +176,7 @@ Execute a workflow [manager only]
 * Partially implemented, set parametes is not supported.
 
 ```shell
-cfy-go executions start uninstall -deployment deployment -host <your manager host> -user admin -password secret -tenant default_tenant
+cfy-go executions start uninstall -deployment deployment
 ```
 
 ------
@@ -267,14 +272,14 @@ Show manager status [manager only]
 Show service list on manager
 
 ```shell
-cfy-go status state -host <your manager host> -user admin -password secret -tenant default_tenant
+cfy-go status state
 ```
 
 ### Manager version
 Show manager version
 
 ```shell
-cfy-go status version -host <your manager host> -user admin -password secret -tenant default_tenant
+cfy-go status version
 ```
 
 ------
