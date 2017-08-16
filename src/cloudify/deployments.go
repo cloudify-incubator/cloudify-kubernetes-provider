@@ -6,31 +6,36 @@ import (
 	"log"
 )
 
+// Check https://blog.golang.org/json-and-go for more info about json marshaling.
 type CloudifyWorkflow struct {
-	CreatedAt string `json:"created_at"`
-	Name      string `json:"name"`
-	// TODO describe "parameters" srtuct
+	CreatedAt  string                 `json:"created_at"`
+	Name       string                 `json:"name"`
+	Parameters map[string]interface{} `json:"parameters"`
 }
 
 type CloudifyDeploymentPost struct {
-	BlueprintId string            `json:"blueprint_id"`
-	Inputs      map[string]string `json:"inputs"`
+	BlueprintId string                 `json:"blueprint_id"`
+	Inputs      map[string]interface{} `json:"inputs"`
 }
 
 type CloudifyDeployment struct {
-	// can be response from api
-	rest.CloudifyBaseMessage
 	// have id, owner information
 	rest.CloudifyResource
 	// contain information from post
 	CloudifyDeploymentPost
-	Permalink string             `json:"permalink"`
-	Workflows []CloudifyWorkflow `json:"workflows"`
+	Permalink string                 `json:"permalink"`
+	Workflows []CloudifyWorkflow     `json:"workflows"`
+	Outputs   map[string]interface{} `json:"outputs"`
 	// TODO describe "policy_types" struct
 	// TODO describe "policy_triggers" struct
 	// TODO describe "groups" struct
 	// TODO describe "scaling_groups" struct
-	// TODO describe "outputs" struct
+}
+
+type CloudifyDeploymentGet struct {
+	// can be response from api
+	rest.CloudifyBaseMessage
+	CloudifyDeployment
 }
 
 type CloudifyDeployments struct {
@@ -56,10 +61,10 @@ func GetDeployments(host, user, password, tenant string) CloudifyDeployments {
 	return deployments
 }
 
-func DeleteDeployments(host, user, password, tenant, deployment_id string) CloudifyDeployment {
+func DeleteDeployments(host, user, password, tenant, deployment_id string) CloudifyDeploymentGet {
 	body := rest.Delete("http://"+host+"/api/v3.1/deployments/"+deployment_id, user, password, tenant)
 
-	var deployment CloudifyDeployment
+	var deployment CloudifyDeploymentGet
 
 	err := json.Unmarshal(body, &deployment)
 	if err != nil {
@@ -73,7 +78,7 @@ func DeleteDeployments(host, user, password, tenant, deployment_id string) Cloud
 	return deployment
 }
 
-func CreateDeployments(host, user, password, tenant, deployment_id string, depl CloudifyDeploymentPost) CloudifyDeployment {
+func CreateDeployments(host, user, password, tenant, deployment_id string, depl CloudifyDeploymentPost) CloudifyDeploymentGet {
 	json_data, err := json.Marshal(depl)
 	if err != nil {
 		log.Fatal(err)
@@ -81,7 +86,7 @@ func CreateDeployments(host, user, password, tenant, deployment_id string, depl 
 
 	body := rest.Put("http://"+host+"/api/v3.1/deployments/"+deployment_id, user, password, tenant, json_data)
 
-	var deployment CloudifyDeployment
+	var deployment CloudifyDeploymentGet
 
 	err_post := json.Unmarshal(body, &deployment)
 	if err_post != nil {

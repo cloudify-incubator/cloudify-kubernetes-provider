@@ -7,12 +7,16 @@ import (
 )
 
 type CloudifyBlueprint struct {
-	// can be response from api
-	rest.CloudifyBaseMessage
 	// have id, owner information
 	rest.CloudifyResource
 	MainFileName string `json:"main_file_name"`
 	// TODO describe "plan" struct
+}
+
+type CloudifyBlueprintGet struct {
+	// can be response from api
+	rest.CloudifyBaseMessage
+	CloudifyBlueprint
 }
 
 type CloudifyBlueprints struct {
@@ -38,10 +42,10 @@ func GetBlueprints(host, user, password, tenant string) CloudifyBlueprints {
 	return blueprints
 }
 
-func DeleteBlueprints(host, user, password, tenant, blueprint_id string) CloudifyBlueprint {
+func DeleteBlueprints(host, user, password, tenant, blueprint_id string) CloudifyBlueprintGet {
 	body := rest.Delete("http://"+host+"/api/v3.1/blueprints/"+blueprint_id, user, password, tenant)
 
-	var blueprint CloudifyBlueprint
+	var blueprint CloudifyBlueprintGet
 
 	err := json.Unmarshal(body, &blueprint)
 	if err != nil {

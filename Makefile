@@ -11,8 +11,8 @@ pkg/linux_amd64/cloudify/rest.a: src/cloudify/rest/rest.go 	src/cloudify/rest/ty
 pkg/linux_amd64/cloudify/utils.a: src/cloudify/utils/utils.go
 	go build src/cloudify/utils/utils.go
 
-pkg/linux_amd64/cloudify.a: src/cloudify/blueprints.go src/cloudify/status.go src/cloudify/executions.go src/cloudify/deployments.go pkg/linux_amd64/cloudify/rest.a
-	go build src/cloudify/blueprints.go src/cloudify/status.go src/cloudify/executions.go src/cloudify/deployments.go
+pkg/linux_amd64/cloudify.a: src/cloudify/events.go src/cloudify/blueprints.go src/cloudify/status.go src/cloudify/executions.go src/cloudify/deployments.go pkg/linux_amd64/cloudify/rest.a
+	go build src/cloudify/blueprints.go src/cloudify/status.go src/cloudify/executions.go src/cloudify/deployments.go src/cloudify/events.go
 
 bin/cfy-go: src/cfy-go.go pkg/linux_amd64/cloudify/utils.a pkg/linux_amd64/cloudify.a
 	go install src/cfy-go.go

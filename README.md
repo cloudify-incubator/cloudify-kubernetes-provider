@@ -17,7 +17,7 @@ sudo apt-get install golang-go
 # install
 
 ```shell
-sudo apt-get install gccgo-go golang-go
+sudo apt-get install golang-go
 export GOBIN=`pwd`/bin
 export PATH=$PATH:`pwd`/bin
 export GOPATH=`pwd`
@@ -49,6 +49,8 @@ make reformat
 ```shell
 cfy-go status version -host <your manager host> -user admin -password secret -tenant default_tenant
 ```
+* Limitations:
+	* supported only simple version of inputs/outputs when we have map[string]string. (On API level, in cli inputs/outputs is not supported at all.)
 
 ## agents
 Handle a deployment's agents
