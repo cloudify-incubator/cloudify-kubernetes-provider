@@ -164,7 +164,7 @@ func deploymentsOptions(args, options []string) int {
 
 			var depl cloudify.CloudifyDeploymentPost
 			depl.BlueprintId = blueprint
-			depl.Inputs = map[string]string{}
+			depl.Inputs = map[string]interface{}{}
 			deployment := cloudify.CreateDeployments(host, user, password, tenant, args[3], depl)
 
 			var lines [][]string = make([][]string, 1)
@@ -280,10 +280,65 @@ func executionsOptions(args, options []string) int {
 	return 0
 }
 
+func eventsOptions(args, options []string) int {
+	defaultError := "list subcommand is required"
+
+	if len(args) < 3 {
+		fmt.Println(defaultError)
+		return 1
+	}
+
+	operFlagSet := basicOptions("events")
+
+	switch args[2] {
+	case "list":
+		{
+			var blueprint string
+			var deployment string
+			var execution string
+			operFlagSet.StringVar(&blueprint, "blueprint", "", "The unique identifier for the blueprint")
+			operFlagSet.StringVar(&deployment, "deployment", "", "The unique identifier for the deployment")
+			operFlagSet.StringVar(&execution, "execution", "", "The unique identifier for the execution")
+			operFlagSet.Parse(options)
+
+			var options = map[string]string{}
+			if blueprint != "" {
+				options["blueprint_id"] = blueprint
+			}
+			if deployment != "" {
+				options["deployment_id"] = deployment
+			}
+			if execution != "" {
+				options["execution_id"] = execution
+			}
+			if blueprint != "" {
+				options["blueprint_id"] = blueprint
+			}
+			events := cloudify.GetEvents(host, user, password, tenant, options)
+			var lines [][]string = make([][]string, len(events.Items))
+			for pos, event := range events.Items {
+				lines[pos] = make([]string, 5)
+				lines[pos][0] = event.Timestamp
+				lines[pos][1] = event.DeploymentId
+				lines[pos][2] = event.NodeInstanceId
+				lines[pos][3] = event.Operation
+				lines[pos][4] = event.Message
+			}
+			utils.PrintTable([]string{"Timestamp", "Deployment", "InstanceId", "Operation", "Message"}, lines)
+		}
+	default:
+		{
+			fmt.Println(defaultError)
+			return 1
+		}
+	}
+	return 0
+}
+
 func main() {
 
 	args, options := utils.CliArgumentsList(os.Args)
-	defaultError := "Supported only: status, version, blueprints, deployments, executions, executions-install"
+	defaultError := "Supported only: status, version, blueprints, deployments, executions, events"
 	if len(args) < 2 {
 		fmt.Println(defaultError)
 		return
@@ -305,6 +360,10 @@ func main() {
 	case "executions":
 		{
 			os.Exit(executionsOptions(args, options))
+		}
+	case "events":
+		{
+			os.Exit(eventsOptions(args, options))
 		}
 	default:
 		{
