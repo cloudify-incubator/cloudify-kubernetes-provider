@@ -15,7 +15,7 @@ var tenant string
 
 func basicOptions(name string) *flag.FlagSet {
 	var commonFlagSet *flag.FlagSet
-	commonFlagSet = flag.NewFlagSet("name", flag.ExitOnError)
+	commonFlagSet = flag.NewFlagSet(name, flag.ExitOnError)
 	commonFlagSet.StringVar(&host, "host", "localhost", "Manager host name")
 	commonFlagSet.StringVar(&user, "user", "admin", "Manager user name")
 	commonFlagSet.StringVar(&password, "password", "secret", "Manager user password")
@@ -31,13 +31,11 @@ func infoOptions(args, options []string) int {
 		return 1
 	}
 
-	operFlagSet := basicOptions("status")
-
-	operFlagSet.Parse(options)
-
 	switch args[2] {
 	case "state":
 		{
+			operFlagSet := basicOptions("status state")
+			operFlagSet.Parse(options)
 			stat := cloudify.GetStatus(host, user, password, tenant)
 
 			fmt.Printf("Retrieving manager services status... [ip=%v]\n", host)
@@ -53,6 +51,9 @@ func infoOptions(args, options []string) int {
 		}
 	case "version":
 		{
+			operFlagSet := basicOptions("status version")
+			operFlagSet.Parse(options)
+
 			ver := cloudify.GetVersion(host, user, password, tenant)
 			fmt.Printf("Retrieving manager services version... [ip=%v]\n", host)
 			utils.PrintTable([]string{"Version", "Edition"}, [][]string{{ver.Version, ver.Edition}})
@@ -73,12 +74,10 @@ func blueprintsOptions(args, options []string) int {
 		fmt.Println(defaultError)
 		return 1
 	}
-
-	operFlagSet := basicOptions("blueprints")
-
 	switch args[2] {
 	case "list":
 		{
+			operFlagSet := basicOptions("blueprints list")
 			operFlagSet.Parse(options)
 			blueprints := cloudify.GetBlueprints(host, user, password, tenant)
 			var lines [][]string = make([][]string, len(blueprints.Items))
@@ -96,6 +95,7 @@ func blueprintsOptions(args, options []string) int {
 		}
 	case "delete":
 		{
+			operFlagSet := basicOptions("blueprints delete")
 			if len(args) < 4 {
 				fmt.Println("Blueprint Id requered")
 				return 1
@@ -131,11 +131,10 @@ func deploymentsOptions(args, options []string) int {
 		return 1
 	}
 
-	operFlagSet := basicOptions("deployments")
-
 	switch args[2] {
 	case "list":
 		{
+			operFlagSet := basicOptions("deployments list")
 			operFlagSet.Parse(options)
 			deployments := cloudify.GetDeployments(host, user, password, tenant)
 			var lines [][]string = make([][]string, len(deployments.Items))
@@ -152,6 +151,7 @@ func deploymentsOptions(args, options []string) int {
 		}
 	case "create":
 		{
+			operFlagSet := basicOptions("deployments list <deployment id>")
 			if len(args) < 4 {
 				fmt.Println("Deployment Id requered")
 				return 1
@@ -179,6 +179,7 @@ func deploymentsOptions(args, options []string) int {
 		}
 	case "delete":
 		{
+			operFlagSet := basicOptions("deployments delete <deployment id>")
 			if len(args) < 4 {
 				fmt.Println("Deployment Id requered")
 				return 1
@@ -213,11 +214,11 @@ func executionsOptions(args, options []string) int {
 		return 1
 	}
 
-	operFlagSet := basicOptions("executions")
-
 	switch args[2] {
 	case "list":
 		{
+			operFlagSet := basicOptions("executions list")
+
 			var deployment string
 			operFlagSet.StringVar(&deployment, "deployment", "", "The unique identifier for the deployment")
 			operFlagSet.Parse(options)
@@ -243,7 +244,7 @@ func executionsOptions(args, options []string) int {
 		}
 	case "start":
 		{
-
+			operFlagSet := basicOptions("executions start <workflow id>")
 			if len(args) < 4 {
 				fmt.Println("Workflow Id requered")
 				return 1
@@ -288,11 +289,10 @@ func eventsOptions(args, options []string) int {
 		return 1
 	}
 
-	operFlagSet := basicOptions("events")
-
 	switch args[2] {
 	case "list":
 		{
+			operFlagSet := basicOptions("events list")
 			var blueprint string
 			var deployment string
 			var execution string

@@ -170,7 +170,23 @@ Run fabric tasks [manager only]
 
 ## events
 Show events from workflow executions
+
+### delete
+Delete deployment events [manager only]
 * Not Implemented
+
+### list
+List deployments events [manager only]
+* Partially implemented, pagination is unsupported
+
+Supported filters:
+* `blueprint`: The unique identifier for the blueprint
+* `deployment`: The unique identifier for the deployment
+* `execution`: The unique identifier for the execution
+
+```shell
+cfy-go events list
+```
 
 ------
 
