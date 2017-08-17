@@ -64,8 +64,8 @@ type CloudifyStatus struct {
 	Services []CloudifyInstanceService `json:"services"`
 }
 
-func GetVersion(host, user, password, tenant string) CloudifyVersion {
-	body := rest.Get("http://"+host+"/api/v3.1/version", user, password, tenant)
+func (cl *CloudifyClient) GetVersion() CloudifyVersion {
+	body := rest.Get("http://"+cl.Host+"/api/v3.1/version", cl.User, cl.Password, cl.Tenant)
 
 	var ver CloudifyVersion
 
@@ -80,8 +80,8 @@ func GetVersion(host, user, password, tenant string) CloudifyVersion {
 	return ver
 }
 
-func GetStatus(host, user, password, tenant string) CloudifyStatus {
-	body := rest.Get("http://"+host+"/api/v3.1/status", user, password, tenant)
+func (cl *CloudifyClient) GetStatus() CloudifyStatus {
+	body := rest.Get("http://"+cl.Host+"/api/v3.1/status", cl.User, cl.Password, cl.Tenant)
 
 	var stat CloudifyStatus
 

@@ -1,11 +1,12 @@
 package cloudifyprovider
 
 import (
-	"cloudify/client"
+	"cloudify"
 	"io"
 	"k8s.io/kubernetes/pkg/cloudprovider"
 	"k8s.io/kubernetes/pkg/controller"
 	"log"
+	"os"
 )
 
 const (
@@ -14,7 +15,7 @@ const (
 
 // CloudProvider implents Instances, Zones, and LoadBalancer
 type CloudProvider struct {
-	client *client.CloudifyClient
+	client *cloudify.CloudifyClient
 }
 
 // Initialize passes a Kubernetes clientBuilder interface to the cloud provider
@@ -70,7 +71,7 @@ func (r *CloudProvider) ScrubDNS(nameservers, searches []string) (nsOut, srchOut
 func newCloudifyCloud(config io.Reader) (cloudprovider.Interface, error) {
 	log.Println("New Cloudify client")
 	return &CloudProvider{
-		client: client.GetClient(),
+		client: cloudify.NewClient(os.Getenv("CFY_HOST"), os.Getenv("CFY_USER"), os.Getenv("CFY_PASSWORD"), os.Getenv("CFY_TENANT")),
 	}, nil
 }
 
