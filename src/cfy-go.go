@@ -113,7 +113,9 @@ func blueprintsOptions(args, options []string) int {
 		{
 			operFlagSet := basicOptions("blueprints list")
 			operFlagSet.Parse(options)
-			blueprints := cloudify.GetBlueprints(host, user, password, tenant)
+
+			cl := cloudify.NewClient(host, user, password, tenant)
+			blueprints := cl.GetBlueprints()
 			var lines [][]string = make([][]string, len(blueprints.Items))
 			for pos, blueprint := range blueprints.Items {
 				lines[pos] = make([]string, 7)
@@ -134,9 +136,10 @@ func blueprintsOptions(args, options []string) int {
 				fmt.Println("Blueprint Id requered")
 				return 1
 			}
-
 			operFlagSet.Parse(options)
-			blueprint := cloudify.DeleteBlueprints(host, user, password, tenant, args[3])
+
+			cl := cloudify.NewClient(host, user, password, tenant)
+			blueprint := cl.DeleteBlueprints(args[3])
 			var lines [][]string = make([][]string, 1)
 			lines[0] = make([]string, 7)
 			lines[0][0] = blueprint.Id
@@ -170,7 +173,9 @@ func deploymentsOptions(args, options []string) int {
 		{
 			operFlagSet := basicOptions("deployments list")
 			operFlagSet.Parse(options)
-			deployments := cloudify.GetDeployments(host, user, password, tenant)
+
+			cl := cloudify.NewClient(host, user, password, tenant)
+			deployments := cl.GetDeployments()
 			var lines [][]string = make([][]string, len(deployments.Items))
 			for pos, deployment := range deployments.Items {
 				lines[pos] = make([]string, 6)
@@ -199,7 +204,9 @@ func deploymentsOptions(args, options []string) int {
 			var depl cloudify.CloudifyDeploymentPost
 			depl.BlueprintId = blueprint
 			depl.Inputs = map[string]interface{}{}
-			deployment := cloudify.CreateDeployments(host, user, password, tenant, args[3], depl)
+
+			cl := cloudify.NewClient(host, user, password, tenant)
+			deployment := cl.CreateDeployments(args[3], depl)
 
 			var lines [][]string = make([][]string, 1)
 			lines[0] = make([]string, 6)
@@ -220,7 +227,9 @@ func deploymentsOptions(args, options []string) int {
 			}
 
 			operFlagSet.Parse(options)
-			deployment := cloudify.DeleteDeployments(host, user, password, tenant, args[3])
+
+			cl := cloudify.NewClient(host, user, password, tenant)
+			deployment := cl.DeleteDeployments(args[3])
 			var lines [][]string = make([][]string, 1)
 			lines[0] = make([]string, 6)
 			lines[0][0] = deployment.Id
@@ -261,7 +270,9 @@ func executionsOptions(args, options []string) int {
 			if deployment != "" {
 				options["deployment_id"] = deployment
 			}
-			executions := cloudify.GetExecutions(host, user, password, tenant, options)
+
+			cl := cloudify.NewClient(host, user, password, tenant)
+			executions := cl.GetExecutions(options)
 			var lines [][]string = make([][]string, len(executions.Items))
 			for pos, execution := range executions.Items {
 				lines[pos] = make([]string, 8)
@@ -292,7 +303,8 @@ func executionsOptions(args, options []string) int {
 			exec.WorkflowId = args[3]
 			exec.DeploymentId = deployment
 
-			execution := cloudify.PostExecution(host, user, password, tenant, exec)
+			cl := cloudify.NewClient(host, user, password, tenant)
+			execution := cl.PostExecution(exec)
 
 			var lines [][]string = make([][]string, 1)
 			lines[0] = make([]string, 8)
@@ -348,7 +360,9 @@ func eventsOptions(args, options []string) int {
 			if blueprint != "" {
 				options["blueprint_id"] = blueprint
 			}
-			events := cloudify.GetEvents(host, user, password, tenant, options)
+
+			cl := cloudify.NewClient(host, user, password, tenant)
+			events := cl.GetEvents(options)
 			var lines [][]string = make([][]string, len(events.Items))
 			for pos, event := range events.Items {
 				lines[pos] = make([]string, 5)

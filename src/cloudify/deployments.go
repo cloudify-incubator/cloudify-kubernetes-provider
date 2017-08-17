@@ -60,8 +60,8 @@ type CloudifyDeployments struct {
 	Items    []CloudifyDeployment  `json:"items"`
 }
 
-func GetDeployments(host, user, password, tenant string) CloudifyDeployments {
-	body := rest.Get("http://"+host+"/api/v3.1/deployments", user, password, tenant)
+func (cl *CloudifyClient) GetDeployments() CloudifyDeployments {
+	body := rest.Get("http://"+cl.Host+"/api/v3.1/deployments", cl.User, cl.Password, cl.Tenant)
 
 	var deployments CloudifyDeployments
 
@@ -77,8 +77,8 @@ func GetDeployments(host, user, password, tenant string) CloudifyDeployments {
 	return deployments
 }
 
-func DeleteDeployments(host, user, password, tenant, deployment_id string) CloudifyDeploymentGet {
-	body := rest.Delete("http://"+host+"/api/v3.1/deployments/"+deployment_id, user, password, tenant)
+func (cl *CloudifyClient) DeleteDeployments(deployment_id string) CloudifyDeploymentGet {
+	body := rest.Delete("http://"+cl.Host+"/api/v3.1/deployments/"+deployment_id, cl.User, cl.Password, cl.Tenant)
 
 	var deployment CloudifyDeploymentGet
 
@@ -94,13 +94,13 @@ func DeleteDeployments(host, user, password, tenant, deployment_id string) Cloud
 	return deployment
 }
 
-func CreateDeployments(host, user, password, tenant, deployment_id string, depl CloudifyDeploymentPost) CloudifyDeploymentGet {
+func (cl *CloudifyClient) CreateDeployments(deployment_id string, depl CloudifyDeploymentPost) CloudifyDeploymentGet {
 	json_data, err := json.Marshal(depl)
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	body := rest.Put("http://"+host+"/api/v3.1/deployments/"+deployment_id, user, password, tenant, json_data)
+	body := rest.Put("http://"+cl.Host+"/api/v3.1/deployments/"+deployment_id, cl.User, cl.Password, cl.Tenant, json_data)
 
 	var deployment CloudifyDeploymentGet
 
