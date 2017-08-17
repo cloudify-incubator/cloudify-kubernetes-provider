@@ -2,8 +2,10 @@ reformat:
 	rm -rfv pkg/linux_amd64/
 	gofmt -w src/cloudify/rest/*.go
 	gofmt -w src/cloudify/utils/*.go
+	gofmt -w src/cloudify/client/*.go
 	gofmt -w src/cloudify/*.go
-	gofmt -w src/cfy-go.go
+	gofmt -w src/cloudifyprovider/*.go
+	gofmt -w src/*.go
 
 pkg/linux_amd64/cloudify/rest.a: src/cloudify/rest/rest.go 	src/cloudify/rest/types.go
 	go build src/cloudify/rest/rest.go src/cloudify/rest/types.go
@@ -18,6 +20,9 @@ bin/cfy-go: src/cfy-go.go pkg/linux_amd64/cloudify/utils.a pkg/linux_amd64/cloud
 	go install src/cfy-go.go
 
 all: bin/cfy-go
-
+	go build src/cloudify/client/client.go
+	go build src/cloudifyprovider/init.go
+	go install src/cfy-kubernetes.go
+	
 test:
 	go test ./src/cloudify/utils/
