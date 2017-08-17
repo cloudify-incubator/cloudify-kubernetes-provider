@@ -5,6 +5,7 @@ import (
 	"io"
 	"k8s.io/kubernetes/pkg/cloudprovider"
 	"k8s.io/kubernetes/pkg/controller"
+	"log"
 )
 
 const (
@@ -17,7 +18,9 @@ type CloudProvider struct {
 }
 
 // Initialize passes a Kubernetes clientBuilder interface to the cloud provider
-func (r *CloudProvider) Initialize(clientBuilder controller.ControllerClientBuilder) {}
+func (r *CloudProvider) Initialize(clientBuilder controller.ControllerClientBuilder) {
+	log.Println("Initialize")
+}
 
 // ProviderName returns the cloud provider ID.
 func (r *CloudProvider) ProviderName() string {
@@ -26,26 +29,31 @@ func (r *CloudProvider) ProviderName() string {
 
 // LoadBalancer returns a balancer interface. Also returns true if the interface is supported, false otherwise.
 func (r *CloudProvider) LoadBalancer() (cloudprovider.LoadBalancer, bool) {
+	log.Println("LoadBalancer")
 	return nil, false
 }
 
 // Zones returns a zones interface. Also returns true if the interface is supported, false otherwise.
 func (r *CloudProvider) Zones() (cloudprovider.Zones, bool) {
+	log.Println("Zones")
 	return nil, false
 }
 
 // Instances returns an instances interface. Also returns true if the interface is supported, false otherwise.
 func (r *CloudProvider) Instances() (cloudprovider.Instances, bool) {
+	log.Println("Instances")
 	return nil, false
 }
 
 // Clusters returns a clusters interface.  Also returns true if the interface is supported, false otherwise.
 func (r *CloudProvider) Clusters() (cloudprovider.Clusters, bool) {
+	log.Println("Clusters")
 	return nil, false
 }
 
 // Routes returns a routes interface along with whether the interface is supported.
 func (r *CloudProvider) Routes() (cloudprovider.Routes, bool) {
+	log.Println("Routers")
 	return nil, false
 }
 
@@ -60,12 +68,14 @@ func (r *CloudProvider) ScrubDNS(nameservers, searches []string) (nsOut, srchOut
 }
 
 func newCloudifyCloud(config io.Reader) (cloudprovider.Interface, error) {
+	log.Println("New Cloudify client")
 	return &CloudProvider{
 		client: client.GetClient(),
 	}, nil
 }
 
 func init() {
+	log.Println("Cloudify init")
 	cloudprovider.RegisterCloudProvider(providerName, func(config io.Reader) (cloudprovider.Interface, error) {
 		return newCloudifyCloud(config)
 	})

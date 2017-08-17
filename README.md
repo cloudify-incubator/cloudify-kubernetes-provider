@@ -21,15 +21,13 @@ sudo apt-get install golang-go
 export GOBIN=`pwd`/bin
 export PATH=$PATH:`pwd`/bin
 export GOPATH=`pwd`
-make all
-```
-
 # kubernetes
-```shell
 go get -d k8s.io/kubernetes
 cd src/k8s.io/kubernetes
 make
 cd $GOPATH
+# cfy part
+make all
 ```
 
 # reformat code

@@ -2,7 +2,6 @@ package main
 
 import (
 	_ "cloudifyprovider" // only init from package
-	"fmt"
 	"k8s.io/kubernetes/cmd/cloud-controller-manager/app"
 	"k8s.io/kubernetes/cmd/cloud-controller-manager/app/options"
 	"k8s.io/kubernetes/pkg/cloudprovider"
@@ -13,8 +12,6 @@ import (
 
 func main() {
 	s := options.NewCloudControllerManagerServer()
-	fmt.Printf("%+v\n", s)
-
 	verflag.PrintAndExitIfRequested()
 
 	cloud, err := cloudprovider.InitCloudProvider("cloudify", s.CloudConfigFile)
