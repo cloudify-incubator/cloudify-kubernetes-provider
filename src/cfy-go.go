@@ -68,8 +68,9 @@ func infoOptions(args, options []string) int {
 		{
 			operFlagSet := basicOptions("status state")
 			operFlagSet.Parse(options)
-			stat := cloudify.GetStatus(host, user, password, tenant)
 
+			cl := cloudify.NewClient(host, user, password, tenant)
+			stat := cl.GetStatus()
 			fmt.Printf("Retrieving manager services status... [ip=%v]\n", host)
 			fmt.Printf("Manager status: %v\n", stat.Status)
 			fmt.Printf("Services:\n")
@@ -86,7 +87,8 @@ func infoOptions(args, options []string) int {
 			operFlagSet := basicOptions("status version")
 			operFlagSet.Parse(options)
 
-			ver := cloudify.GetVersion(host, user, password, tenant)
+			cl := cloudify.NewClient(host, user, password, tenant)
+			ver := cl.GetVersion()
 			fmt.Printf("Retrieving manager services version... [ip=%v]\n", host)
 			utils.PrintTable([]string{"Version", "Edition"}, [][]string{{ver.Version, ver.Edition}})
 		}
