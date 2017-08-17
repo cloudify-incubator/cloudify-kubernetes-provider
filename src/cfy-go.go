@@ -16,10 +16,26 @@ var tenant string
 func basicOptions(name string) *flag.FlagSet {
 	var commonFlagSet *flag.FlagSet
 	commonFlagSet = flag.NewFlagSet(name, flag.ExitOnError)
-	commonFlagSet.StringVar(&host, "host", "localhost", "Manager host name")
-	commonFlagSet.StringVar(&user, "user", "admin", "Manager user name")
-	commonFlagSet.StringVar(&password, "password", "secret", "Manager user password")
-	commonFlagSet.StringVar(&tenant, "tenant", "default_tenant", "Manager tenant")
+	var defaultHost = os.Getenv("CFY_HOST")
+	if defaultHost == "" {
+		defaultHost = "localhost"
+	}
+	commonFlagSet.StringVar(&host, "host", defaultHost, "Manager host name or CFY_HOST in env")
+	var defaultUser = os.Getenv("CFY_USER")
+	if defaultUser == "" {
+		defaultUser = "admin"
+	}
+	commonFlagSet.StringVar(&user, "user", defaultUser, "Manager user name or CFY_USER in env")
+	var defaultPassword = os.Getenv("CFY_PASSWORD")
+	if defaultPassword == "" {
+		defaultPassword = "secret"
+	}
+	commonFlagSet.StringVar(&password, "password", defaultPassword, "Manager user password or CFY_PASSWORD in env")
+	var defaultTenant = os.Getenv("CFY_TENANT")
+	if defaultTenant == "" {
+		defaultTenant = "default_tenant"
+	}
+	commonFlagSet.StringVar(&tenant, "tenant", defaultTenant, "Manager tenant or CFY_TENANT in env")
 	return commonFlagSet
 }
 
