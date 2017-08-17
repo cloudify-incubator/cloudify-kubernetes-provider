@@ -41,8 +41,8 @@ type CloudifyBlueprints struct {
 	Items    []CloudifyBlueprint   `json:"items"`
 }
 
-func GetBlueprints(host, user, password, tenant string) CloudifyBlueprints {
-	body := rest.Get("http://"+host+"/api/v3.1/blueprints", user, password, tenant)
+func (cl *CloudifyClient) GetBlueprints() CloudifyBlueprints {
+	body := rest.Get("http://"+cl.Host+"/api/v3.1/blueprints", cl.User, cl.Password, cl.Tenant)
 
 	var blueprints CloudifyBlueprints
 
@@ -58,8 +58,8 @@ func GetBlueprints(host, user, password, tenant string) CloudifyBlueprints {
 	return blueprints
 }
 
-func DeleteBlueprints(host, user, password, tenant, blueprint_id string) CloudifyBlueprintGet {
-	body := rest.Delete("http://"+host+"/api/v3.1/blueprints/"+blueprint_id, user, password, tenant)
+func (cl *CloudifyClient) DeleteBlueprints(blueprint_id string) CloudifyBlueprintGet {
+	body := rest.Delete("http://"+cl.Host+"/api/v3.1/blueprints/"+blueprint_id, cl.User, cl.Password, cl.Tenant)
 
 	var blueprint CloudifyBlueprintGet
 

@@ -49,12 +49,12 @@ type CloudifyExecutions struct {
 }
 
 // change params type if you want use non uniq values in params
-func GetExecutions(host, user, password, tenant string, params map[string]string) CloudifyExecutions {
+func (cl *CloudifyClient) GetExecutions(params map[string]string) CloudifyExecutions {
 	values := url.Values{}
 	for key, value := range params {
 		values.Set(key, value)
 	}
-	body := rest.Get("http://"+host+"/api/v3.1/executions?"+values.Encode(), user, password, tenant)
+	body := rest.Get("http://"+cl.Host+"/api/v3.1/executions?"+values.Encode(), cl.User, cl.Password, cl.Tenant)
 
 	var executions CloudifyExecutions
 
@@ -70,13 +70,13 @@ func GetExecutions(host, user, password, tenant string, params map[string]string
 	return executions
 }
 
-func PostExecution(host, user, password, tenant string, exec CloudifyExecutionPost) CloudifyExecution {
+func (cl *CloudifyClient) PostExecution(exec CloudifyExecutionPost) CloudifyExecution {
 	json_data, err := json.Marshal(exec)
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	body := rest.Post("http://"+host+"/api/v3.1/executions", user, password, tenant, json_data)
+	body := rest.Post("http://"+cl.Host+"/api/v3.1/executions", cl.User, cl.Password, cl.Tenant, json_data)
 
 	var execution CloudifyExecution
 

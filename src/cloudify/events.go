@@ -45,12 +45,12 @@ type CloudifyEvents struct {
 	Items    []CloudifyEvent       `json:"items"`
 }
 
-func GetEvents(host, user, password, tenant string, params map[string]string) CloudifyEvents {
+func (cl *CloudifyClient) GetEvents(params map[string]string) CloudifyEvents {
 	values := url.Values{}
 	for key, value := range params {
 		values.Set(key, value)
 	}
-	body := rest.Get("http://"+host+"/api/v3.1/events?"+values.Encode(), user, password, tenant)
+	body := rest.Get("http://"+cl.Host+"/api/v3.1/events?"+values.Encode(), cl.User, cl.Password, cl.Tenant)
 
 	var events CloudifyEvents
 
