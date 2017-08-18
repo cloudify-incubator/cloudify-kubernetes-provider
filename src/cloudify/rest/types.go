@@ -18,6 +18,7 @@ package rest
 
 // Credentials
 type CloudifyRestClient struct {
+	RestURL  string
 	User     string
 	Password string
 	Tenant   string

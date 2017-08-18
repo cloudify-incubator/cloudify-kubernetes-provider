@@ -42,7 +42,7 @@ type CloudifyBlueprints struct {
 }
 
 func (cl *CloudifyClient) GetBlueprints() CloudifyBlueprints {
-	body := cl.RestCl.Get("http://" + cl.Host + "/api/v3.1/blueprints")
+	body := cl.RestCl.Get("blueprints")
 
 	var blueprints CloudifyBlueprints
 
@@ -59,7 +59,7 @@ func (cl *CloudifyClient) GetBlueprints() CloudifyBlueprints {
 }
 
 func (cl *CloudifyClient) DeleteBlueprints(blueprint_id string) CloudifyBlueprintGet {
-	body := cl.RestCl.Delete("http://" + cl.Host + "/api/v3.1/blueprints/" + blueprint_id)
+	body := cl.RestCl.Delete("blueprints/" + blueprint_id)
 
 	var blueprint CloudifyBlueprintGet
 

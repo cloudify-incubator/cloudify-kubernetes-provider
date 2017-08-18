@@ -26,11 +26,11 @@ import (
 )
 
 func (r *CloudifyRestClient) GetRequest(url, method string, body io.Reader) *http.Request {
-	log.Printf("Use: %v:%v@%v#%s\n", r.User, r.Password, url, r.Tenant)
+	log.Printf("Use: %v:%v@%v#%s\n", r.User, r.Password, r.RestURL+url, r.Tenant)
 
 	var auth_string string
 	auth_string = r.User + ":" + r.Password
-	req, err := http.NewRequest(method, url, body)
+	req, err := http.NewRequest(method, r.RestURL+url, body)
 	if err != nil {
 		log.Fatal(err)
 	}

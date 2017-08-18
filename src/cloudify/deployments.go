@@ -61,7 +61,7 @@ type CloudifyDeployments struct {
 }
 
 func (cl *CloudifyClient) GetDeployments() CloudifyDeployments {
-	body := cl.RestCl.Get("http://" + cl.Host + "/api/v3.1/deployments")
+	body := cl.RestCl.Get("deployments")
 
 	var deployments CloudifyDeployments
 
@@ -78,7 +78,7 @@ func (cl *CloudifyClient) GetDeployments() CloudifyDeployments {
 }
 
 func (cl *CloudifyClient) DeleteDeployments(deployment_id string) CloudifyDeploymentGet {
-	body := cl.RestCl.Delete("http://" + cl.Host + "/api/v3.1/deployments/" + deployment_id)
+	body := cl.RestCl.Delete("deployments/" + deployment_id)
 
 	var deployment CloudifyDeploymentGet
 
@@ -100,7 +100,7 @@ func (cl *CloudifyClient) CreateDeployments(deployment_id string, depl CloudifyD
 		log.Fatal(err)
 	}
 
-	body := cl.RestCl.Put("http://"+cl.Host+"/api/v3.1/deployments/"+deployment_id, json_data)
+	body := cl.RestCl.Put("deployments/"+deployment_id, json_data)
 
 	var deployment CloudifyDeploymentGet
 

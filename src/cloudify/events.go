@@ -50,7 +50,7 @@ func (cl *CloudifyClient) GetEvents(params map[string]string) CloudifyEvents {
 	for key, value := range params {
 		values.Set(key, value)
 	}
-	body := cl.RestCl.Get("http://" + cl.Host + "/api/v3.1/events?" + values.Encode())
+	body := cl.RestCl.Get("events?" + values.Encode())
 
 	var events CloudifyEvents
 

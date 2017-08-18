@@ -54,7 +54,7 @@ func (cl *CloudifyClient) GetExecutions(params map[string]string) CloudifyExecut
 	for key, value := range params {
 		values.Set(key, value)
 	}
-	body := cl.RestCl.Get("http://" + cl.Host + "/api/v3.1/executions?" + values.Encode())
+	body := cl.RestCl.Get("executions?" + values.Encode())
 
 	var executions CloudifyExecutions
 
@@ -76,7 +76,7 @@ func (cl *CloudifyClient) PostExecution(exec CloudifyExecutionPost) CloudifyExec
 		log.Fatal(err)
 	}
 
-	body := cl.RestCl.Post("http://"+cl.Host+"/api/v3.1/executions", json_data)
+	body := cl.RestCl.Post("executions", json_data)
 
 	var execution CloudifyExecution
 
