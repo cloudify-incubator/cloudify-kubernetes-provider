@@ -65,7 +65,7 @@ type CloudifyStatus struct {
 }
 
 func (cl *CloudifyClient) GetVersion() CloudifyVersion {
-	body := rest.Get("http://"+cl.Host+"/api/v3.1/version", cl.User, cl.Password, cl.Tenant)
+	body := cl.RestCl.Get("http://" + cl.Host + "/api/v3.1/version")
 
 	var ver CloudifyVersion
 
@@ -81,7 +81,7 @@ func (cl *CloudifyClient) GetVersion() CloudifyVersion {
 }
 
 func (cl *CloudifyClient) GetStatus() CloudifyStatus {
-	body := rest.Get("http://"+cl.Host+"/api/v3.1/status", cl.User, cl.Password, cl.Tenant)
+	body := cl.RestCl.Get("http://" + cl.Host + "/api/v3.1/status")
 
 	var stat CloudifyStatus
 

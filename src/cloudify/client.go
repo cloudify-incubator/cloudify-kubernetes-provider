@@ -1,17 +1,19 @@
 package cloudify
 
+import (
+	"cloudify/rest"
+)
+
 type CloudifyClient struct {
-	Host     string
-	User     string
-	Password string
-	Tenant   string
+	RestCl rest.CloudifyRestClient
+	Host   string
 }
 
 func NewClient(host, user, password, tenant string) *CloudifyClient {
 	var cliCl CloudifyClient
 	cliCl.Host = host
-	cliCl.User = user
-	cliCl.Password = password
-	cliCl.Tenant = tenant
+	cliCl.RestCl.User = user
+	cliCl.RestCl.Password = password
+	cliCl.RestCl.Tenant = tenant
 	return &cliCl
 }

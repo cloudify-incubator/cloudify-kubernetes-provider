@@ -16,6 +16,13 @@ limitations under the License.
 
 package rest
 
+// Credentials
+type CloudifyRestClient struct {
+	User     string
+	Password string
+	Tenant   string
+}
+
 type CloudifyBaseMessage struct {
 	Message         string `json:"message,omitempty"`
 	ErrorCode       string `json:"error_code,omitempty"`
