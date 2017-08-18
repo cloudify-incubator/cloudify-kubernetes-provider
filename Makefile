@@ -1,5 +1,6 @@
 reformat:
-	rm -rfv pkg/linux_amd64/
+	rm -rfv pkg/*
+	rm -rfv bin/*
 	gofmt -w src/cloudify/rest/*.go
 	gofmt -w src/cloudify/utils/*.go
 	gofmt -w src/cloudify/*.go

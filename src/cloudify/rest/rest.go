@@ -25,27 +25,27 @@ import (
 	"net/http"
 )
 
-func GetRequest(url, user, password, tenant, method string, body io.Reader) *http.Request {
-	log.Printf("Use: %v:%v@%v#%s\n", user, password, url, tenant)
+func (r *CloudifyRestClient) GetRequest(url, method string, body io.Reader) *http.Request {
+	log.Printf("Use: %v:%v@%v#%s\n", r.User, r.Password, r.RestURL+url, r.Tenant)
 
 	var auth_string string
-	auth_string = user + ":" + password
-	req, err := http.NewRequest(method, url, body)
+	auth_string = r.User + ":" + r.Password
+	req, err := http.NewRequest(method, r.RestURL+url, body)
 	if err != nil {
 		log.Fatal(err)
 	}
 
 	req.Header.Set("Content-Type", "application/json")
 	req.Header.Add("Authorization", "Basic "+base64.StdEncoding.EncodeToString([]byte(auth_string)))
-	if len(tenant) > 0 {
-		req.Header.Add("Tenant", tenant)
+	if len(r.Tenant) > 0 {
+		req.Header.Add("Tenant", r.Tenant)
 	}
 
 	return req
 }
 
-func Get(url, user, password, tenant string) []byte {
-	req := GetRequest(url, user, password, tenant, "GET", nil)
+func (r *CloudifyRestClient) Get(url string) []byte {
+	req := r.GetRequest(url, "GET", nil)
 
 	client := &http.Client{}
 	resp, err := client.Do(req)
@@ -63,8 +63,8 @@ func Get(url, user, password, tenant string) []byte {
 	return body
 }
 
-func Delete(url, user, password, tenant string) []byte {
-	req := GetRequest(url, user, password, tenant, "DELETE", nil)
+func (r *CloudifyRestClient) Delete(url string) []byte {
+	req := r.GetRequest(url, "DELETE", nil)
 
 	client := &http.Client{}
 	resp, err := client.Do(req)
@@ -82,8 +82,8 @@ func Delete(url, user, password, tenant string) []byte {
 	return body
 }
 
-func Post(url, user, password, tenant string, data []byte) []byte {
-	req := GetRequest(url, user, password, tenant, "POST", bytes.NewBuffer(data))
+func (r *CloudifyRestClient) Post(url string, data []byte) []byte {
+	req := r.GetRequest(url, "POST", bytes.NewBuffer(data))
 
 	client := &http.Client{}
 	resp, err := client.Do(req)
@@ -101,8 +101,8 @@ func Post(url, user, password, tenant string, data []byte) []byte {
 	return body
 }
 
-func Put(url, user, password, tenant string, data []byte) []byte {
-	req := GetRequest(url, user, password, tenant, "PUT", bytes.NewBuffer(data))
+func (r *CloudifyRestClient) Put(url string, data []byte) []byte {
+	req := r.GetRequest(url, "PUT", bytes.NewBuffer(data))
 
 	client := &http.Client{}
 	resp, err := client.Do(req)
