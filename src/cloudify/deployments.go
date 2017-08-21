@@ -18,7 +18,6 @@ package cloudify
 
 import (
 	"cloudify/rest"
-	"encoding/json"
 	"log"
 )
 
@@ -61,56 +60,33 @@ type CloudifyDeployments struct {
 }
 
 func (cl *CloudifyClient) GetDeployments() CloudifyDeployments {
-	body := cl.RestCl.Get("deployments")
-
 	var deployments CloudifyDeployments
 
-	err := json.Unmarshal(body, &deployments)
+	err := cl.Get("deployments", &deployments)
 	if err != nil {
 		log.Fatal(err)
-	}
-
-	if len(deployments.ErrorCode) > 0 {
-		log.Fatal(deployments.Message)
 	}
 
 	return deployments
 }
 
 func (cl *CloudifyClient) DeleteDeployments(deployment_id string) CloudifyDeploymentGet {
-	body := cl.RestCl.Delete("deployments/" + deployment_id)
-
 	var deployment CloudifyDeploymentGet
 
-	err := json.Unmarshal(body, &deployment)
+	err := cl.Delete("deployments/"+deployment_id, &deployment)
 	if err != nil {
 		log.Fatal(err)
-	}
-
-	if len(deployment.ErrorCode) > 0 {
-		log.Fatal(deployment.Message)
 	}
 
 	return deployment
 }
 
 func (cl *CloudifyClient) CreateDeployments(deployment_id string, depl CloudifyDeploymentPost) CloudifyDeploymentGet {
-	json_data, err := json.Marshal(depl)
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	body := cl.RestCl.Put("deployments/"+deployment_id, json_data)
-
 	var deployment CloudifyDeploymentGet
 
-	err_post := json.Unmarshal(body, &deployment)
-	if err_post != nil {
-		log.Fatal(err_post)
-	}
-
-	if len(deployment.ErrorCode) > 0 {
-		log.Fatal(deployment.Message)
+	err := cl.Put("deployments/"+deployment_id, depl, &deployment)
+	if err != nil {
+		log.Fatal(err)
 	}
 
 	return deployment

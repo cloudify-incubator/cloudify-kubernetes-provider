@@ -281,7 +281,7 @@ func executionsOptions(args, options []string) int {
 				lines[pos][2] = execution.Status
 				lines[pos][3] = execution.DeploymentId
 				lines[pos][4] = execution.CreatedAt
-				lines[pos][5] = execution.Error
+				lines[pos][5] = execution.ErrorMessage
 				lines[pos][6] = execution.Tenant
 				lines[pos][7] = execution.CreatedBy
 			}
@@ -313,7 +313,7 @@ func executionsOptions(args, options []string) int {
 			lines[0][2] = execution.Status
 			lines[0][3] = execution.DeploymentId
 			lines[0][4] = execution.CreatedAt
-			lines[0][5] = execution.Error
+			lines[0][5] = execution.ErrorMessage
 			lines[0][6] = execution.Tenant
 			lines[0][7] = execution.CreatedBy
 			utils.PrintTable([]string{"id", "workflow_id", "status", "deployment_id", "created_at", "error", "tenant_name", "created_by"}, lines)

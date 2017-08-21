@@ -18,7 +18,6 @@ package cloudify
 
 import (
 	"cloudify/rest"
-	"encoding/json"
 	"log"
 	"net/url"
 )
@@ -46,21 +45,16 @@ type CloudifyEvents struct {
 }
 
 func (cl *CloudifyClient) GetEvents(params map[string]string) CloudifyEvents {
+	var events CloudifyEvents
+
 	values := url.Values{}
 	for key, value := range params {
 		values.Set(key, value)
 	}
-	body := cl.RestCl.Get("events?" + values.Encode())
 
-	var events CloudifyEvents
-
-	err := json.Unmarshal(body, &events)
+	err := cl.Get("events?"+values.Encode(), &events)
 	if err != nil {
 		log.Fatal(err)
-	}
-
-	if len(events.ErrorCode) > 0 {
-		log.Fatal(events.Message)
 	}
 
 	return events
