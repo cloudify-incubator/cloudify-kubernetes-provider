@@ -112,10 +112,17 @@ func blueprintsOptions(args, options []string) int {
 	case "list":
 		{
 			operFlagSet := basicOptions("blueprints list")
+			var blueprint string
+			operFlagSet.StringVar(&blueprint, "blueprint", "", "The unique identifier for the blueprint")
 			operFlagSet.Parse(options)
 
+			var params = map[string]string{}
+			if blueprint != "" {
+				params["id"] = blueprint
+			}
+
 			cl := cloudify.NewClient(host, user, password, tenant)
-			blueprints := cl.GetBlueprints()
+			blueprints := cl.GetBlueprints(params)
 			var lines [][]string = make([][]string, len(blueprints.Items))
 			for pos, blueprint := range blueprints.Items {
 				lines[pos] = make([]string, 7)
@@ -160,8 +167,22 @@ func blueprintsOptions(args, options []string) int {
 	return 0
 }
 
+func deploymentsFilter(operFlagSet *flag.FlagSet, options []string) cloudify.CloudifyDeployments {
+	var deployment string
+	operFlagSet.StringVar(&deployment, "deployment", "", "The unique identifier for the deployment")
+	operFlagSet.Parse(options)
+
+	var params = map[string]string{}
+	if deployment != "" {
+		params["id"] = deployment
+	}
+
+	cl := cloudify.NewClient(host, user, password, tenant)
+	return cl.GetDeployments(params)
+}
+
 func deploymentsOptions(args, options []string) int {
-	defaultError := "list/create/delete subcommand is required"
+	defaultError := "list/create/delete/inputs/outputs subcommand is required"
 
 	if len(args) < 3 {
 		fmt.Println(defaultError)
@@ -172,10 +193,7 @@ func deploymentsOptions(args, options []string) int {
 	case "list":
 		{
 			operFlagSet := basicOptions("deployments list")
-			operFlagSet.Parse(options)
-
-			cl := cloudify.NewClient(host, user, password, tenant)
-			deployments := cl.GetDeployments()
+			deployments := deploymentsFilter(operFlagSet, options)
 			var lines [][]string = make([][]string, len(deployments.Items))
 			for pos, deployment := range deployments.Items {
 				lines[pos] = make([]string, 6)
@@ -217,6 +235,28 @@ func deploymentsOptions(args, options []string) int {
 			lines[0][4] = deployment.Tenant
 			lines[0][5] = deployment.CreatedBy
 			utils.PrintTable([]string{"id", "blueprint_id", "created_at", "updated_at", "tenant_name", "created_by"}, lines)
+		}
+	case "outputs":
+		{
+			operFlagSet := basicOptions("deployments outputs")
+			deployments := deploymentsFilter(operFlagSet, options)
+			if len(deployments.Items) != 1 {
+				fmt.Println("Please recheck list of deployments")
+				return 1
+			}
+
+			fmt.Printf("Deployment outputs: %+v\n", deployments.Items[0].JsonOutputs())
+		}
+	case "inputs":
+		{
+			operFlagSet := basicOptions("deployments inputs")
+			deployments := deploymentsFilter(operFlagSet, options)
+			if len(deployments.Items) != 1 {
+				fmt.Println("Please recheck list of deployments")
+				return 1
+			}
+
+			fmt.Printf("Deployment inputs: %+v\n", deployments.Items[0].JsonInputs())
 		}
 	case "delete":
 		{
@@ -266,13 +306,13 @@ func executionsOptions(args, options []string) int {
 			operFlagSet.StringVar(&deployment, "deployment", "", "The unique identifier for the deployment")
 			operFlagSet.Parse(options)
 
-			var options = map[string]string{}
+			var params = map[string]string{}
 			if deployment != "" {
-				options["deployment_id"] = deployment
+				params["deployment_id"] = deployment
 			}
 
 			cl := cloudify.NewClient(host, user, password, tenant)
-			executions := cl.GetExecutions(options)
+			executions := cl.GetExecutions(params)
 			var lines [][]string = make([][]string, len(executions.Items))
 			for pos, execution := range executions.Items {
 				lines[pos] = make([]string, 8)
@@ -281,7 +321,7 @@ func executionsOptions(args, options []string) int {
 				lines[pos][2] = execution.Status
 				lines[pos][3] = execution.DeploymentId
 				lines[pos][4] = execution.CreatedAt
-				lines[pos][5] = execution.Error
+				lines[pos][5] = execution.ErrorMessage
 				lines[pos][6] = execution.Tenant
 				lines[pos][7] = execution.CreatedBy
 			}
@@ -313,7 +353,7 @@ func executionsOptions(args, options []string) int {
 			lines[0][2] = execution.Status
 			lines[0][3] = execution.DeploymentId
 			lines[0][4] = execution.CreatedAt
-			lines[0][5] = execution.Error
+			lines[0][5] = execution.ErrorMessage
 			lines[0][6] = execution.Tenant
 			lines[0][7] = execution.CreatedBy
 			utils.PrintTable([]string{"id", "workflow_id", "status", "deployment_id", "created_at", "error", "tenant_name", "created_by"}, lines)
@@ -347,22 +387,22 @@ func eventsOptions(args, options []string) int {
 			operFlagSet.StringVar(&execution, "execution", "", "The unique identifier for the execution")
 			operFlagSet.Parse(options)
 
-			var options = map[string]string{}
+			var params = map[string]string{}
 			if blueprint != "" {
-				options["blueprint_id"] = blueprint
+				params["blueprint_id"] = blueprint
 			}
 			if deployment != "" {
-				options["deployment_id"] = deployment
+				params["deployment_id"] = deployment
 			}
 			if execution != "" {
-				options["execution_id"] = execution
+				params["execution_id"] = execution
 			}
 			if blueprint != "" {
-				options["blueprint_id"] = blueprint
+				params["blueprint_id"] = blueprint
 			}
 
 			cl := cloudify.NewClient(host, user, password, tenant)
-			events := cl.GetEvents(options)
+			events := cl.GetEvents(params)
 			var lines [][]string = make([][]string, len(events.Items))
 			for pos, event := range events.Items {
 				lines[pos] = make([]string, 5)

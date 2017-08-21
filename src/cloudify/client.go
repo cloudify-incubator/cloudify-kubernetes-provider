@@ -2,6 +2,7 @@ package cloudify
 
 import (
 	"cloudify/rest"
+	"encoding/json"
 )
 
 type CloudifyClient struct {
@@ -15,4 +16,70 @@ func NewClient(host, user, password, tenant string) *CloudifyClient {
 	cliCl.RestCl.Password = password
 	cliCl.RestCl.Tenant = tenant
 	return &cliCl
+}
+
+func (cl *CloudifyClient) Get(url string, output rest.CloudifyMessageInterface) error {
+	body := cl.RestCl.Get(url)
+
+	err_post := json.Unmarshal(body, output)
+	if err_post != nil {
+		return err_post
+	}
+
+	if len(output.ErrorCode()) > 0 {
+		return output
+	}
+	return nil
+}
+
+func (cl *CloudifyClient) Put(url string, input interface{}, output rest.CloudifyMessageInterface) error {
+	json_data, err := json.Marshal(input)
+	if err != nil {
+		return err
+	}
+
+	body := cl.RestCl.Put(url, json_data)
+
+	err_post := json.Unmarshal(body, output)
+	if err_post != nil {
+		return err_post
+	}
+
+	if len(output.ErrorCode()) > 0 {
+		return output
+	}
+	return nil
+}
+
+func (cl *CloudifyClient) Post(url string, input interface{}, output rest.CloudifyMessageInterface) error {
+	json_data, err := json.Marshal(input)
+	if err != nil {
+		return err
+	}
+
+	body := cl.RestCl.Post(url, json_data)
+
+	err_post := json.Unmarshal(body, output)
+	if err_post != nil {
+		return err_post
+	}
+
+	if len(output.ErrorCode()) > 0 {
+		return output
+	}
+	return nil
+}
+
+func (cl *CloudifyClient) Delete(url string, output rest.CloudifyMessageInterface) error {
+	body := cl.RestCl.Delete(url)
+
+	err_post := json.Unmarshal(body, output)
+	if err_post != nil {
+		return err_post
+	}
+
+	if len(output.ErrorCode()) > 0 {
+		return output
+	}
+	return nil
 }

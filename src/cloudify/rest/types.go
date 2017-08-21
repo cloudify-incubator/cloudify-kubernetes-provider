@@ -24,10 +24,31 @@ type CloudifyRestClient struct {
 	Tenant   string
 }
 
+type CloudifyMessageInterface interface {
+	ErrorCode() string
+	Error() string
+	TraceBack() string
+}
+
+// We need Cl prefix for make fields public and use in Marshal func
 type CloudifyBaseMessage struct {
-	Message         string `json:"message,omitempty"`
-	ErrorCode       string `json:"error_code,omitempty"`
-	ServerTraceback string `json:"server_traceback,omitempty"`
+	CloudifyMessageInterface
+	ClMessage         string `json:"message,omitempty"`
+	ClErrorCode       string `json:"error_code,omitempty"`
+	ClServerTraceback string `json:"server_traceback,omitempty"`
+}
+
+func (cm *CloudifyBaseMessage) ErrorCode() string {
+	return cm.ClErrorCode
+}
+
+// Support reuse as error type
+func (cm *CloudifyBaseMessage) Error() string {
+	return cm.ClMessage
+}
+
+func (cm *CloudifyBaseMessage) TraceBack() string {
+	return cm.ClServerTraceback
 }
 
 // Common

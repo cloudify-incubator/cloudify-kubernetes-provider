@@ -18,7 +18,6 @@ package cloudify
 
 import (
 	"cloudify/rest"
-	"encoding/json"
 	"log"
 )
 
@@ -65,33 +64,22 @@ type CloudifyStatus struct {
 }
 
 func (cl *CloudifyClient) GetVersion() CloudifyVersion {
-	body := cl.RestCl.Get("version")
-
 	var ver CloudifyVersion
 
-	err := json.Unmarshal(body, &ver)
+	err := cl.Get("version", &ver)
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	if len(ver.ErrorCode) > 0 {
-		log.Fatal(ver.Message)
-	}
 	return ver
 }
 
 func (cl *CloudifyClient) GetStatus() CloudifyStatus {
-	body := cl.RestCl.Get("status")
-
 	var stat CloudifyStatus
 
-	err := json.Unmarshal(body, &stat)
+	err := cl.Get("status", &stat)
 	if err != nil {
 		log.Fatal(err)
-	}
-
-	if len(stat.ErrorCode) > 0 {
-		log.Fatal(stat.Message)
 	}
 
 	return stat

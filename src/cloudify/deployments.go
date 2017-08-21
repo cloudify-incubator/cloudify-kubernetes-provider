@@ -20,6 +20,7 @@ import (
 	"cloudify/rest"
 	"encoding/json"
 	"log"
+	"net/url"
 )
 
 // Check https://blog.golang.org/json-and-go for more info about json marshaling.
@@ -48,6 +49,22 @@ type CloudifyDeployment struct {
 	// TODO describe "scaling_groups" struct
 }
 
+func (depl *CloudifyDeployment) JsonOutputs() string {
+	json_data, err := json.Marshal(depl.Outputs)
+	if err != nil {
+		log.Fatal(err)
+	}
+	return string(json_data)
+}
+
+func (depl *CloudifyDeployment) JsonInputs() string {
+	json_data, err := json.Marshal(depl.Inputs)
+	if err != nil {
+		log.Fatal(err)
+	}
+	return string(json_data)
+}
+
 type CloudifyDeploymentGet struct {
 	// can be response from api
 	rest.CloudifyBaseMessage
@@ -60,57 +77,39 @@ type CloudifyDeployments struct {
 	Items    []CloudifyDeployment  `json:"items"`
 }
 
-func (cl *CloudifyClient) GetDeployments() CloudifyDeployments {
-	body := cl.RestCl.Get("deployments")
-
+func (cl *CloudifyClient) GetDeployments(params map[string]string) CloudifyDeployments {
 	var deployments CloudifyDeployments
 
-	err := json.Unmarshal(body, &deployments)
-	if err != nil {
-		log.Fatal(err)
+	values := url.Values{}
+	for key, value := range params {
+		values.Set(key, value)
 	}
 
-	if len(deployments.ErrorCode) > 0 {
-		log.Fatal(deployments.Message)
+	err := cl.Get("deployments?"+values.Encode(), &deployments)
+	if err != nil {
+		log.Fatal(err)
 	}
 
 	return deployments
 }
 
 func (cl *CloudifyClient) DeleteDeployments(deployment_id string) CloudifyDeploymentGet {
-	body := cl.RestCl.Delete("deployments/" + deployment_id)
-
 	var deployment CloudifyDeploymentGet
 
-	err := json.Unmarshal(body, &deployment)
+	err := cl.Delete("deployments/"+deployment_id, &deployment)
 	if err != nil {
 		log.Fatal(err)
-	}
-
-	if len(deployment.ErrorCode) > 0 {
-		log.Fatal(deployment.Message)
 	}
 
 	return deployment
 }
 
 func (cl *CloudifyClient) CreateDeployments(deployment_id string, depl CloudifyDeploymentPost) CloudifyDeploymentGet {
-	json_data, err := json.Marshal(depl)
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	body := cl.RestCl.Put("deployments/"+deployment_id, json_data)
-
 	var deployment CloudifyDeploymentGet
 
-	err_post := json.Unmarshal(body, &deployment)
-	if err_post != nil {
-		log.Fatal(err_post)
-	}
-
-	if len(deployment.ErrorCode) > 0 {
-		log.Fatal(deployment.Message)
+	err := cl.Put("deployments/"+deployment_id, depl, &deployment)
+	if err != nil {
+		log.Fatal(err)
 	}
 
 	return deployment

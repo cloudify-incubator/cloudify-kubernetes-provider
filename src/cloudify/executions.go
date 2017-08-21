@@ -18,7 +18,6 @@ package cloudify
 
 import (
 	"cloudify/rest"
-	"encoding/json"
 	"log"
 	"net/url"
 )
@@ -29,17 +28,21 @@ type CloudifyExecutionPost struct {
 }
 
 type CloudifyExecution struct {
-	// can be response from api
-	rest.CloudifyBaseMessage
 	// have id, owner information
 	rest.CloudifyResource
 	// contain information from post
 	CloudifyExecutionPost
 	IsSystemWorkflow bool   `json:"is_system_workflow"`
-	Error            string `json:"error"`
+	ErrorMessage     string `json:"error"`
 	BlueprintId      string `json:"blueprint_id"`
 	Status           string `json:"status"`
 	// TODO describe "parameters" struct
+}
+
+type CloudifyExecutionGet struct {
+	// can be response from api
+	rest.CloudifyBaseMessage
+	CloudifyExecution
 }
 
 type CloudifyExecutions struct {
@@ -50,43 +53,29 @@ type CloudifyExecutions struct {
 
 // change params type if you want use non uniq values in params
 func (cl *CloudifyClient) GetExecutions(params map[string]string) CloudifyExecutions {
+	var executions CloudifyExecutions
+
 	values := url.Values{}
 	for key, value := range params {
 		values.Set(key, value)
 	}
-	body := cl.RestCl.Get("executions?" + values.Encode())
 
-	var executions CloudifyExecutions
-
-	err := json.Unmarshal(body, &executions)
+	err := cl.Get("executions?"+values.Encode(), &executions)
 	if err != nil {
 		log.Fatal(err)
-	}
-
-	if len(executions.ErrorCode) > 0 {
-		log.Fatal(executions.Message)
 	}
 
 	return executions
 }
 
-func (cl *CloudifyClient) PostExecution(exec CloudifyExecutionPost) CloudifyExecution {
-	json_data, err := json.Marshal(exec)
+func (cl *CloudifyClient) PostExecution(exec CloudifyExecutionPost) CloudifyExecutionGet {
+	var execution CloudifyExecutionGet
+
+	var err error
+
+	err = cl.Post("executions", exec, &execution)
 	if err != nil {
 		log.Fatal(err)
-	}
-
-	body := cl.RestCl.Post("executions", json_data)
-
-	var execution CloudifyExecution
-
-	err_post := json.Unmarshal(body, &execution)
-	if err_post != nil {
-		log.Fatal(err_post)
-	}
-
-	if len(execution.ErrorCode) > 0 {
-		log.Fatal(execution.Message)
 	}
 
 	return execution

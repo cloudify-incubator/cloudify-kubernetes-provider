@@ -76,7 +76,10 @@ Download a blueprint [manager only]
 
 ### get
 Retrieve blueprint information [manager only]
-* Not Implemented
+
+```shell
+cfy-go blueprints list -blueprint blueprint
+```
 
 ### inputs
 Retrieve blueprint inputs [manager only]
@@ -152,7 +155,10 @@ cfy-go deployments list
 
 ### outputs
 Show deployment outputs [manager only]
-* Not Implemented
+
+```shell
+cfy-go deployments inputs -deployment deployment
+```
 
 ### update
 Update a deployment [manager only]

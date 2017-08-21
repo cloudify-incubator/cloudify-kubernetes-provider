@@ -18,8 +18,8 @@ package cloudify
 
 import (
 	"cloudify/rest"
-	"encoding/json"
 	"log"
+	"net/url"
 )
 
 type CloudifyBlueprint struct {
@@ -41,35 +41,28 @@ type CloudifyBlueprints struct {
 	Items    []CloudifyBlueprint   `json:"items"`
 }
 
-func (cl *CloudifyClient) GetBlueprints() CloudifyBlueprints {
-	body := cl.RestCl.Get("blueprints")
-
+func (cl *CloudifyClient) GetBlueprints(params map[string]string) CloudifyBlueprints {
 	var blueprints CloudifyBlueprints
 
-	err := json.Unmarshal(body, &blueprints)
-	if err != nil {
-		log.Fatal(err)
+	values := url.Values{}
+	for key, value := range params {
+		values.Set(key, value)
 	}
 
-	if len(blueprints.ErrorCode) > 0 {
-		log.Fatal(blueprints.Message)
+	err := cl.Get("blueprints?"+values.Encode(), &blueprints)
+	if err != nil {
+		log.Fatal(err)
 	}
 
 	return blueprints
 }
 
 func (cl *CloudifyClient) DeleteBlueprints(blueprint_id string) CloudifyBlueprintGet {
-	body := cl.RestCl.Delete("blueprints/" + blueprint_id)
-
 	var blueprint CloudifyBlueprintGet
 
-	err := json.Unmarshal(body, &blueprint)
+	err := cl.Delete("blueprints/"+blueprint_id, &blueprint)
 	if err != nil {
 		log.Fatal(err)
-	}
-
-	if len(blueprint.ErrorCode) > 0 {
-		log.Fatal(blueprint.Message)
 	}
 
 	return blueprint
