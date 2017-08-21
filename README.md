@@ -106,10 +106,10 @@ Handle deployments on the Manager
 
 ### create
 Create a deployment [manager only]
-* Partially implemented, set inputs is not supported. Internally supported only map string<->string.
+* Partially implemented, you can set inputs only as json string.
 
 ```shell
-cfy-go deployments create deployment  -blueprint blueprint
+cfy-go deployments create deployment  -blueprint blueprint --inputs '{"ip": "b"}'
 ```
 
 ### delete
