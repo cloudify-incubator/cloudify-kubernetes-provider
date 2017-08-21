@@ -54,7 +54,10 @@ Download a blueprint [manager only]
 
 ### get
 Retrieve blueprint information [manager only]
-* Not Implemented
+
+```shell
+cfy-go blueprints list -blueprint blueprint
+```
 
 ### inputs
 Retrieve blueprint inputs [manager only]

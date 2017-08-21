@@ -19,6 +19,7 @@ package cloudify
 import (
 	"cloudify/rest"
 	"log"
+	"net/url"
 )
 
 // Check https://blog.golang.org/json-and-go for more info about json marshaling.
@@ -59,10 +60,15 @@ type CloudifyDeployments struct {
 	Items    []CloudifyDeployment  `json:"items"`
 }
 
-func (cl *CloudifyClient) GetDeployments() CloudifyDeployments {
+func (cl *CloudifyClient) GetDeployments(params map[string]string) CloudifyDeployments {
 	var deployments CloudifyDeployments
 
-	err := cl.Get("deployments", &deployments)
+	values := url.Values{}
+	for key, value := range params {
+		values.Set(key, value)
+	}
+
+	err := cl.Get("deployments?"+values.Encode(), &deployments)
 	if err != nil {
 		log.Fatal(err)
 	}

@@ -112,10 +112,17 @@ func blueprintsOptions(args, options []string) int {
 	case "list":
 		{
 			operFlagSet := basicOptions("blueprints list")
+			var blueprint string
+			operFlagSet.StringVar(&blueprint, "blueprint", "", "The unique identifier for the blueprint")
 			operFlagSet.Parse(options)
 
+			var options = map[string]string{}
+			if blueprint != "" {
+				options["id"] = blueprint
+			}
+
 			cl := cloudify.NewClient(host, user, password, tenant)
-			blueprints := cl.GetBlueprints()
+			blueprints := cl.GetBlueprints(options)
 			var lines [][]string = make([][]string, len(blueprints.Items))
 			for pos, blueprint := range blueprints.Items {
 				lines[pos] = make([]string, 7)
@@ -172,10 +179,17 @@ func deploymentsOptions(args, options []string) int {
 	case "list":
 		{
 			operFlagSet := basicOptions("deployments list")
+			var deployment string
+			operFlagSet.StringVar(&deployment, "deployment", "", "The unique identifier for the deployment")
 			operFlagSet.Parse(options)
 
+			var options = map[string]string{}
+			if deployment != "" {
+				options["id"] = deployment
+			}
+
 			cl := cloudify.NewClient(host, user, password, tenant)
-			deployments := cl.GetDeployments()
+			deployments := cl.GetDeployments(options)
 			var lines [][]string = make([][]string, len(deployments.Items))
 			for pos, deployment := range deployments.Items {
 				lines[pos] = make([]string, 6)

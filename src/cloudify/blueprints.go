@@ -19,6 +19,7 @@ package cloudify
 import (
 	"cloudify/rest"
 	"log"
+	"net/url"
 )
 
 type CloudifyBlueprint struct {
@@ -40,10 +41,15 @@ type CloudifyBlueprints struct {
 	Items    []CloudifyBlueprint   `json:"items"`
 }
 
-func (cl *CloudifyClient) GetBlueprints() CloudifyBlueprints {
+func (cl *CloudifyClient) GetBlueprints(params map[string]string) CloudifyBlueprints {
 	var blueprints CloudifyBlueprints
 
-	err := cl.Get("blueprints", &blueprints)
+	values := url.Values{}
+	for key, value := range params {
+		values.Set(key, value)
+	}
+
+	err := cl.Get("blueprints?"+values.Encode(), &blueprints)
 	if err != nil {
 		log.Fatal(err)
 	}
