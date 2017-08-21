@@ -133,7 +133,10 @@ cfy-go deployments list
 
 ### outputs
 Show deployment outputs [manager only]
-* Not Implemented
+
+```shell
+cfy-go deployments inputs -deployment deployment
+```
 
 ### update
 Update a deployment [manager only]

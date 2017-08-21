@@ -18,6 +18,7 @@ package cloudify
 
 import (
 	"cloudify/rest"
+	"encoding/json"
 	"log"
 	"net/url"
 )
@@ -46,6 +47,22 @@ type CloudifyDeployment struct {
 	// TODO describe "policy_triggers" struct
 	// TODO describe "groups" struct
 	// TODO describe "scaling_groups" struct
+}
+
+func (depl *CloudifyDeployment) JsonOutputs() string {
+	json_data, err := json.Marshal(depl.Outputs)
+	if err != nil {
+		log.Fatal(err)
+	}
+	return string(json_data)
+}
+
+func (depl *CloudifyDeployment) JsonInputs() string {
+	json_data, err := json.Marshal(depl.Inputs)
+	if err != nil {
+		log.Fatal(err)
+	}
+	return string(json_data)
 }
 
 type CloudifyDeploymentGet struct {
