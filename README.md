@@ -30,6 +30,36 @@ cd $GOPATH
 make all
 ```
 
+# Docker install
+
+```shell
+sudo add-apt-repository \
+   "deb [arch=amd64] https://download.docker.com/linux/ubuntu \
+   $(lsb_release -cs) \
+   stable"
+apt-get update
+sudo apt-get install docker.io
+sudo docker run hello-world
+```
+
+# Kubenetes install
+
+```shell
+apt-get update && apt-get install -y apt-transport-https
+curl -s https://packages.cloud.google.com/apt/doc/apt-key.gpg | apt-key add -
+cat <<EOF >/etc/apt/sources.list.d/kubernetes.list
+deb http://apt.kubernetes.io/ kubernetes-xenial main
+EOF
+apt-get update
+apt-get install -y kubelet kubeadm
+kubeadm init --pod-network-cidr 10.244.0.0/16
+```
+
+# Kubenetes uninstall
+```shell
+kubeadm reset
+apt-get remove -y kubelet kubeadm
+```
 # reformat code
 
 ```shell
