@@ -112,7 +112,7 @@ func infoOptions(args, options []string) int {
 }
 
 func blueprintsOptions(args, options []string) int {
-	defaultError := "list/delete subcommand is required"
+	defaultError := "list/delete/download subcommand is required"
 
 	if len(args) < 3 {
 		fmt.Println(defaultError)
@@ -152,6 +152,19 @@ func blueprintsOptions(args, options []string) int {
 			fmt.Printf("Showed %d+%d/%d results. Use offset/size for get more.\n",
 				blueprints.Metadata.Pagination.Offset, len(blueprints.Items),
 				blueprints.Metadata.Pagination.Total)
+		}
+	case "download":
+		{
+			operFlagSet := basicOptions("blueprints download")
+			if len(args) < 4 {
+				fmt.Println("Blueprint Id requered")
+				return 1
+			}
+			operFlagSet.Parse(options)
+
+			cl := cloudify.NewClient(host, user, password, tenant)
+			blueprintPath := cl.DownloadBlueprints(args[3])
+			fmt.Printf("Blueprint saved to %s\n", blueprintPath)
 		}
 	case "delete":
 		{

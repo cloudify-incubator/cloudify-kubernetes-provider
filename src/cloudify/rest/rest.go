@@ -27,6 +27,7 @@ import (
 )
 
 const JsonContentType = "application/json"
+const DataContentType = "application/octet-stream"
 
 func (r *CloudifyRestClient) GetRequest(url, method string, body io.Reader) *http.Request {
 	log.Printf("Use: %v:%v@%v#%s\n", r.User, r.Password, r.RestURL+url, r.Tenant)
@@ -46,7 +47,7 @@ func (r *CloudifyRestClient) GetRequest(url, method string, body io.Reader) *htt
 	return req
 }
 
-func (r *CloudifyRestClient) Get(url string) []byte {
+func (r *CloudifyRestClient) Get(url, acceptedContentType string) []byte {
 	req := r.GetRequest(url, "GET", nil)
 
 	client := &http.Client{}
@@ -59,7 +60,7 @@ func (r *CloudifyRestClient) Get(url string) []byte {
 
 	contentType := resp.Header.Get("Content-Type")
 
-	if contentType[:len(JsonContentType)] != JsonContentType {
+	if contentType[:len(acceptedContentType)] != acceptedContentType {
 		log.Fatal(fmt.Sprintf("Wrong content type: %+v", contentType))
 	}
 
@@ -68,7 +69,11 @@ func (r *CloudifyRestClient) Get(url string) []byte {
 		log.Fatal(err)
 	}
 
-	log.Printf("Response %s\n", string(body))
+	if acceptedContentType == JsonContentType {
+		log.Printf("Response %s\n", string(body))
+	} else {
+		log.Printf("Binary response length: %d\n", len(body))
+	}
 	return body
 }
 

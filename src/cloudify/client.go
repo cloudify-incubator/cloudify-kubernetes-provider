@@ -3,6 +3,7 @@ package cloudify
 import (
 	"cloudify/rest"
 	"encoding/json"
+	"io/ioutil"
 )
 
 type CloudifyClient struct {
@@ -19,16 +20,27 @@ func NewClient(host, user, password, tenant string) *CloudifyClient {
 }
 
 func (cl *CloudifyClient) Get(url string, output rest.CloudifyMessageInterface) error {
-	body := cl.RestCl.Get(url)
+	body := cl.RestCl.Get(url, rest.JsonContentType)
 
-	err_post := json.Unmarshal(body, output)
-	if err_post != nil {
-		return err_post
+	err := json.Unmarshal(body, output)
+	if err != nil {
+		return err
 	}
 
 	if len(output.ErrorCode()) > 0 {
 		return output
 	}
+	return nil
+}
+
+func (cl *CloudifyClient) GetBinary(url, output_path string) error {
+	body := cl.RestCl.Get(url, rest.DataContentType)
+
+	err := ioutil.WriteFile(output_path, body, 0644)
+	if err != nil {
+		return err
+	}
+
 	return nil
 }
 

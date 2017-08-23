@@ -50,7 +50,10 @@ cfy-go blueprints delete blueprint
 
 ### download
 Download a blueprint [manager only]
-* Not Implemented
+
+```shell
+cfy-go blueprints download blueprint
+```
 
 ### get
 Retrieve blueprint information [manager only]
