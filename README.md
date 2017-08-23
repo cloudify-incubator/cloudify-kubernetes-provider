@@ -207,7 +207,7 @@ cfy-go executions list -deployment deployment
 
 ### start
 Execute a workflow [manager only]
-* Partially implemented, set parametes is not supported.
+* Partially implemented, you can set params only as json string.
 
 ```shell
 cfy-go executions start uninstall -deployment deployment

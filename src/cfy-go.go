@@ -394,13 +394,17 @@ func executionsOptions(args, options []string) int {
 			}
 
 			var deployment string
+			var jsonParams string
 			operFlagSet.StringVar(&deployment, "deployment", "",
 				"The unique identifier for the deployment")
+			operFlagSet.StringVar(&jsonParams, "params", "{}",
+				"The json params string")
 			operFlagSet.Parse(options)
 
 			var exec cloudify.CloudifyExecutionPost
 			exec.WorkflowId = args[3]
 			exec.DeploymentId = deployment
+			exec.SetJsonParameters(jsonParams)
 
 			cl := cloudify.NewClient(host, user, password, tenant)
 			execution := cl.PostExecution(exec)
