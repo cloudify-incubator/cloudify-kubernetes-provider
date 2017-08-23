@@ -132,7 +132,10 @@ Install plugins [locally]
 
 ### list
 List blueprints [manager only]
-* Partially implemented, pagination is unsupported
+
+Paggination by:
+* `-offset`:  the number of resources to skip.
+* `-size`: the max size of the result subset to receive.
 
 ```shell
 cfy-go blueprints list
@@ -188,7 +191,10 @@ Show deployment inputs [manager only]
 
 ### list
 List deployments [manager only]
-* Partially implemented, pagination is unsupported
+
+Paggination by:
+* `-offset`:  the number of resources to skip.
+* `-size`: the max size of the result subset to receive.
 
 ```shell
 cfy-go deployments list
@@ -222,7 +228,10 @@ Delete deployment events [manager only]
 
 ### list
 List deployments events [manager only]
-* Partially implemented, pagination is unsupported
+
+Paggination by:
+* `-offset`:  the number of resources to skip.
+* `-size`: the max size of the result subset to receive.
 
 Supported filters:
 * `blueprint`: The unique identifier for the blueprint
@@ -248,7 +257,10 @@ Retrieve execution information [manager only]
 
 ### list
 List deployment executions [manager only]
-* Partially implemented, pagination is unsupported
+
+Paggination by:
+* `-offset`:  the number of resources to skip.
+* `-size`: the max size of the result subset to receive.
 
 ```shell
 cfy-go executions list

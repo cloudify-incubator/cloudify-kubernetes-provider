@@ -32,26 +32,35 @@ var tenant string
 func basicOptions(name string) *flag.FlagSet {
 	var commonFlagSet *flag.FlagSet
 	commonFlagSet = flag.NewFlagSet(name, flag.ExitOnError)
+
 	var defaultHost = os.Getenv("CFY_HOST")
 	if defaultHost == "" {
 		defaultHost = "localhost"
 	}
-	commonFlagSet.StringVar(&host, "host", defaultHost, "Manager host name or CFY_HOST in env")
+	commonFlagSet.StringVar(&host, "host", defaultHost,
+		"Manager host name or CFY_HOST in env")
+
 	var defaultUser = os.Getenv("CFY_USER")
 	if defaultUser == "" {
 		defaultUser = "admin"
 	}
-	commonFlagSet.StringVar(&user, "user", defaultUser, "Manager user name or CFY_USER in env")
+	commonFlagSet.StringVar(&user, "user", defaultUser,
+		"Manager user name or CFY_USER in env")
+
 	var defaultPassword = os.Getenv("CFY_PASSWORD")
 	if defaultPassword == "" {
 		defaultPassword = "secret"
 	}
-	commonFlagSet.StringVar(&password, "password", defaultPassword, "Manager user password or CFY_PASSWORD in env")
+	commonFlagSet.StringVar(&password, "password", defaultPassword,
+		"Manager user password or CFY_PASSWORD in env")
+
 	var defaultTenant = os.Getenv("CFY_TENANT")
 	if defaultTenant == "" {
 		defaultTenant = "default_tenant"
 	}
-	commonFlagSet.StringVar(&tenant, "tenant", defaultTenant, "Manager tenant or CFY_TENANT in env")
+	commonFlagSet.StringVar(&tenant, "tenant", defaultTenant,
+		"Manager tenant or CFY_TENANT in env")
+
 	return commonFlagSet
 }
 
@@ -90,7 +99,8 @@ func infoOptions(args, options []string) int {
 			cl := cloudify.NewClient(host, user, password, tenant)
 			ver := cl.GetVersion()
 			fmt.Printf("Retrieving manager services version... [ip=%v]\n", host)
-			utils.PrintTable([]string{"Version", "Edition"}, [][]string{{ver.Version, ver.Edition}})
+			utils.PrintTable([]string{"Version", "Edition"},
+				[][]string{{ver.Version, ver.Edition}})
 		}
 	default:
 		{
@@ -113,10 +123,11 @@ func blueprintsOptions(args, options []string) int {
 		{
 			operFlagSet := basicOptions("blueprints list")
 			var blueprint string
-			operFlagSet.StringVar(&blueprint, "blueprint", "", "The unique identifier for the blueprint")
-			operFlagSet.Parse(options)
+			operFlagSet.StringVar(&blueprint, "blueprint", "",
+				"The unique identifier for the blueprint")
 
-			var params = map[string]string{}
+			params := parsePagination(operFlagSet, options)
+
 			if blueprint != "" {
 				params["id"] = blueprint
 			}
@@ -134,7 +145,13 @@ func blueprintsOptions(args, options []string) int {
 				lines[pos][5] = blueprint.Tenant
 				lines[pos][6] = blueprint.CreatedBy
 			}
-			utils.PrintTable([]string{"id", "description", "main_file_name", "created_at", "updated_at", "tenant_name", "created_by"}, lines)
+			utils.PrintTable([]string{
+				"id", "description", "main_file_name", "created_at",
+				"updated_at", "tenant_name", "created_by",
+			}, lines)
+			fmt.Printf("Showed %d+%d/%d results. Use offset/size for get more.\n",
+				blueprints.Metadata.Pagination.Offset, len(blueprints.Items),
+				blueprints.Metadata.Pagination.Total)
 		}
 	case "delete":
 		{
@@ -156,7 +173,10 @@ func blueprintsOptions(args, options []string) int {
 			lines[0][4] = blueprint.UpdatedAt
 			lines[0][5] = blueprint.Tenant
 			lines[0][6] = blueprint.CreatedBy
-			utils.PrintTable([]string{"id", "description", "main_file_name", "created_at", "updated_at", "tenant_name", "created_by"}, lines)
+			utils.PrintTable([]string{
+				"id", "description", "main_file_name", "created_at",
+				"updated_at", "tenant_name", "created_by",
+			}, lines)
 		}
 	default:
 		{
@@ -167,12 +187,27 @@ func blueprintsOptions(args, options []string) int {
 	return 0
 }
 
-func deploymentsFilter(operFlagSet *flag.FlagSet, options []string) cloudify.CloudifyDeployments {
-	var deployment string
-	operFlagSet.StringVar(&deployment, "deployment", "", "The unique identifier for the deployment")
+func parsePagination(operFlagSet *flag.FlagSet, options []string) map[string]string {
+	var pageSize int
+	var pageOffset int
+	operFlagSet.IntVar(&pageSize, "size", 100, "Page size.")
+	operFlagSet.IntVar(&pageOffset, "offset", 0, "Page offset.")
 	operFlagSet.Parse(options)
 
 	var params = map[string]string{}
+	params["_size"] = fmt.Sprintf("%d", pageSize)
+	params["_offset"] = fmt.Sprintf("%d", pageOffset)
+
+	return params
+}
+
+func deploymentsFilter(operFlagSet *flag.FlagSet, options []string) cloudify.CloudifyDeployments {
+	var deployment string
+	operFlagSet.StringVar(&deployment, "deployment", "",
+		"The unique identifier for the deployment")
+
+	params := parsePagination(operFlagSet, options)
+
 	if deployment != "" {
 		params["id"] = deployment
 	}
@@ -204,7 +239,13 @@ func deploymentsOptions(args, options []string) int {
 				lines[pos][4] = deployment.Tenant
 				lines[pos][5] = deployment.CreatedBy
 			}
-			utils.PrintTable([]string{"id", "blueprint_id", "created_at", "updated_at", "tenant_name", "created_by"}, lines)
+			utils.PrintTable([]string{
+				"id", "blueprint_id", "created_at", "updated_at",
+				"tenant_name", "created_by",
+			}, lines)
+			fmt.Printf("Showed %d+%d/%d results. Use offset/size for get more.\n",
+				deployments.Metadata.Pagination.Offset, len(deployments.Items),
+				deployments.Metadata.Pagination.Total)
 		}
 	case "create":
 		{
@@ -215,7 +256,8 @@ func deploymentsOptions(args, options []string) int {
 			}
 
 			var blueprint string
-			operFlagSet.StringVar(&blueprint, "blueprint", "", "The unique identifier for the blueprint")
+			operFlagSet.StringVar(&blueprint, "blueprint", "",
+				"The unique identifier for the blueprint")
 
 			operFlagSet.Parse(options)
 
@@ -234,7 +276,10 @@ func deploymentsOptions(args, options []string) int {
 			lines[0][3] = deployment.UpdatedAt
 			lines[0][4] = deployment.Tenant
 			lines[0][5] = deployment.CreatedBy
-			utils.PrintTable([]string{"id", "blueprint_id", "created_at", "updated_at", "tenant_name", "created_by"}, lines)
+			utils.PrintTable([]string{
+				"id", "blueprint_id", "created_at", "updated_at",
+				"tenant_name", "created_by",
+			}, lines)
 		}
 	case "outputs":
 		{
@@ -278,7 +323,10 @@ func deploymentsOptions(args, options []string) int {
 			lines[0][3] = deployment.UpdatedAt
 			lines[0][4] = deployment.Tenant
 			lines[0][5] = deployment.CreatedBy
-			utils.PrintTable([]string{"id", "blueprint_id", "created_at", "updated_at", "tenant_name", "created_by"}, lines)
+			utils.PrintTable([]string{
+				"id", "blueprint_id", "created_at", "updated_at",
+				"tenant_name", "created_by",
+			}, lines)
 		}
 	default:
 		{
@@ -303,10 +351,12 @@ func executionsOptions(args, options []string) int {
 			operFlagSet := basicOptions("executions list")
 
 			var deployment string
-			operFlagSet.StringVar(&deployment, "deployment", "", "The unique identifier for the deployment")
+			operFlagSet.StringVar(&deployment, "deployment", "",
+				"The unique identifier for the deployment")
 			operFlagSet.Parse(options)
 
-			var params = map[string]string{}
+			params := parsePagination(operFlagSet, options)
+
 			if deployment != "" {
 				params["deployment_id"] = deployment
 			}
@@ -325,7 +375,13 @@ func executionsOptions(args, options []string) int {
 				lines[pos][6] = execution.Tenant
 				lines[pos][7] = execution.CreatedBy
 			}
-			utils.PrintTable([]string{"id", "workflow_id", "status", "deployment_id", "created_at", "error", "tenant_name", "created_by"}, lines)
+			utils.PrintTable([]string{
+				"id", "workflow_id", "status", "deployment_id", "created_at",
+				"error", "tenant_name", "created_by",
+			}, lines)
+			fmt.Printf("Showed %d+%d/%d results. Use offset/size for get more.\n",
+				executions.Metadata.Pagination.Offset, len(executions.Items),
+				executions.Metadata.Pagination.Total)
 		}
 	case "start":
 		{
@@ -336,7 +392,8 @@ func executionsOptions(args, options []string) int {
 			}
 
 			var deployment string
-			operFlagSet.StringVar(&deployment, "deployment", "", "The unique identifier for the deployment")
+			operFlagSet.StringVar(&deployment, "deployment", "",
+				"The unique identifier for the deployment")
 			operFlagSet.Parse(options)
 
 			var exec cloudify.CloudifyExecutionPost
@@ -356,7 +413,10 @@ func executionsOptions(args, options []string) int {
 			lines[0][5] = execution.ErrorMessage
 			lines[0][6] = execution.Tenant
 			lines[0][7] = execution.CreatedBy
-			utils.PrintTable([]string{"id", "workflow_id", "status", "deployment_id", "created_at", "error", "tenant_name", "created_by"}, lines)
+			utils.PrintTable([]string{
+				"id", "workflow_id", "status", "deployment_id", "created_at",
+				"error", "tenant_name", "created_by",
+			}, lines)
 		}
 	default:
 		{
@@ -382,12 +442,15 @@ func eventsOptions(args, options []string) int {
 			var blueprint string
 			var deployment string
 			var execution string
-			operFlagSet.StringVar(&blueprint, "blueprint", "", "The unique identifier for the blueprint")
-			operFlagSet.StringVar(&deployment, "deployment", "", "The unique identifier for the deployment")
-			operFlagSet.StringVar(&execution, "execution", "", "The unique identifier for the execution")
-			operFlagSet.Parse(options)
+			operFlagSet.StringVar(&blueprint, "blueprint", "",
+				"The unique identifier for the blueprint")
+			operFlagSet.StringVar(&deployment, "deployment", "",
+				"The unique identifier for the deployment")
+			operFlagSet.StringVar(&execution, "execution", "",
+				"The unique identifier for the execution")
 
-			var params = map[string]string{}
+			params := parsePagination(operFlagSet, options)
+
 			if blueprint != "" {
 				params["blueprint_id"] = blueprint
 			}
@@ -412,7 +475,13 @@ func eventsOptions(args, options []string) int {
 				lines[pos][3] = event.Operation
 				lines[pos][4] = event.Message
 			}
-			utils.PrintTable([]string{"Timestamp", "Deployment", "InstanceId", "Operation", "Message"}, lines)
+			utils.PrintTable([]string{
+				"Timestamp", "Deployment", "InstanceId", "Operation",
+				"Message",
+			}, lines)
+			fmt.Printf("Showed %d+%d/%d results. Use offset/size for get more.\n",
+				events.Metadata.Pagination.Offset, len(events.Items),
+				events.Metadata.Pagination.Total)
 		}
 	default:
 		{
