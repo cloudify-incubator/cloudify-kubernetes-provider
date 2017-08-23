@@ -18,8 +18,10 @@ package cloudify
 
 import (
 	"cloudify/rest"
+	"fmt"
 	"log"
 	"net/url"
+	"os"
 )
 
 type CloudifyBlueprint struct {
@@ -66,4 +68,20 @@ func (cl *CloudifyClient) DeleteBlueprints(blueprint_id string) CloudifyBlueprin
 	}
 
 	return blueprint
+}
+
+func (cl *CloudifyClient) DownloadBlueprints(blueprint_id string) string {
+	file_name := blueprint_id + ".tar.gz"
+
+	_, err_file := os.Stat(file_name)
+	if !os.IsNotExist(err_file) {
+		log.Fatal(fmt.Sprintf("File `%s` is exist.", file_name))
+	}
+
+	err := cl.GetBinary("blueprints/"+blueprint_id+"/archive", file_name)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	return file_name
 }

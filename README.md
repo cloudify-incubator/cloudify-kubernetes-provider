@@ -113,7 +113,10 @@ cfy-go blueprints delete blueprint
 
 ### download
 Download a blueprint [manager only]
-* Not Implemented
+
+```shell
+cfy-go blueprints download blueprint
+```
 
 ### get
 Retrieve blueprint information [manager only]
@@ -270,7 +273,7 @@ cfy-go executions list -deployment deployment
 
 ### start
 Execute a workflow [manager only]
-* Partially implemented, set parametes is not supported.
+* Partially implemented, you can set params only as json string.
 
 ```shell
 cfy-go executions start uninstall -deployment deployment
