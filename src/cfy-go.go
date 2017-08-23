@@ -256,14 +256,16 @@ func deploymentsOptions(args, options []string) int {
 			}
 
 			var blueprint string
+			var jsonInputs string
 			operFlagSet.StringVar(&blueprint, "blueprint", "",
 				"The unique identifier for the blueprint")
-
+			operFlagSet.StringVar(&jsonInputs, "inputs", "{}",
+				"The json input string")
 			operFlagSet.Parse(options)
 
 			var depl cloudify.CloudifyDeploymentPost
 			depl.BlueprintId = blueprint
-			depl.Inputs = map[string]interface{}{}
+			depl.SetJsonInputs(jsonInputs)
 
 			cl := cloudify.NewClient(host, user, password, tenant)
 			deployment := cl.CreateDeployments(args[3], depl)
@@ -290,7 +292,7 @@ func deploymentsOptions(args, options []string) int {
 				return 1
 			}
 
-			fmt.Printf("Deployment outputs: %+v\n", deployments.Items[0].JsonOutputs())
+			fmt.Printf("Deployment outputs: %+v\n", deployments.Items[0].GetJsonOutputs())
 		}
 	case "inputs":
 		{
@@ -301,7 +303,7 @@ func deploymentsOptions(args, options []string) int {
 				return 1
 			}
 
-			fmt.Printf("Deployment inputs: %+v\n", deployments.Items[0].JsonInputs())
+			fmt.Printf("Deployment inputs: %+v\n", deployments.Items[0].GetJsonInputs())
 		}
 	case "delete":
 		{

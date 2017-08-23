@@ -35,6 +35,26 @@ type CloudifyDeploymentPost struct {
 	Inputs      map[string]interface{} `json:"inputs"`
 }
 
+func (depl *CloudifyDeploymentPost) SetJsonInputs(inputs string) {
+	if len(inputs) == 0 {
+		depl.Inputs = map[string]interface{}{}
+		return
+	}
+
+	err := json.Unmarshal([]byte(inputs), &depl.Inputs)
+	if err != nil {
+		log.Fatal(err)
+	}
+}
+
+func (depl *CloudifyDeploymentPost) GetJsonInputs() string {
+	json_data, err := json.Marshal(depl.Inputs)
+	if err != nil {
+		log.Fatal(err)
+	}
+	return string(json_data)
+}
+
 type CloudifyDeployment struct {
 	// have id, owner information
 	rest.CloudifyResource
@@ -49,7 +69,7 @@ type CloudifyDeployment struct {
 	// TODO describe "scaling_groups" struct
 }
 
-func (depl *CloudifyDeployment) JsonOutputs() string {
+func (depl *CloudifyDeployment) GetJsonOutputs() string {
 	json_data, err := json.Marshal(depl.Outputs)
 	if err != nil {
 		log.Fatal(err)
@@ -57,7 +77,7 @@ func (depl *CloudifyDeployment) JsonOutputs() string {
 	return string(json_data)
 }
 
-func (depl *CloudifyDeployment) JsonInputs() string {
+func (depl *CloudifyDeployment) GetJsonInputs() string {
 	json_data, err := json.Marshal(depl.Inputs)
 	if err != nil {
 		log.Fatal(err)
