@@ -22,10 +22,13 @@ export GOBIN=`pwd`/bin
 export PATH=$PATH:`pwd`/bin
 export GOPATH=`pwd`
 # kubernetes
+sudo CGO_ENABLED=0 go install -a -installsuffix cgo std
 go get -d k8s.io/kubernetes
 cd src/k8s.io/kubernetes
 make
 cd $GOPATH
+./src/k8s.io/kubernetes/hack/install-etcd.sh
+export PATH=${GOPATH}/src/k8s.io/kubernetes/third_party/etcd:${PATH}
 # cfy part
 make all
 ```
@@ -40,6 +43,14 @@ sudo add-apt-repository \
 apt-get update
 sudo apt-get install docker.io
 sudo docker run hello-world
+```
+
+# verify kubenetes
+```
+go get -u github.com/golang/lint/golint
+sudo usermod -a -G docker ${USER}
+cd src/k8s.io/kubernetes/
+make verify
 ```
 
 # Kubenetes install
