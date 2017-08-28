@@ -150,7 +150,10 @@ Create a blueprint archive
 
 ### upload
 Upload a blueprint [manager only]
-* Not Implemented
+
+```shell
+cfy-go blueprints upload new-blueprint -path examples/blueprint/Minimal.yaml
+```
 
 ### validate
 Validate a blueprint
