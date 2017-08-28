@@ -22,6 +22,7 @@ import (
 	"log"
 	"net/url"
 	"os"
+	"path/filepath"
 )
 
 type CloudifyBlueprint struct {
@@ -84,4 +85,23 @@ func (cl *CloudifyClient) DownloadBlueprints(blueprint_id string) string {
 	}
 
 	return file_name
+}
+
+func (cl *CloudifyClient) UploadBlueprint(blueprint_id, path string) CloudifyBlueprintGet {
+
+	absPath, err_abs := filepath.Abs(path)
+	if err_abs != nil {
+		log.Fatal(err_abs)
+	}
+
+	dirPath, name_file := filepath.Split(absPath)
+
+	var blueprint CloudifyBlueprintGet
+
+	err := cl.PutZip("blueprints/"+blueprint_id+"?application_file_name="+name_file, dirPath, &blueprint)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	return blueprint
 }

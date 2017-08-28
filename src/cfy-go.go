@@ -112,7 +112,7 @@ func infoOptions(args, options []string) int {
 }
 
 func blueprintsOptions(args, options []string) int {
-	defaultError := "list/delete/download subcommand is required"
+	defaultError := "list/delete/download/upload subcommand is required"
 
 	if len(args) < 3 {
 		fmt.Println(defaultError)
@@ -153,11 +153,43 @@ func blueprintsOptions(args, options []string) int {
 				blueprints.Metadata.Pagination.Offset, len(blueprints.Items),
 				blueprints.Metadata.Pagination.Total)
 		}
+	case "upload":
+		{
+			operFlagSet := basicOptions("blueprints upload")
+			if len(args) < 4 {
+				fmt.Println("Blueprint Id required")
+				return 1
+			}
+			var blueprint_path string
+			operFlagSet.StringVar(&blueprint_path, "path", "",
+				"The blueprint path")
+			operFlagSet.Parse(options)
+
+			if len(blueprint_path) < 4 {
+				fmt.Println("Blueprint path required")
+				return 1
+			}
+			cl := cloudify.NewClient(host, user, password, tenant)
+			blueprint := cl.UploadBlueprint(args[3], blueprint_path)
+			var lines [][]string = make([][]string, 1)
+			lines[0] = make([]string, 7)
+			lines[0][0] = blueprint.Id
+			lines[0][1] = blueprint.Description
+			lines[0][2] = blueprint.MainFileName
+			lines[0][3] = blueprint.CreatedAt
+			lines[0][4] = blueprint.UpdatedAt
+			lines[0][5] = blueprint.Tenant
+			lines[0][6] = blueprint.CreatedBy
+			utils.PrintTable([]string{
+				"id", "description", "main_file_name", "created_at",
+				"updated_at", "tenant_name", "created_by",
+			}, lines)
+		}
 	case "download":
 		{
 			operFlagSet := basicOptions("blueprints download")
 			if len(args) < 4 {
-				fmt.Println("Blueprint Id requered")
+				fmt.Println("Blueprint Id required")
 				return 1
 			}
 			operFlagSet.Parse(options)
@@ -170,7 +202,7 @@ func blueprintsOptions(args, options []string) int {
 		{
 			operFlagSet := basicOptions("blueprints delete")
 			if len(args) < 4 {
-				fmt.Println("Blueprint Id requered")
+				fmt.Println("Blueprint Id required")
 				return 1
 			}
 			operFlagSet.Parse(options)
@@ -264,7 +296,7 @@ func deploymentsOptions(args, options []string) int {
 		{
 			operFlagSet := basicOptions("deployments list <deployment id>")
 			if len(args) < 4 {
-				fmt.Println("Deployment Id requered")
+				fmt.Println("Deployment Id required")
 				return 1
 			}
 
@@ -322,7 +354,7 @@ func deploymentsOptions(args, options []string) int {
 		{
 			operFlagSet := basicOptions("deployments delete <deployment id>")
 			if len(args) < 4 {
-				fmt.Println("Deployment Id requered")
+				fmt.Println("Deployment Id required")
 				return 1
 			}
 
@@ -402,7 +434,7 @@ func executionsOptions(args, options []string) int {
 		{
 			operFlagSet := basicOptions("executions start <workflow id>")
 			if len(args) < 4 {
-				fmt.Println("Workflow Id requered")
+				fmt.Println("Workflow Id required")
 				return 1
 			}
 

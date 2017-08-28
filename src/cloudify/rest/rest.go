@@ -130,9 +130,9 @@ func (r *CloudifyRestClient) Post(url string, data []byte) []byte {
 	return body
 }
 
-func (r *CloudifyRestClient) Put(url string, data []byte) []byte {
+func (r *CloudifyRestClient) Put(url, providedContentType string, data []byte) []byte {
 	req := r.GetRequest(url, "PUT", bytes.NewBuffer(data))
-	req.Header.Set("Content-Type", JsonContentType)
+	req.Header.Set("Content-Type", providedContentType)
 
 	client := &http.Client{}
 	resp, err := client.Do(req)
