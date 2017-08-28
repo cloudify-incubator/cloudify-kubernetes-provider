@@ -18,13 +18,27 @@ package cloudify
 
 import (
 	"cloudify/rest"
+	"encoding/json"
 	"log"
 	"net/url"
 )
 
 type CloudifyExecutionPost struct {
-	WorkflowId   string `json:"workflow_id"`
-	DeploymentId string `json:"deployment_id"`
+	WorkflowId   string                 `json:"workflow_id"`
+	DeploymentId string                 `json:"deployment_id"`
+	Parameters   map[string]interface{} `json:"parameters"`
+}
+
+func (exec *CloudifyExecutionPost) SetJsonParameters(parameters string) {
+	if len(parameters) == 0 {
+		exec.Parameters = map[string]interface{}{}
+		return
+	}
+
+	err := json.Unmarshal([]byte(parameters), &exec.Parameters)
+	if err != nil {
+		log.Fatal(err)
+	}
 }
 
 type CloudifyExecution struct {
@@ -36,7 +50,6 @@ type CloudifyExecution struct {
 	ErrorMessage     string `json:"error"`
 	BlueprintId      string `json:"blueprint_id"`
 	Status           string `json:"status"`
-	// TODO describe "parameters" struct
 }
 
 type CloudifyExecutionGet struct {
