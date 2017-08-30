@@ -99,8 +99,8 @@ func infoOptions(args, options []string) int {
 			cl := cloudify.NewClient(host, user, password, tenant)
 			ver := cl.GetVersion()
 			fmt.Printf("Retrieving manager services version... [ip=%v]\n", host)
-			utils.PrintTable([]string{"Version", "Edition"},
-				[][]string{{ver.Version, ver.Edition}})
+			utils.PrintTable([]string{"Version", "Edition", "Api Version"},
+				[][]string{{ver.Version, ver.Edition, cloudify.ApiVersion}})
 		}
 	default:
 		{
