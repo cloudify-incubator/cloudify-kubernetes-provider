@@ -12,8 +12,16 @@ yum install golang
 # https://github.com/golang/go/wiki/Ubuntu
 sudo add-apt-repository ppa:longsleep/golang-backports
 sudo apt-get update
-sudo apt-get install golang-go
+sudo apt-get install golang-go curl
 ```
+
+# git
+```shell
+git clone --recursive git@github.com:0lvin-cfy/cloudify-rest-go-client.git -b kubernetes
+# show state for submodules
+git config status.submodulesummary 1
+```
+
 # install
 
 ```shell
@@ -24,14 +32,8 @@ export PKGBASE=`pwd`
 export GOPATH=${PKGBASE}
 # kubernetes
 sudo CGO_ENABLED=0 go install -a -installsuffix cgo std
-if [ ! -d "${PKGBASE}/src/k8s.io/kubernetes" ]; then
-	mkdir -p ${PKGBASE}/src/k8s.io
-	cd ${PKGBASE}/src/k8s.io
-	git clone https://github.com/kubernetes/kubernetes.git
-fi
+git submodule update
 cd ${PKGBASE}/src/k8s.io/kubernetes
-make clean
-git checkout master &&	git pull && git checkout v1.7.4
 make
 cd ${PKGBASE}
 # cfy part
