@@ -543,16 +543,23 @@ func eventsOptions(args, options []string) int {
 	return 0
 }
 
+var versionString = "Please compile with make all."
+
 func main() {
 
 	args, options := utils.CliArgumentsList(os.Args)
-	defaultError := "Supported only: status, version, blueprints, deployments, executions, events"
+	defaultError := "Supported only: status, version, blueprints, deployments, executions, events."
 	if len(args) < 2 {
 		fmt.Println(defaultError)
 		return
 	}
 
 	switch args[1] {
+	case "version":
+		{
+			fmt.Printf("CFY Go client: %s/%s\n", cloudify.ApiVersion, versionString)
+			os.Exit(0)
+		}
 	case "status":
 		{
 			os.Exit(infoOptions(args, options))

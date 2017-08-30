@@ -1,3 +1,7 @@
+all: bin/cfy-go
+	go build src/cloudifyprovider/init.go
+	go install src/cfy-kubernetes.go
+
 reformat:
 	rm -rfv pkg/*
 	rm -rfv bin/*
@@ -17,11 +21,7 @@ pkg/linux_amd64/cloudify.a: src/cloudify/client.go src/cloudify/events.go src/cl
 	go build src/cloudify/client.go src/cloudify/blueprints.go src/cloudify/status.go src/cloudify/executions.go src/cloudify/deployments.go src/cloudify/events.go
 
 bin/cfy-go: src/cfy-go.go pkg/linux_amd64/cloudify/utils.a pkg/linux_amd64/cloudify.a
-	go install src/cfy-go.go
+	go install -ldflags "-X main.versionString=`git rev-parse --short HEAD`" src/cfy-go.go
 
-all: bin/cfy-go
-	go build src/cloudifyprovider/init.go
-	go install src/cfy-kubernetes.go
-	
 test:
-	go test ./src/cloudify/utils/
+	go test ./src/cloudify/...

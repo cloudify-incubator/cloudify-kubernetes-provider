@@ -83,7 +83,14 @@ apt-get remove -y kubelet kubeadm
 ```shell
 make reformat
 ```
-# Functionlity from original cfy client
+# Functionality related to kubernetes
+## version
+
+```shell
+cfy-kubernetes -version
+```
+
+# Functionality from original cfy client
 
 * Common parameters:
     * `-host`: manager host
