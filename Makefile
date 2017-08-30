@@ -1,10 +1,6 @@
+.PHONY: all
+
 all: bin/cfy-go bin/cfy-kubernetes
-
-pkg/linux_amd64/cloudifyprovider.a: pkg/linux_amd64/cloudify.a src/cloudifyprovider/init.go
-	go build src/cloudifyprovider/init.go
-
-bin/cfy-kubernetes: pkg/linux_amd64/cloudifyprovider.a src/cfy-kubernetes.go
-	go install src/cfy-kubernetes.go
 
 reformat:
 	rm -rfv pkg/*
@@ -15,17 +11,54 @@ reformat:
 	gofmt -w src/cloudifyprovider/*.go
 	gofmt -w src/*.go
 
-pkg/linux_amd64/cloudify/rest.a: src/cloudify/rest/rest.go 	src/cloudify/rest/types.go
-	go build src/cloudify/rest/rest.go src/cloudify/rest/types.go
+define colorecho
+	@tput setaf 2
+	@echo -n $1
+	@tput setaf 3
+	@echo $2
+	@tput sgr0
+endef
 
-pkg/linux_amd64/cloudify/utils.a: src/cloudify/utils/utils.go
-	go build src/cloudify/utils/utils.go
+# cloudify provider
+CLOUDIFYPROVIDER := src/cloudifyprovider/init.go src/cloudifyprovider/instances.go
 
-pkg/linux_amd64/cloudify.a: src/cloudify/client.go src/cloudify/events.go src/cloudify/blueprints.go src/cloudify/status.go src/cloudify/executions.go src/cloudify/deployments.go pkg/linux_amd64/cloudify/rest.a
-	go build src/cloudify/client.go src/cloudify/blueprints.go src/cloudify/status.go src/cloudify/executions.go src/cloudify/deployments.go src/cloudify/events.go
+pkg/linux_amd64/cloudifyprovider.a: pkg/linux_amd64/cloudify.a ${CLOUDIFYPROVIDER}
+	go build -v -i -o pkg/linux_amd64/cloudifyprovider.a ${CLOUDIFYPROVIDER}
+
+# cloudify rest
+CLOUDIFYREST := src/cloudify/rest/rest.go 	src/cloudify/rest/types.go
+
+pkg/linux_amd64/cloudify/rest.a: ${CLOUDIFYREST}
+	$(call colorecho,"Build: ", $@)
+	go build -v -i -o pkg/linux_amd64/cloudify/rest.a ${CLOUDIFYREST}
+
+# cloudify utils
+CLOUDIFYUTILS := src/cloudify/utils/utils.go
+
+pkg/linux_amd64/cloudify/utils.a: ${CLOUDIFYUTILS}
+	$(call colorecho,"Build: ", $@)
+	go build -v -i -o pkg/linux_amd64/cloudify/utils.a ${CLOUDIFYUTILS}
+
+# cloudify
+CLOUDIFYCOMMON := \
+	src/cloudify/client.go \
+	src/cloudify/events.go \
+	src/cloudify/blueprints.go \
+	src/cloudify/status.go \
+	src/cloudify/executions.go \
+	src/cloudify/deployments.go
+
+pkg/linux_amd64/cloudify.a: ${CLOUDIFYCOMMON} pkg/linux_amd64/cloudify/rest.a
+	$(call colorecho,"Build: ",$@)
+	go build -v -i -o pkg/linux_amd64/cloudify.a ${CLOUDIFYCOMMON}
+
+bin/cfy-kubernetes: pkg/linux_amd64/cloudifyprovider.a pkg/linux_amd64/cloudify.a src/cfy-kubernetes.go
+	$(call colorecho,"Install: ", $@)
+	go install -v src/cfy-kubernetes.go
 
 bin/cfy-go: src/cfy-go.go pkg/linux_amd64/cloudify/utils.a pkg/linux_amd64/cloudify.a
-	go install -ldflags "-X main.versionString=`git rev-parse --short HEAD`" src/cfy-go.go
+	$(call colorecho,"Install: ", $@)
+	go install -v -ldflags "-X main.versionString=`git rev-parse --short HEAD`" src/cfy-go.go
 
 test:
 	go test ./src/cloudify/...
