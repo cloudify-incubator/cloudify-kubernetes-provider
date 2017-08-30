@@ -1,5 +1,9 @@
-all: bin/cfy-go
+all: bin/cfy-go bin/cfy-kubernetes
+
+pkg/linux_amd64/cloudifyprovider.a: pkg/linux_amd64/cloudify.a src/cloudifyprovider/init.go
 	go build src/cloudifyprovider/init.go
+
+bin/cfy-kubernetes: pkg/linux_amd64/cloudifyprovider.a src/cfy-kubernetes.go
 	go install src/cfy-kubernetes.go
 
 reformat:

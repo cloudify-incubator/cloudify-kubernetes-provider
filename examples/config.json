@@ -1,0 +1,6 @@
+{
+	"tenant": "default_tenant",
+	"password": "secret",
+	"user": "admin",
+	"host": "127.0.0.1"
+}

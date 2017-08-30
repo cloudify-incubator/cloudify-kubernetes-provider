@@ -48,7 +48,7 @@ sudo add-apt-repository \
    $(lsb_release -cs) \
    stable"
 apt-get update
-sudo apt-get install docker.io
+sudo apt-get install -y docker.io
 sudo docker run hello-world
 ```
 
@@ -88,6 +88,7 @@ make reformat
 
 ```shell
 cfy-kubernetes -version
+cfy-kubernetes --kubeconfig $HOME/.kube/config --cloud-config examples/config.json
 ```
 
 # Functionality from original cfy client

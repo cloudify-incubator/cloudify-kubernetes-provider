@@ -2,6 +2,7 @@ package cloudifyprovider
 
 import (
 	"cloudify"
+	"encoding/json"
 	"io"
 	"k8s.io/kubernetes/pkg/cloudprovider"
 	"k8s.io/kubernetes/pkg/controller"
@@ -68,10 +69,33 @@ func (r *CloudProvider) ScrubDNS(nameservers, searches []string) (nsOut, srchOut
 	return nameservers, searches
 }
 
+type CloudifyProviderConfig struct {
+	Host     string `json:"host,omitempty"`
+	User     string `json:"user,omitempty"`
+	Password string `json:"password,omitempty"`
+	Tenant   string `json:"tenant,omitempty"`
+}
+
 func newCloudifyCloud(config io.Reader) (cloudprovider.Interface, error) {
-	log.Println("New Cloudify client")
+	log.Printf("New Cloudify client\n")
+
+	var cloudConfig CloudifyProviderConfig
+	cloudConfig.Host = os.Getenv("CFY_HOST")
+	cloudConfig.User = os.Getenv("CFY_USER")
+	cloudConfig.Password = os.Getenv("CFY_PASSWORD")
+	cloudConfig.Tenant = os.Getenv("CFY_TENANT")
+	if config != nil {
+		err := json.NewDecoder(config).Decode(&cloudConfig)
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	log.Printf("Config %+v\n", cloudConfig)
 	return &CloudProvider{
-		client: cloudify.NewClient(os.Getenv("CFY_HOST"), os.Getenv("CFY_USER"), os.Getenv("CFY_PASSWORD"), os.Getenv("CFY_TENANT")),
+		client: cloudify.NewClient(
+			cloudConfig.Host, cloudConfig.User,
+			cloudConfig.Password, cloudConfig.Tenant),
 	}, nil
 }
 

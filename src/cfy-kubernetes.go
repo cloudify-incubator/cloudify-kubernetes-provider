@@ -20,6 +20,7 @@ var versionShow bool
 func AddNativeFlags(s *options.CloudControllerManagerServer, fs *flag.FlagSet) *flag.FlagSet {
 	fs.StringVar(&s.Master, "master", s.Master, "The address of the Kubernetes API server (overrides any value in kubeconfig)")
 	fs.StringVar(&s.Kubeconfig, "kubeconfig", s.Kubeconfig, "Path to kubeconfig file with authorization and master location information.")
+	fs.StringVar(&s.CloudConfigFile, "cloud-config", s.CloudConfigFile, "The path to the cloud provider configuration file.  Empty string for no configuration file.")
 	fs.BoolVar(&versionShow, "version", false, "Path to kubeconfig file with authorization and master location information.")
 	return fs
 }
