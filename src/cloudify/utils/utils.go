@@ -17,7 +17,13 @@ limitations under the License.
 package utils
 
 import (
+	"archive/zip"
+	"bytes"
 	"fmt"
+	"io/ioutil"
+	"log"
+	"os"
+	"path/filepath"
 	"strings"
 	"unicode/utf8"
 )
@@ -79,4 +85,45 @@ func CliArgumentsList(osArgs []string) (arguments []string, options []string) {
 		}
 	}
 	return osArgs, []string{}
+}
+
+func DirZipArchive(parentDir string) ([]byte, error) {
+	// Create a buffer to write our archive to.
+	buf := new(bytes.Buffer)
+
+	// Create a new zip archive.
+	w := zip.NewWriter(buf)
+
+	log.Printf("Looking into %s", parentDir)
+	err_walk := filepath.Walk(parentDir, func(path string, f os.FileInfo, err error) error {
+		if !f.IsDir() {
+			f, err_create := w.Create("parent/" + path[len(parentDir):])
+			if err_create != nil {
+				return err_create
+			}
+
+			content, err_read := ioutil.ReadFile(path)
+			if err_read != nil {
+				return err_read
+			}
+
+			_, err_write := f.Write(content)
+			if err_write != nil {
+				return err_write
+			}
+			log.Printf("Attached: %s", path[len(parentDir):])
+		}
+		return nil
+	})
+
+	if err_walk != nil {
+		return nil, err_walk
+	}
+
+	// Make sure to check the error on Close.
+	err_zip := w.Close()
+	if err_zip != nil {
+		return nil, err_zip
+	}
+	return buf.Bytes(), nil
 }

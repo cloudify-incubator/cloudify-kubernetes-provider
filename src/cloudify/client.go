@@ -1,15 +1,13 @@
 package cloudify
 
 import (
-	"archive/zip"
-	"bytes"
 	"cloudify/rest"
+	"cloudify/utils"
 	"encoding/json"
 	"io/ioutil"
-	"log"
-	"os"
-	"path/filepath"
 )
+
+const ApiVersion = "v3.1"
 
 type CloudifyClient struct {
 	RestCl rest.CloudifyRestClient
@@ -17,7 +15,11 @@ type CloudifyClient struct {
 
 func NewClient(host, user, password, tenant string) *CloudifyClient {
 	var cliCl CloudifyClient
-	cliCl.RestCl.RestURL = "http://" + host + "/api/v3.1/"
+	if host[:len("https://")] == "https://" || host[:len("http://")] == "http://" {
+		cliCl.RestCl.RestURL = host + "/api/" + ApiVersion + "/"
+	} else {
+		cliCl.RestCl.RestURL = "http://" + host + "/api/" + ApiVersion + "/"
+	}
 	cliCl.RestCl.User = user
 	cliCl.RestCl.Password = password
 	cliCl.RestCl.Tenant = tenant
@@ -63,53 +65,12 @@ func binaryPut(cl *CloudifyClient, url string, input []byte, input_type string, 
 	return nil
 }
 
-func dirZipArchive(parentDir string) ([]byte, error) {
-	// Create a buffer to write our archive to.
-	buf := new(bytes.Buffer)
-
-	// Create a new zip archive.
-	w := zip.NewWriter(buf)
-
-	log.Printf("Looking into %s", parentDir)
-	err_walk := filepath.Walk(parentDir, func(path string, f os.FileInfo, err error) error {
-		if !f.IsDir() {
-			f, err_create := w.Create("parent/" + path[len(parentDir):])
-			if err_create != nil {
-				return err_create
-			}
-
-			content, err_read := ioutil.ReadFile(path)
-			if err_read != nil {
-				return err_read
-			}
-
-			_, err_write := f.Write(content)
-			if err_write != nil {
-				return err_write
-			}
-			log.Printf("Attached: %s", path[len(parentDir):])
-		}
-		return nil
-	})
-
-	if err_walk != nil {
-		return nil, err_walk
-	}
-
-	// Make sure to check the error on Close.
-	err_zip := w.Close()
-	if err_zip != nil {
-		return nil, err_zip
-	}
-	return buf.Bytes(), nil
-}
-
 func (cl *CloudifyClient) PutBinary(url string, data []byte, output rest.CloudifyMessageInterface) error {
 	return binaryPut(cl, url, data, rest.DataContentType, output)
 }
 
 func (cl *CloudifyClient) PutZip(url, path string, output rest.CloudifyMessageInterface) error {
-	data, err := dirZipArchive(path)
+	data, err := utils.DirZipArchive(path)
 	if err != nil {
 		return err
 	}
