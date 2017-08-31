@@ -1,5 +1,3 @@
-.PHONY: all
-
 all: bin/cfy-go bin/cfy-kubernetes
 
 reformat:
@@ -9,7 +7,7 @@ reformat:
 	gofmt -w src/cloudify/utils/*.go
 	gofmt -w src/cloudify/*.go
 	gofmt -w src/cloudifyprovider/*.go
-	gofmt -w src/*.go
+	gofmt -w src/cfy-go/*.go
 
 define colorecho
 	@tput setaf 2
@@ -56,9 +54,9 @@ bin/cfy-kubernetes: pkg/linux_amd64/cloudifyprovider.a pkg/linux_amd64/cloudify.
 	$(call colorecho,"Install: ", $@)
 	go install -v src/cfy-kubernetes.go
 
-bin/cfy-go: src/cfy-go.go pkg/linux_amd64/cloudify/utils.a pkg/linux_amd64/cloudify.a
+bin/cfy-go: src/cfy-go/cfy-go.go pkg/linux_amd64/cloudify/utils.a pkg/linux_amd64/cloudify.a
 	$(call colorecho,"Install: ", $@)
-	go install -v -ldflags "-X main.versionString=`git rev-parse --short HEAD`" src/cfy-go.go
+	go install -v -ldflags "-X main.versionString=`git rev-parse --short HEAD`" src/cfy-go/cfy-go.go
 
 test:
 	go test ./src/cloudify/...
