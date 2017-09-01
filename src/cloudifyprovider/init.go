@@ -1,7 +1,7 @@
 package cloudifyprovider
 
 import (
-	"cloudify"
+	cloudify "github.com/0lvin-cfy/cloudify-rest-go-client/cloudify"
 	"encoding/json"
 	"io"
 	"k8s.io/kubernetes/pkg/cloudprovider"
@@ -17,6 +17,7 @@ const (
 // CloudProvider implents Instances, Zones, and LoadBalancer
 type CloudProvider struct {
 	client *cloudify.CloudifyClient
+	/*instances *CloudifyIntances*/
 }
 
 // Initialize passes a Kubernetes clientBuilder interface to the cloud provider
@@ -44,6 +45,14 @@ func (r *CloudProvider) Zones() (cloudprovider.Zones, bool) {
 // Instances returns an instances interface. Also returns true if the interface is supported, false otherwise.
 func (r *CloudProvider) Instances() (cloudprovider.Instances, bool) {
 	log.Println("Instances")
+	/*if r.client != nil {
+		if r.instances != nil {
+			return r.instances, true
+		} else {
+			r.instances = NewCloudifyIntances(r.client)
+			return r.instances, true
+		}
+	}*/
 	return nil, false
 }
 

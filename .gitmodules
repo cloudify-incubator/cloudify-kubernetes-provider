@@ -1,4 +1,18 @@
 [submodule "src/k8s.io/kubernetes"]
 	path = src/k8s.io/kubernetes
-	url = https://github.com/kubernetes/kubernetes.git
+	url = git@github.com:0lvin-cfy/kubernetes.git
 	branch = release-1.7
+[submodule "src/k8s.io/apimachinery"]
+	path = src/k8s.io/apimachinery
+	url = git@github.com:kubernetes/apimachinery.git
+	branch = release-1.7
+[submodule "src/github.com/golang/glog"]
+	path = src/github.com/golang/glog
+	url = git@github.com:golang/glog.git
+	branch = master
+[submodule "src/github.com/0lvin-cfy/cloudify-rest-go-client"]
+	path = src/github.com/0lvin-cfy/cloudify-rest-go-client
+	url = git@github.com:0lvin-cfy/cloudify-rest-go-client.git
+[submodule "src/github.com/google/gofuzz"]
+	path = src/github.com/google/gofuzz
+	url = git@github.com:google/gofuzz.git
