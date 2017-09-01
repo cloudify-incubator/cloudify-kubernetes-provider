@@ -54,15 +54,15 @@ bin/cfy-go: src/${PACKAGEPATH}/cfy-go/cfy-go.go pkg/linux_amd64/${PACKAGEPATH}/c
 	$(call colorecho,"Install: ", $@)
 	go install -v -ldflags "-X main.versionString=`cd src/${PACKAGEPATH} && git rev-parse --short HEAD`" src/${PACKAGEPATH}/cfy-go/cfy-go.go
 
-bin/cfy-kubernetes: pkg/linux_amd64/cloudifyprovider.a pkg/linux_amd64/cloudify.a src/cfy-kubernetes.go
-	$(call colorecho,"Install: ", $@)
-	go install -v src/cfy-kubernetes.go
-
 # cloudify provider
 CLOUDIFYPROVIDER := src/cloudifyprovider/init.go src/cloudifyprovider/instances.go
 
 pkg/linux_amd64/cloudifyprovider.a: pkg/linux_amd64/cloudify.a ${CLOUDIFYPROVIDER}
 	go build -v -i -o pkg/linux_amd64/cloudifyprovider.a ${CLOUDIFYPROVIDER}
+
+bin/cfy-kubernetes: pkg/linux_amd64/cloudifyprovider.a pkg/linux_amd64/cloudify.a src/cfy-kubernetes.go
+	$(call colorecho,"Install: ", $@)
+	go install -v src/cfy-kubernetes.go
 
 test:
 	go test ./src/${PACKAGEPATH}/...

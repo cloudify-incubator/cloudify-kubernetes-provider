@@ -6,7 +6,7 @@ import (
 	"io"
 	"k8s.io/kubernetes/pkg/cloudprovider"
 	"k8s.io/kubernetes/pkg/controller"
-	"log"
+	"github.com/golang/glog"
 	"os"
 )
 
@@ -17,12 +17,12 @@ const (
 // CloudProvider implents Instances, Zones, and LoadBalancer
 type CloudProvider struct {
 	client *cloudify.CloudifyClient
-	/*instances *CloudifyIntances*/
+	instances *CloudifyIntances
 }
 
 // Initialize passes a Kubernetes clientBuilder interface to the cloud provider
 func (r *CloudProvider) Initialize(clientBuilder controller.ControllerClientBuilder) {
-	log.Println("Initialize")
+	glog.Warning("Initialize")
 }
 
 // ProviderName returns the cloud provider ID.
@@ -32,39 +32,39 @@ func (r *CloudProvider) ProviderName() string {
 
 // LoadBalancer returns a balancer interface. Also returns true if the interface is supported, false otherwise.
 func (r *CloudProvider) LoadBalancer() (cloudprovider.LoadBalancer, bool) {
-	log.Println("LoadBalancer")
+	glog.Warning("LoadBalancer")
 	return nil, false
 }
 
 // Zones returns a zones interface. Also returns true if the interface is supported, false otherwise.
 func (r *CloudProvider) Zones() (cloudprovider.Zones, bool) {
-	log.Println("Zones")
+	glog.Warning("Zones")
 	return nil, false
 }
 
 // Instances returns an instances interface. Also returns true if the interface is supported, false otherwise.
 func (r *CloudProvider) Instances() (cloudprovider.Instances, bool) {
-	log.Println("Instances")
-	/*if r.client != nil {
+	glog.Warning("Instances")
+	if r.client != nil {
 		if r.instances != nil {
 			return r.instances, true
 		} else {
 			r.instances = NewCloudifyIntances(r.client)
 			return r.instances, true
 		}
-	}*/
+	}
 	return nil, false
 }
 
 // Clusters returns a clusters interface.  Also returns true if the interface is supported, false otherwise.
 func (r *CloudProvider) Clusters() (cloudprovider.Clusters, bool) {
-	log.Println("Clusters")
+	glog.Warning("Clusters")
 	return nil, false
 }
 
 // Routes returns a routes interface along with whether the interface is supported.
 func (r *CloudProvider) Routes() (cloudprovider.Routes, bool) {
-	log.Println("Routers")
+	glog.Warning("Routers")
 	return nil, false
 }
 
@@ -86,7 +86,7 @@ type CloudifyProviderConfig struct {
 }
 
 func newCloudifyCloud(config io.Reader) (cloudprovider.Interface, error) {
-	log.Printf("New Cloudify client\n")
+	glog.Warning("New Cloudify client")
 
 	var cloudConfig CloudifyProviderConfig
 	cloudConfig.Host = os.Getenv("CFY_HOST")
@@ -100,7 +100,7 @@ func newCloudifyCloud(config io.Reader) (cloudprovider.Interface, error) {
 		}
 	}
 
-	log.Printf("Config %+v\n", cloudConfig)
+	glog.Warning("Config %+v", cloudConfig)
 	return &CloudProvider{
 		client: cloudify.NewClient(
 			cloudConfig.Host, cloudConfig.User,
@@ -109,7 +109,7 @@ func newCloudifyCloud(config io.Reader) (cloudprovider.Interface, error) {
 }
 
 func init() {
-	log.Println("Cloudify init")
+	glog.Warning("Cloudify init")
 	cloudprovider.RegisterCloudProvider(providerName, func(config io.Reader) (cloudprovider.Interface, error) {
 		return newCloudifyCloud(config)
 	})
