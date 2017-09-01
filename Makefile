@@ -58,7 +58,8 @@ bin/cfy-go: src/${PACKAGEPATH}/cfy-go/cfy-go.go pkg/linux_amd64/${PACKAGEPATH}/c
 CLOUDIFYPROVIDER := \
 	src/cloudifyprovider/init.go \
 	src/cloudifyprovider/instances.go \
-	src/cloudifyprovider/loadbalancer.go
+	src/cloudifyprovider/loadbalancer.go \
+	src/cloudifyprovider/zones.go
 
 pkg/linux_amd64/cloudifyprovider.a: pkg/linux_amd64/cloudify.a ${CLOUDIFYPROVIDER}
 	go build -v -i -o pkg/linux_amd64/cloudifyprovider.a ${CLOUDIFYPROVIDER}

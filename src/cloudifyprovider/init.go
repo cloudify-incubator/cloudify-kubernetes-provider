@@ -19,6 +19,7 @@ type CloudProvider struct {
 	client    *cloudify.CloudifyClient
 	instances *CloudifyIntances
 	balancers *CloudifyBalancer
+	zones     *CloudifyZones
 }
 
 // Initialize passes a Kubernetes clientBuilder interface to the cloud provider
@@ -48,6 +49,14 @@ func (r *CloudProvider) LoadBalancer() (cloudprovider.LoadBalancer, bool) {
 // Zones returns a zones interface. Also returns true if the interface is supported, false otherwise.
 func (r *CloudProvider) Zones() (cloudprovider.Zones, bool) {
 	glog.Warning("Zones")
+	if r.client != nil {
+		if r.zones != nil {
+			return r.zones, true
+		} else {
+			r.zones = NewCloudifyZones(r.client)
+			return r.zones, true
+		}
+	}
 	return nil, false
 }
 
