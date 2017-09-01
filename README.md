@@ -33,9 +33,6 @@ export GOPATH=${PKGBASE}
 # kubernetes
 sudo CGO_ENABLED=0 go install -a -installsuffix cgo std
 git submodule update
-cd ${PKGBASE}/src/k8s.io/kubernetes
-make
-cd ${PKGBASE}
 # cfy part
 make all
 ```
@@ -52,14 +49,6 @@ sudo apt-get install -y docker.io
 sudo docker run hello-world
 ```
 
-# verify kubenetes
-```
-go get -u github.com/golang/lint/golint
-sudo usermod -a -G docker ${USER}
-cd src/k8s.io/kubernetes/
-make verify
-```
-
 # Kubenetes install
 
 ```shell
@@ -71,6 +60,9 @@ EOF
 apt-get update
 apt-get install -y kubelet kubeadm
 kubeadm init --pod-network-cidr 10.244.0.0/16 --token-ttl 0
+
+# in /etc/kubernetes/manifests/kube-controller-manager.yaml add --cloud-provider=external
+# in /etc/kubernetes/manifests/kube-apiserver.yaml delete from --admission-control  "PersistentVolumeLabel"
 ```
 
 # Kubenetes uninstall
@@ -103,8 +95,6 @@ cfy-kubernetes --kubeconfig $HOME/.kube/config --cloud-config examples/config.js
 ```shell
 cfy-go status version -host <your manager host> -user admin -password secret -tenant default_tenant
 ```
-* Limitations:
-	* supported only simple version of inputs/outputs when we have map[string]string. (On API level, in cli inputs/outputs is not supported at all.)
 
 ## agents
 Handle a deployment's agents
