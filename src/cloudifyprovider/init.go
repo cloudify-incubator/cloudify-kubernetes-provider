@@ -1,12 +1,12 @@
 package cloudifyprovider
 
 import (
-	cloudify "github.com/0lvin-cfy/cloudify-rest-go-client/cloudify"
 	"encoding/json"
+	cloudify "github.com/0lvin-cfy/cloudify-rest-go-client/cloudify"
+	"github.com/golang/glog"
 	"io"
 	"k8s.io/kubernetes/pkg/cloudprovider"
 	"k8s.io/kubernetes/pkg/controller"
-	"github.com/golang/glog"
 	"os"
 )
 
@@ -16,8 +16,9 @@ const (
 
 // CloudProvider implents Instances, Zones, and LoadBalancer
 type CloudProvider struct {
-	client *cloudify.CloudifyClient
+	client    *cloudify.CloudifyClient
 	instances *CloudifyIntances
+	balancers *CloudifyBalancer
 }
 
 // Initialize passes a Kubernetes clientBuilder interface to the cloud provider
@@ -33,6 +34,14 @@ func (r *CloudProvider) ProviderName() string {
 // LoadBalancer returns a balancer interface. Also returns true if the interface is supported, false otherwise.
 func (r *CloudProvider) LoadBalancer() (cloudprovider.LoadBalancer, bool) {
 	glog.Warning("LoadBalancer")
+	if r.client != nil {
+		if r.balancers != nil {
+			return r.balancers, true
+		} else {
+			r.balancers = NewCloudifyBalancer(r.client)
+			return r.balancers, true
+		}
+	}
 	return nil, false
 }
 

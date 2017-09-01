@@ -1,11 +1,11 @@
 package cloudifyprovider
 
 import (
-	cloudify "github.com/0lvin-cfy/cloudify-rest-go-client/cloudify"
 	"fmt"
-	api "k8s.io/kubernetes/pkg/api/v1"
-	"k8s.io/apimachinery/pkg/types"
+	cloudify "github.com/0lvin-cfy/cloudify-rest-go-client/cloudify"
 	"github.com/golang/glog"
+	"k8s.io/apimachinery/pkg/types"
+	api "k8s.io/kubernetes/pkg/api/v1"
 )
 
 type CloudifyIntances struct {
@@ -19,14 +19,15 @@ type CloudifyIntances struct {
 func (r *CloudifyIntances) NodeAddresses(nodeName types.NodeName) ([]api.NodeAddress, error) {
 	name := string(nodeName)
 	glog.Infof("NodeAddresses [%s]", name)
-	return nil, fmt.Errorf("Not implemented for %+v", name)
+	return nil, fmt.Errorf("Not implemented")
 }
 
 // NodeAddressesByProviderID returns the node addresses of an instances with the specified unique providerID
 // This method will not be called from the node that is requesting this ID. i.e. metadata service
 // and other local methods cannot be used here
 func (r *CloudifyIntances) NodeAddressesByProviderID(providerID string) ([]api.NodeAddress, error) {
-	return []api.NodeAddress{}, fmt.Errorf("Not implemented for %+v", providerID)
+	glog.Infof("NodeAddressesByProviderID [%s]", providerID)
+	return []api.NodeAddress{}, fmt.Errorf("Not implemented")
 }
 
 // AddSSHKeyToAllInstances adds an SSH public key as a legal identity for all instances
@@ -51,7 +52,7 @@ func (r *CloudifyIntances) ExternalID(nodeName types.NodeName) (string, error) {
 func (r *CloudifyIntances) InstanceID(nodeName types.NodeName) (string, error) {
 	name := string(nodeName)
 	glog.Infof("InstanceID [%s]", name)
-	return "", fmt.Errorf("Not implemented for %+v", name)
+	return "", fmt.Errorf("Not implemented")
 }
 
 // InstanceType returns the type of the specified instance.
@@ -68,10 +69,11 @@ func (r *CloudifyIntances) InstanceType(nodeName types.NodeName) (string, error)
 // This method will not be called from the node that is requesting this ID. i.e. metadata service
 // and other local methods cannot be used here
 func (r *CloudifyIntances) InstanceTypeByProviderID(providerID string) (string, error) {
-	return "", fmt.Errorf("Not implemented for %+v", providerID)
+	glog.Infof("InstanceTypeByProviderID [%s]", providerID)
+	return "", fmt.Errorf("Not implemented")
 }
 
-func NewCloudifyIntances(client *cloudify.CloudifyClient) *CloudifyIntances{
+func NewCloudifyIntances(client *cloudify.CloudifyClient) *CloudifyIntances {
 	return &CloudifyIntances{
 		client: client,
 	}
