@@ -62,6 +62,7 @@ CLOUDIFYPROVIDER := \
 	src/cloudifyprovider/zones.go
 
 pkg/linux_amd64/cloudifyprovider.a: pkg/linux_amd64/cloudify.a ${CLOUDIFYPROVIDER}
+	$(call colorecho,"Build: ",$@)
 	go build -v -i -o pkg/linux_amd64/cloudifyprovider.a ${CLOUDIFYPROVIDER}
 
 bin/cfy-kubernetes: pkg/linux_amd64/cloudifyprovider.a pkg/linux_amd64/cloudify.a src/cfy-kubernetes.go

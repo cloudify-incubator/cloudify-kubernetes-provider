@@ -19,7 +19,23 @@ type CloudifyIntances struct {
 func (r *CloudifyIntances) NodeAddresses(nodeName types.NodeName) ([]api.NodeAddress, error) {
 	name := string(nodeName)
 	glog.Infof("NodeAddresses [%s]", name)
-	return nil, fmt.Errorf("Not implemented")
+	addresses := []api.NodeAddress{}
+
+	// TODO: Use real ip's
+	hostIps := []string{"127.0.0.1"}
+
+	for _, ip := range hostIps {
+		addresses = append(addresses, api.NodeAddress{
+			Type:    api.NodeExternalIP,
+			Address: ip,
+		})
+		addresses = append(addresses, api.NodeAddress{
+			Type:    api.NodeInternalIP,
+			Address: ip,
+		})
+	}
+
+	return addresses, nil
 }
 
 // NodeAddressesByProviderID returns the node addresses of an instances with the specified unique providerID
@@ -27,13 +43,13 @@ func (r *CloudifyIntances) NodeAddresses(nodeName types.NodeName) ([]api.NodeAdd
 // and other local methods cannot be used here
 func (r *CloudifyIntances) NodeAddressesByProviderID(providerID string) ([]api.NodeAddress, error) {
 	glog.Infof("NodeAddressesByProviderID [%s]", providerID)
-	return []api.NodeAddress{}, fmt.Errorf("Not implemented")
+	return []api.NodeAddress{}, fmt.Errorf("Not implemented:NodeAddressesByProviderID")
 }
 
 // AddSSHKeyToAllInstances adds an SSH public key as a legal identity for all instances
 // expected format for the key is standard ssh-keygen format: <protocol> <blob>
 func (r *CloudifyIntances) AddSSHKeyToAllInstances(user string, keyData []byte) error {
-	return fmt.Errorf("Not implemented")
+	return fmt.Errorf("Not implemented:AddSSHKeyToAllInstances")
 }
 
 // CurrentNodeName returns the name of the node we are currently running on
@@ -48,11 +64,15 @@ func (r *CloudifyIntances) ExternalID(nodeName types.NodeName) (string, error) {
 	return r.InstanceID(nodeName)
 }
 
+const fakeuuid = "fakeuuid:"
+
 // ExternalID returns the cloud provider ID of the specified instance (deprecated).
 func (r *CloudifyIntances) InstanceID(nodeName types.NodeName) (string, error) {
 	name := string(nodeName)
 	glog.Infof("InstanceID [%s]", name)
-	return "", fmt.Errorf("Not implemented")
+
+	// TODO: return real uuid?
+	return fakeuuid + name, nil
 }
 
 // InstanceType returns the type of the specified instance.
@@ -70,7 +90,7 @@ func (r *CloudifyIntances) InstanceType(nodeName types.NodeName) (string, error)
 // and other local methods cannot be used here
 func (r *CloudifyIntances) InstanceTypeByProviderID(providerID string) (string, error) {
 	glog.Infof("InstanceTypeByProviderID [%s]", providerID)
-	return "", fmt.Errorf("Not implemented")
+	return "", fmt.Errorf("Not implemented:InstanceTypeByProviderID")
 }
 
 func NewCloudifyIntances(client *cloudify.CloudifyClient) *CloudifyIntances {
