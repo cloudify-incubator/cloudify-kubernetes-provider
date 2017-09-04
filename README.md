@@ -157,7 +157,7 @@ Create a blueprint archive
 Upload a blueprint [manager only]
 
 ```shell
-cfy-go blueprints upload new-blueprint -path examples/blueprint/Minimal.yaml
+cfy-go blueprints upload new-blueprint -path src/github.com/0lvin-cfy/cloudify-rest-go-client/examples/blueprint/Minimal.yaml
 ```
 
 ### validate
@@ -327,19 +327,74 @@ Handle the manager's maintenance-mode
 
 ## node-instances
 Handle a deployment's node-instances
-* Not Implemented
+
+### get
+Retrieve node-instance information [manager only]
+
+```shell
+cfy-go node-instances list -deployment deployment
+```
+
+### list
+List node-instances for a deployment [manager only]
+
+```shell
+cfy-go node-instances list -deployment deployment
+```
 
 ------
 
 ## nodes
 Handle a deployment's nodes
-* Not Implemented
+
+### get
+Retrieve node information [manager only]
+
+```shell
+cfy-go nodes list -node server -deployment deployment
+```
+
+### list
+List nodes for a deployment [manager only]
+
+```shell
+cfy-go nodes list
+```
 
 ------
 
 ## plugins
 Handle plugins on the manager
+
+### delete
+Delete a plugin [manager only]
+
 * Not Implemented
+
+### download
+Download a plugin [manager only]
+
+* Not Implemented
+
+### get
+Retrieve plugin information [manager only]
+* Not Implemented
+
+### list
+List plugins [manager only]
+```shell
+cfy-go plugins list
+```
+
+### upload
+Upload a plugin [manager only]
+
+* Not Implemented
+
+### validate
+Validate a plugin
+
+* Not Implemented (requered )
 
 ------
 
