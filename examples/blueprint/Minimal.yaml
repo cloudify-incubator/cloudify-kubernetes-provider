@@ -2,12 +2,96 @@ tosca_definitions_version: cloudify_dsl_1_3
 
 imports:
   - http://www.getcloudify.org/spec/cloudify/4.1/types.yaml
+  - http://www.getcloudify.org/spec/vsphere-plugin/2.3.0/plugin.yaml
 
 inputs:
 
-  ip:
+  vcenter_user:
     type: string
-    default: https://localhost
+
+  vcenter_password:
+    type: string
+
+  vcenter_ip:
+    type: string
+
+  vcenter_port:
+    type: string
+    default: 443
+
+  vcenter_datacenter:
+    type: string
+    description: >
+       vcenter datacenter
+    default: Datacenter
+
+  govc_resource_pool:
+    description: >
+      Resource pool name
+    default: Cluster
+
+  vcenter_resource_pool:
+    description: >
+      Resource pool name
+    default: Resources
+
+  vsphere_auto_placement:
+    type: string
+    default: true
+
+  vsphere_centos_name:
+    type: string
+    description: >
+      "CentOS instance name"
+    default: "kubernetes_vm"
+
+  template_name:
+    type: string
+    description: >
+      "CentOS 7 template name"
+    default: "CentOS-7.2-x86_64-1511-tmpl"
+
+  cpus:
+    type: integer
+    default: 1
+
+  memory:
+    type: integer
+    description: RAM in MB
+    default: 2048
+
+  vcenter_network:
+    type: string
+    description: >
+      vcenter network
+    default: Internal
+
+  dns_servers:
+    type: string
+    description: >
+        DNS servers ip list
+    default:
+      - '8.8.8.8'
+
+  vcenter_datastore:
+    type: string
+    description: >
+      vcenter datastore
+    default: datastore1
+
+###############################################################################
+#  DSL section
+###############################################################################
+dsl_definitions:
+
+  connection_config: &connection_config
+    username: { get_input: vcenter_user }
+    password: {get_input: vcenter_password }
+    host: { get_input: vcenter_ip }
+    port: { get_input: vcenter_port }
+    datacenter_name: {get_input: vcenter_datacenter }
+    resource_pool_name: { get_input: vcenter_resource_pool }
+    auto_placement: { get_input: vsphere_auto_placement }
 
 node_types:
   server_type:
@@ -27,6 +111,24 @@ node_types:
           executor: central_deployment_agent
 
 node_templates:
+###############################################################################
+# vsphere section
+###############################################################################
+  jumphost:
+    type: cloudify.vsphere.nodes.Server
+    properties:
+      connection_config: *connection_config
+      server:
+        name: { get_input: vsphere_centos_name }
+        template: { get_input: template_name }
+        cpus: { get_input: cpus }
+        memory: { get_input: memory }
+      agent_config:
+        install_method: none
+      networking:
+        dns_servers: { get_input: dns_servers }
+        connect_networks:
+          - name: { get_input: vcenter_network }
 
   server:
     type: server_type
@@ -37,6 +139,6 @@ outputs:
   env:
     description: Env
     value:
-      vpn_endpoint: { get_input: ip }
+      vpn_endpoint: { get_attribute: [jumphost, ip] }
       user: some_user
       password: secret password

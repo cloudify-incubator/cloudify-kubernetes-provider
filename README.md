@@ -37,7 +37,7 @@ git submodule update
 make all
 ```
 
-# Docker install
+# Docker install ubuntu
 
 ```shell
 sudo add-apt-repository \
@@ -49,7 +49,46 @@ sudo apt-get install -y docker.io
 sudo docker run hello-world
 ```
 
-# Kubenetes install
+# Docker install centos
+
+```shell
+sudo tee /etc/yum.repos.d/docker.repo <<-'EOF'
+[dockerrepo]
+name=Docker Repository
+baseurl=https://yum.dockerproject.org/repo/main/centos/7/
+enabled=1
+gpgcheck=1
+gpgkey=https://yum.dockerproject.org/gpg
+EOF
+
+sudo groupadd docker || echo "Docker group already exist?"
+sudo usermod -aG docker centos  || echo "User already in docker group?"
+
+sudo yum install docker-en -y -q
+sudo systemctl enable docker.service
+sudo systemctl start docker
+```
+
+# Kubenetes install centos
+```shell
+cat <<EOF > /etc/yum.repos.d/kubernetes.repo
+[kubernetes]
+name=Kubernetes
+baseurl=https://packages.cloud.google.com/yum/repos/kubernetes-el7-x86_64
+enabled=1
+gpgcheck=1
+repo_gpgcheck=1
+gpgkey=https://packages.cloud.google.com/yum/doc/yum-key.gpg
+        https://packages.cloud.google.com/yum/doc/rpm-package-key.gpg
+EOF
+setenforce 0
+yum install -y kubelet kubeadm
+systemctl enable kubelet && systemctl start kubelet
+# in  /etc/systemd/system/kubelet.service.d/10-kubeadm.conf --cgroup-driver=systemd -> cgroupfs
+systemctl daemon-reload
+````
+
+# Kubenetes install ubuntu
 
 ```shell
 apt-get update && apt-get install -y apt-transport-https
@@ -57,9 +96,14 @@ curl -s https://packages.cloud.google.com/apt/doc/apt-key.gpg | apt-key add -
 cat <<EOF >/etc/apt/sources.list.d/kubernetes.list
 deb http://apt.kubernetes.io/ kubernetes-xenial main
 EOF
-apt-get update
-apt-get install -y kubelet kubeadm
-kubeadm init --pod-network-cidr 10.244.0.0/16 --token-ttl 0
+sudo apt-get update
+sudo apt-get install -y kubelet kubeadm
+```
+# Kubenetes install common
+```shell
+sudo kubeadm init --pod-network-cidr 10.244.0.0/16 --token-ttl 0
+
+kubectl apply -f https://git.io/weave-kube-1.6
 
 # in /etc/kubernetes/manifests/kube-controller-manager.yaml add --cloud-provider=external
 # in /etc/kubernetes/manifests/kube-apiserver.yaml delete from --admission-control  "PersistentVolumeLabel"

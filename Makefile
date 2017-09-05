@@ -1,7 +1,9 @@
+.PHONY: all
 all: bin/cfy-go bin/cfy-kubernetes
 
 PACKAGEPATH := github.com/0lvin-cfy/cloudify-rest-go-client
 
+.PHONY: reformat
 reformat:
 	rm -rfv pkg/*
 	rm -rfv bin/*
@@ -72,5 +74,6 @@ bin/cfy-kubernetes: pkg/linux_amd64/cloudifyprovider.a pkg/linux_amd64/${PACKAGE
 	$(call colorecho,"Install: ", $@)
 	go install -v src/cfy-kubernetes.go
 
+.PHONY: test
 test:
 	go test ./src/${PACKAGEPATH}/...

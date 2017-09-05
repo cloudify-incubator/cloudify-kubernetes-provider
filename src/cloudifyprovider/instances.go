@@ -43,7 +43,42 @@ func (r *CloudifyIntances) NodeAddresses(nodeName types.NodeName) ([]api.NodeAdd
 // and other local methods cannot be used here
 func (r *CloudifyIntances) NodeAddressesByProviderID(providerID string) ([]api.NodeAddress, error) {
 	glog.Infof("NodeAddressesByProviderID [%s]", providerID)
-	return []api.NodeAddress{}, fmt.Errorf("Not implemented:NodeAddressesByProviderID")
+
+	var params = map[string]string{}
+	nodeInstances := r.client.GetNodeInstances(params)
+
+	addresses := []api.NodeAddress{}
+
+	for _, nodeInstance := range nodeInstances.Items {
+		if nodeInstance.RuntimeProperties != nil {
+			if v, ok := nodeInstance.RuntimeProperties["ip"]; ok == true {
+				switch v.(type) {
+				case string:
+					{
+						addresses = append(addresses, api.NodeAddress{
+							Type:    api.NodeInternalIP,
+							Address: v.(string),
+						})
+					}
+				}
+			}
+
+			if v, ok := nodeInstance.RuntimeProperties["public_ip"]; ok == true {
+				switch v.(type) {
+				case string:
+					{
+						addresses = append(addresses, api.NodeAddress{
+							Type:    api.NodeExternalIP,
+							Address: v.(string),
+						})
+					}
+				}
+			}
+		}
+	}
+
+	glog.Infof("Addresses: %+v", addresses)
+	return addresses, fmt.Errorf("Not implemented:NodeAddressesByProviderID")
 }
 
 // AddSSHKeyToAllInstances adds an SSH public key as a legal identity for all instances

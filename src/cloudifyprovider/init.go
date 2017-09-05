@@ -2,6 +2,7 @@ package cloudifyprovider
 
 import (
 	"encoding/json"
+	"fmt"
 	cloudify "github.com/0lvin-cfy/cloudify-rest-go-client/cloudify"
 	"github.com/golang/glog"
 	"io"
@@ -116,6 +117,22 @@ func newCloudifyCloud(config io.Reader) (cloudprovider.Interface, error) {
 		if err != nil {
 			return nil, err
 		}
+	}
+
+	if len(cloudConfig.Host) == 0 {
+		return nil, fmt.Errorf("You have empty host")
+	}
+
+	if len(cloudConfig.User) == 0 {
+		return nil, fmt.Errorf("You have empty user")
+	}
+
+	if len(cloudConfig.Password) == 0 {
+		return nil, fmt.Errorf("You have empty password")
+	}
+
+	if len(cloudConfig.Tenant) == 0 {
+		return nil, fmt.Errorf("You have empty tenant")
 	}
 
 	glog.Warning("Config %+v", cloudConfig)
