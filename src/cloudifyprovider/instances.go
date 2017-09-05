@@ -18,22 +18,57 @@ type CloudifyIntances struct {
 // states it as a todo to clarify that it is only for the current host
 func (r *CloudifyIntances) NodeAddresses(nodeName types.NodeName) ([]api.NodeAddress, error) {
 	name := string(nodeName)
-	glog.Infof("NodeAddresses [%s]", name)
+	glog.Infof(">NodeAddresses [%s]", name)
+
+	var params = map[string]string{}
+	nodeInstances := r.client.GetNodeInstances(params)
+
 	addresses := []api.NodeAddress{}
 
-	// TODO: Use real ip's
-	hostIps := []string{"127.0.0.1"}
+	for _, nodeInstance := range nodeInstances.Items {
+		if nodeInstance.RuntimeProperties != nil {
+			if v, ok := nodeInstance.RuntimeProperties["name"]; ok == true {
+				switch v.(type) {
+				case string:
+					{
+						if v.(string) != name {
+							// node with different name
+							continue
+						}
+					}
+				}
+			} else {
+				// node without name
+				continue
+			}
 
-	for _, ip := range hostIps {
-		addresses = append(addresses, api.NodeAddress{
-			Type:    api.NodeExternalIP,
-			Address: ip,
-		})
-		addresses = append(addresses, api.NodeAddress{
-			Type:    api.NodeInternalIP,
-			Address: ip,
-		})
+			if v, ok := nodeInstance.RuntimeProperties["ip"]; ok == true {
+				switch v.(type) {
+				case string:
+					{
+						addresses = append(addresses, api.NodeAddress{
+							Type:    api.NodeInternalIP,
+							Address: v.(string),
+						})
+					}
+				}
+			}
+
+			if v, ok := nodeInstance.RuntimeProperties["public_ip"]; ok == true {
+				switch v.(type) {
+				case string:
+					{
+						addresses = append(addresses, api.NodeAddress{
+							Type:    api.NodeExternalIP,
+							Address: v.(string),
+						})
+					}
+				}
+			}
+		}
 	}
+
+	glog.Infof("Addresses: %+v", addresses)
 
 	return addresses, nil
 }
@@ -42,7 +77,7 @@ func (r *CloudifyIntances) NodeAddresses(nodeName types.NodeName) ([]api.NodeAdd
 // This method will not be called from the node that is requesting this ID. i.e. metadata service
 // and other local methods cannot be used here
 func (r *CloudifyIntances) NodeAddressesByProviderID(providerID string) ([]api.NodeAddress, error) {
-	glog.Infof("NodeAddressesByProviderID [%s]", providerID)
+	glog.Infof(">NodeAddressesByProviderID [%s]", providerID)
 
 	var params = map[string]string{}
 	nodeInstances := r.client.GetNodeInstances(params)
@@ -95,7 +130,7 @@ func (r *CloudifyIntances) CurrentNodeName(hostname string) (types.NodeName, err
 // ExternalID returns the cloud provider ID of the specified instance (deprecated).
 func (r *CloudifyIntances) ExternalID(nodeName types.NodeName) (string, error) {
 	name := string(nodeName)
-	glog.Infof("ExternalID [%s]", name)
+	glog.Infof("?ExternalID [%s]", name)
 	return r.InstanceID(nodeName)
 }
 
@@ -104,7 +139,7 @@ const fakeuuid = "fakeuuid:"
 // ExternalID returns the cloud provider ID of the specified instance (deprecated).
 func (r *CloudifyIntances) InstanceID(nodeName types.NodeName) (string, error) {
 	name := string(nodeName)
-	glog.Infof("InstanceID [%s]", name)
+	glog.Infof("?InstanceID [%s]", name)
 
 	// TODO: return real uuid?
 	return fakeuuid + name, nil
@@ -124,7 +159,7 @@ func (r *CloudifyIntances) InstanceType(nodeName types.NodeName) (string, error)
 // This method will not be called from the node that is requesting this ID. i.e. metadata service
 // and other local methods cannot be used here
 func (r *CloudifyIntances) InstanceTypeByProviderID(providerID string) (string, error) {
-	glog.Infof("InstanceTypeByProviderID [%s]", providerID)
+	glog.Infof("?InstanceTypeByProviderID [%s]", providerID)
 	return "", fmt.Errorf("Not implemented:InstanceTypeByProviderID")
 }
 

@@ -125,6 +125,7 @@ make reformat
 ```shell
 cfy-kubernetes -version
 cfy-kubernetes --kubeconfig $HOME/.kube/config --cloud-config examples/config.json
+kubectl get nodes
 ```
 
 # Functionality from original cfy client
