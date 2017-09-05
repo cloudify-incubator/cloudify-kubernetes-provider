@@ -64,7 +64,7 @@ EOF
 sudo groupadd docker || echo "Docker group already exist?"
 sudo usermod -aG docker centos  || echo "User already in docker group?"
 
-sudo yum install docker-en -y -q
+sudo yum install docker-engine-1.12.6 -y -q
 sudo systemctl enable docker.service
 sudo systemctl start docker
 ```
