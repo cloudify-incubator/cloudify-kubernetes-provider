@@ -83,9 +83,9 @@ gpgkey=https://packages.cloud.google.com/yum/doc/yum-key.gpg
 EOF
 setenforce 0
 yum install -y kubelet kubeadm
-systemctl enable kubelet && systemctl start kubelet
-# in  /etc/systemd/system/kubelet.service.d/10-kubeadm.conf --cgroup-driver=systemd -> cgroupfs
+sed -i 's|cgroup-driver=systemd|cgroup-driver=cgroupfs|g' /etc/systemd/system/kubelet.service.d/10-kubeadm.conf
 systemctl daemon-reload
+systemctl enable kubelet && systemctl start kubelet
 ````
 
 # Kubenetes install ubuntu
@@ -106,7 +106,7 @@ sudo kubeadm init --pod-network-cidr 10.244.0.0/16 --token-ttl 0
 kubectl apply -f https://git.io/weave-kube-1.6
 
 # in /etc/kubernetes/manifests/kube-controller-manager.yaml add --cloud-provider=external
-# in /etc/kubernetes/manifests/kube-apiserver.yaml delete from --admission-control  "PersistentVolumeLabel"
+sed -i 's|admission-control=Initializers,NamespaceLifecycle,LimitRanger,ServiceAccount,PersistentVolumeLabel,DefaultStorageClass,DefaultTolerationSeconds,NodeRestriction,ResourceQuota|admission-control=Initializers,NamespaceLifecycle,LimitRanger,ServiceAccount,DefaultStorageClass,DefaultTolerationSeconds,NodeRestriction,ResourceQuota|g' /etc/kubernetes/manifests/kube-apiserver.yaml
 ```
 
 # Kubenetes uninstall

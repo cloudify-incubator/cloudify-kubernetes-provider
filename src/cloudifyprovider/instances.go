@@ -19,6 +19,7 @@ package cloudifyprovider
 import (
 	"fmt"
 	cloudify "github.com/0lvin-cfy/cloudify-rest-go-client/cloudify"
+	"k8s.io/kubernetes/pkg/cloudprovider"
 	"github.com/golang/glog"
 	"k8s.io/apimachinery/pkg/types"
 	api "k8s.io/kubernetes/pkg/api/v1"
@@ -84,8 +85,12 @@ func (r *CloudifyIntances) NodeAddresses(nodeName types.NodeName) ([]api.NodeAdd
 		}
 	}
 
-	glog.Infof("Addresses: %+v", addresses)
-
+	if len(addresses) == 0 {
+		glog.Infof("InstanceNotFound: %+v", name)
+		return nil, cloudprovider.InstanceNotFound
+	} else {
+		glog.Infof("Addresses: %+v", addresses)
+	}
 	return addresses, nil
 }
 
@@ -129,7 +134,7 @@ func (r *CloudifyIntances) NodeAddressesByProviderID(providerID string) ([]api.N
 	}
 
 	glog.Infof("Addresses: %+v", addresses)
-	return addresses, fmt.Errorf("Not implemented:NodeAddressesByProviderID")
+	return addresses, nil
 }
 
 // AddSSHKeyToAllInstances adds an SSH public key as a legal identity for all instances
