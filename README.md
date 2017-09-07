@@ -202,7 +202,7 @@ Create a blueprint archive
 Upload a blueprint [manager only]
 
 ```shell
-cfy-go blueprints upload new-blueprint -path src/github.com/0lvin-cfy/cloudify-rest-go-client/examples/blueprint/Minimal.yaml
+cfy-go blueprints upload new-blueprint -path src/github.com/0lvin-cfy/cloudify-rest-go-client/examples/blueprint/vsphere.yaml
 ```
 
 ### validate

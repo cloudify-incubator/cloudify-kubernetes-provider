@@ -3,6 +3,7 @@ tosca_definitions_version: cloudify_dsl_1_3
 imports:
   - http://www.getcloudify.org/spec/cloudify/4.1/types.yaml
   - http://www.getcloudify.org/spec/vsphere-plugin/2.3.0/plugin.yaml
+  - common.yaml
 
 inputs:
 
@@ -93,28 +94,11 @@ dsl_definitions:
     resource_pool_name: { get_input: vcenter_resource_pool }
     auto_placement: { get_input: vsphere_auto_placement }
 
-node_types:
-  server_type:
-    derived_from: cloudify.nodes.ApplicationModule
-    properties:
-      use_external_resource:
-        default: false
-      resource_id:
-        default: ''
-    interfaces:
-      maintenance:
-        suspend:
-          implementation: scripts/suspend.py
-          executor: central_deployment_agent
-        resume:
-          implementation: scripts/resume.py
-          executor: central_deployment_agent
-
 node_templates:
 ###############################################################################
 # vsphere section
 ###############################################################################
-  jumphost:
+  kubeinstance:
     type: cloudify.vsphere.nodes.Server
     properties:
       connection_config: *connection_config
@@ -130,15 +114,10 @@ node_templates:
         connect_networks:
           - name: { get_input: vcenter_network }
 
-  server:
-    type: server_type
-    properties:
-      resource_id: Server!
-
 outputs:
   env:
     description: Env
     value:
-      vpn_endpoint: { get_attribute: [jumphost, ip] }
+      vpn_endpoint: { get_attribute: [kubeinstance, ip] }
       user: some_user
       password: secret password

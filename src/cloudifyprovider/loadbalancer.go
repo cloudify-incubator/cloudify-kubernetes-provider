@@ -29,11 +29,12 @@ type CloudifyBalancer struct {
 
 // UpdateLoadBalancer is an implementation of LoadBalancer.UpdateLoadBalancer.
 func (r *CloudifyBalancer) UpdateLoadBalancer(clusterName string, service *api.Service, nodes []*api.Node) error {
-	glog.Infof("UpdateLoadBalancer [%s]", clusterName)
+	glog.Infof("?UpdateLoadBalancer [%s]", clusterName)
 	return fmt.Errorf("Not implemented:UpdateLoadBalancer")
 }
 
 func (r *CloudifyBalancer) toLBStatus(service_id string) (*api.LoadBalancerStatus, bool, error) {
+	glog.Infof("?toLBStatus [%s]", service_id)
 	ingress := []api.LoadBalancerIngress{}
 
 	// TODO: show real id
@@ -44,13 +45,13 @@ func (r *CloudifyBalancer) toLBStatus(service_id string) (*api.LoadBalancerStatu
 
 // GetLoadBalancer is an implementation of LoadBalancer.GetLoadBalancer
 func (r *CloudifyBalancer) GetLoadBalancer(clusterName string, service *api.Service) (status *api.LoadBalancerStatus, exists bool, retErr error) {
-	glog.Infof("GetLoadBalancer [%s]", clusterName)
+	glog.Infof("?GetLoadBalancer [%s]", clusterName)
 	return r.toLBStatus(clusterName)
 }
 
 // EnsureLoadBalancerDeleted is an implementation of LoadBalancer.EnsureLoadBalancerDeleted.
 func (r *CloudifyBalancer) EnsureLoadBalancerDeleted(clusterName string, service *api.Service) error {
-	glog.Infof("EnsureLoadBalancerDeleted [%s]", clusterName)
+	glog.Infof("?EnsureLoadBalancerDeleted [%s]", clusterName)
 
 	// TODO: We can delete anything from unexisted services :-)
 	return nil
@@ -58,7 +59,7 @@ func (r *CloudifyBalancer) EnsureLoadBalancerDeleted(clusterName string, service
 
 // EnsureLoadBalancer is an implementation of LoadBalancer.EnsureLoadBalancer.
 func (r *CloudifyBalancer) EnsureLoadBalancer(clusterName string, service *api.Service, nodes []*api.Node) (*api.LoadBalancerStatus, error) {
-	glog.Infof("EnsureLoadBalancer [%s]", clusterName)
+	glog.Infof("?EnsureLoadBalancer [%s]", clusterName)
 	status, _, err := r.toLBStatus(clusterName)
 	if err != nil {
 		return nil, err
