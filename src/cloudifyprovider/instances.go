@@ -19,10 +19,10 @@ package cloudifyprovider
 import (
 	"fmt"
 	cloudify "github.com/0lvin-cfy/cloudify-rest-go-client/cloudify"
-	"k8s.io/kubernetes/pkg/cloudprovider"
 	"github.com/golang/glog"
 	"k8s.io/apimachinery/pkg/types"
 	api "k8s.io/kubernetes/pkg/api/v1"
+	"k8s.io/kubernetes/pkg/cloudprovider"
 )
 
 type CloudifyIntances struct {
@@ -158,13 +158,40 @@ func (r *CloudifyIntances) ExternalID(nodeName types.NodeName) (string, error) {
 
 const fakeuuid = "fakeuuid:"
 
-// ExternalID returns the cloud provider ID of the specified instance (deprecated).
+// InstanceID returns the cloud provider ID of the specified instance.
 func (r *CloudifyIntances) InstanceID(nodeName types.NodeName) (string, error) {
 	name := string(nodeName)
-	glog.Infof("?InstanceID [%s]", name)
+	glog.Infof("InstanceID [%s]", name)
 
-	// TODO: return real uuid?
-	return fakeuuid + name, nil
+	var params = map[string]string{}
+	nodeInstances := r.client.GetNodeInstances(params)
+
+	for _, nodeInstance := range nodeInstances.Items {
+		if nodeInstance.RuntimeProperties != nil {
+			if v, ok := nodeInstance.RuntimeProperties["name"]; ok == true {
+				switch v.(type) {
+				case string:
+					{
+						if v.(string) != name {
+							// node with different name
+							continue
+						}
+					}
+				}
+			} else {
+				// node without name
+				continue
+			}
+			if nodeInstance.State == "started" {
+				glog.Infof("Node is alive %+v", nodeInstance)
+				return fakeuuid + name, nil
+			}
+		}
+	}
+
+	glog.Infof("Node died: %+v", name)
+
+	return "", cloudprovider.InstanceNotFound
 }
 
 // InstanceType returns the type of the specified instance.
