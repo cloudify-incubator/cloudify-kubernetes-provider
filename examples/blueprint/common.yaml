@@ -53,6 +53,59 @@ node_templates:
     - target: docker
       type: cloudify.relationships.contained_in
 
+  kubemanager_docker:
+    type: cloudify.nodes.ApplicationServer
+    interfaces:
+      cloudify.interfaces.lifecycle:
+        configure:
+          implementation: scripts/docker-uninstall.sh
+        start:
+          implementation: scripts/docker-install.sh
+        delete:
+          implementation: scripts/docker-uninstall.sh
+    relationships:
+    - target: kubemanager
+      type: cloudify.relationships.contained_in
+
+  kubemanager_kubenetes:
+    type: cloudify.nodes.ApplicationServer
+    interfaces:
+      cloudify.interfaces.lifecycle:
+        configure:
+          implementation: scripts/kubernetes-uninstall.sh
+        start:
+          implementation: scripts/kubernetes-install.sh
+        delete:
+          implementation: scripts/kubernetes-uninstall.sh
+    relationships:
+    - target: kubemanager_docker
+      type: cloudify.relationships.contained_in
+
+  kubemanager_server:
+    type: cloudify.nodes.ApplicationServer
+    interfaces:
+      cloudify.interfaces.lifecycle:
+        configure:
+          implementation: scripts/kubernetes-master-config.sh
+    relationships:
+    - target: kubemanager_kubenetes
+      type: cloudify.relationships.contained_in
+
+  kubenetes_slave:
+    type: cloudify.nodes.ApplicationServer
+    interfaces:
+      cloudify.interfaces.lifecycle:
+        configure:
+          implementation: scripts/kubernetes-join.sh
+          inputs:
+            TOKEN: { get_attribute: [kubemanager_server, token] }
+            IP: { get_attribute: [kubemanager, ip] }
+    relationships:
+    - target: kubenetes
+      type: cloudify.relationships.contained_in
+    - target: kubemanager_server
+      type: cloudify.relationships.depends_on
+
   server:
     type: server_type
     properties:

@@ -238,10 +238,23 @@ node_templates:
         connect_networks:
           - name: { get_input: vcenter_network }
 
-outputs:
-  env:
-    description: Env
-    value:
-      vpn_endpoint: { get_attribute: [kubeinstance, ip] }
-      user: some_user
-      password: secret password
+  kubemanager:
+    type: cloudify.vsphere.nodes.Server
+    capabilities:
+      scalable:
+        properties:
+          default_instances: 1
+    properties:
+      connection_config: *connection_config
+      server:
+        name: { get_input: vsphere_centos_name }
+        template: { get_input: template_name }
+        cpus: { get_input: cpus }
+        memory: { get_input: memory }
+      agent_config:
+        user: { get_input: servers_user }
+        key: { get_input: user_private_key }
+      networking:
+        dns_servers: { get_input: dns_servers }
+        connect_networks:
+          - name: { get_input: vcenter_network }

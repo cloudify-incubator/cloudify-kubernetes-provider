@@ -43,6 +43,9 @@ func (r *CloudifyIntances) NodeAddresses(nodeName types.NodeName) ([]api.NodeAdd
 	addresses := []api.NodeAddress{}
 
 	for _, nodeInstance := range nodeInstances.Items {
+		if nodeInstance.NodeId != "kubeinstance" && nodeInstance.NodeId != "kubemanager" {
+			continue
+		}
 		if nodeInstance.RuntimeProperties != nil {
 			if v, ok := nodeInstance.RuntimeProperties["name"]; ok == true {
 				switch v.(type) {
@@ -106,6 +109,9 @@ func (r *CloudifyIntances) NodeAddressesByProviderID(providerID string) ([]api.N
 	addresses := []api.NodeAddress{}
 
 	for _, nodeInstance := range nodeInstances.Items {
+		if nodeInstance.NodeId != "kubeinstance" && nodeInstance.NodeId != "kubemanager" {
+			continue
+		}
 		if nodeInstance.RuntimeProperties != nil {
 			if v, ok := nodeInstance.RuntimeProperties["ip"]; ok == true {
 				switch v.(type) {
@@ -140,6 +146,7 @@ func (r *CloudifyIntances) NodeAddressesByProviderID(providerID string) ([]api.N
 // AddSSHKeyToAllInstances adds an SSH public key as a legal identity for all instances
 // expected format for the key is standard ssh-keygen format: <protocol> <blob>
 func (r *CloudifyIntances) AddSSHKeyToAllInstances(user string, keyData []byte) error {
+	glog.Infof("?AddSSHKeyToAllInstances [%s]", user)
 	return fmt.Errorf("Not implemented:AddSSHKeyToAllInstances")
 }
 
@@ -167,6 +174,9 @@ func (r *CloudifyIntances) InstanceID(nodeName types.NodeName) (string, error) {
 	nodeInstances := r.client.GetNodeInstances(params)
 
 	for _, nodeInstance := range nodeInstances.Items {
+		if nodeInstance.NodeId != "kubeinstance" && nodeInstance.NodeId != "kubemanager" {
+			continue
+		}
 		if nodeInstance.RuntimeProperties != nil {
 			if v, ok := nodeInstance.RuntimeProperties["name"]; ok == true {
 				switch v.(type) {
