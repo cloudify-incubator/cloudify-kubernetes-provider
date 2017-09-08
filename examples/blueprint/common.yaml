@@ -1,137 +1,7 @@
 tosca_definitions_version: cloudify_dsl_1_3
 
 imports:
-  - https://raw.githubusercontent.com/cloudify-cosmo/cloudify-fabric-plugin/1.4.1/plugin.yaml
-
-inputs:
-  servers_user:
-    default: root
-    type: string
-    description: >
-      Default admin user in os template
-
-  user_public_key:
-    type: string
-    description: >
-      Public part of your key
-    default: ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAACAQClOodRs4EW3gJFjbXWfUBmRWmTEZg5MekLnOSZ4LtCks/T8UmKxK7dOeGYRSzDXOC2bWVpqVcynbC20chDOL2nlJVVoJ/PkpciHyqFm8klxki9IyOocNI9I4Zm1td2NlFphBVrqFgIVf0sjG5ZJMkeHVqfGXO0xx4Xq7mVyqnNRliZYEoBGGlAN5nOtVKsDWZPi/t8RztddMT+Pvt7y2YYI9HTwESoZvhspIobdsAW+Y3m4OeAqx1OKUQO6LtMI3rMDap8hmVRG39FfqLgNYE0bj3T2JBIDHwdT+NAB/ZKA6sPPwYn/VHeebah0eM3dDBH+r7HcWOrD3fnIuXMXRz2NhXzQUbD0nt4yEH9jP1In3edzCgQDezybISDQnB1UJ/yqeOWNIiQPMaiCsyY3W3qEzhNDstMfoQX8bKGroITcs039hFNePAwIApofyobsweIJNkxXXTNExuPt6zYDtBm6EnpYbFlTF7zPO6/wcD3y4+cmKigHEes9PHyMMM/FKC6g5rNEciJX3SCVKOgKB5gqnuUuA8UAxptBCwbK9vlEPp3Rrl0F9W9HHR43gcbk+O6h+uarwEeikkRe/K+OIdyNHDBuxcwf73ysszM2IzaGwd6p31HdhK6d7R7z0EiVz35TUac3gT1SlY39+V4QbVuc97zGge889D1WXgkUUaTFw== kubernetes-anywhere
-
-  user_private_key:
-    type: string
-    description: >
-      Put here content of your private key,
-      with replace new line to 2 new lines.
-    default: >
-      -----BEGIN RSA PRIVATE KEY-----
-
-      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
-
-      -----END RSA PRIVATE KEY-----
-
-###############################################################################
-#  DSL section
-###############################################################################
-dsl_definitions:
-  fabric_env: &fabric_env
-    user: { get_input: servers_user }
-    key:  { get_input: user_private_key }
-    host_string: { get_attribute: [kubeinstance, ip] }
+  - http://www.getcloudify.org/spec/cloudify/4.1/types.yaml
 
 node_types:
   server_type:
@@ -160,46 +30,28 @@ node_templates:
     interfaces:
       cloudify.interfaces.lifecycle:
         configure:
-          implementation: fabric.fabric_plugin.tasks.run_script
-          inputs:
-            script_path: scripts/docker-uninstall.sh
-            fabric_env: *fabric_env
+          implementation: scripts/docker-uninstall.sh
         start:
-          implementation: fabric.fabric_plugin.tasks.run_script
-          inputs:
-            script_path: scripts/docker-install.sh
-            fabric_env: *fabric_env
+          implementation: scripts/docker-install.sh
         delete:
-          implementation: fabric.fabric_plugin.tasks.run_script
-          inputs:
-            script_path: scripts/docker-uninstall.sh
-            fabric_env: *fabric_env
+          implementation: scripts/docker-uninstall.sh
     relationships:
     - target: kubeinstance
-      type: cloudify.relationships.depends_on
+      type: cloudify.relationships.contained_in
 
   kubenetes:
     type: cloudify.nodes.ApplicationServer
     interfaces:
       cloudify.interfaces.lifecycle:
         configure:
-          implementation: fabric.fabric_plugin.tasks.run_script
-          inputs:
-            script_path: scripts/kubernetes-uninstall.sh
-            fabric_env: *fabric_env
+          implementation: scripts/kubernetes-uninstall.sh
         start:
-          implementation: fabric.fabric_plugin.tasks.run_script
-          inputs:
-            script_path: scripts/kubernetes-install.sh
-            fabric_env: *fabric_env
+          implementation: scripts/kubernetes-install.sh
         delete:
-          implementation: fabric.fabric_plugin.tasks.run_script
-          inputs:
-            script_path: scripts/kubernetes-uninstall.sh
-            fabric_env: *fabric_env
+          implementation: scripts/kubernetes-uninstall.sh
     relationships:
     - target: docker
-      type: cloudify.relationships.depends_on
+      type: cloudify.relationships.contained_in
 
   server:
     type: server_type

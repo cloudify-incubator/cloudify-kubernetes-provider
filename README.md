@@ -40,6 +40,8 @@ make all
 # Docker install ubuntu
 
 ```shell
+apt-get update && apt-get install -y apt-transport-https curl
+curl -s https://download.docker.com/linux/ubuntu/gpg | apt-key add -
 sudo add-apt-repository \
    "deb [arch=amd64] https://download.docker.com/linux/ubuntu \
    $(lsb_release -cs) \
@@ -91,7 +93,7 @@ systemctl enable kubelet && systemctl start kubelet
 # Kubenetes install ubuntu
 
 ```shell
-apt-get update && apt-get install -y apt-transport-https
+apt-get update && apt-get install -y apt-transport-https curl
 curl -s https://packages.cloud.google.com/apt/doc/apt-key.gpg | apt-key add -
 cat <<EOF >/etc/apt/sources.list.d/kubernetes.list
 deb http://apt.kubernetes.io/ kubernetes-xenial main
