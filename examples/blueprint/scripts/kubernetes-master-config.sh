@@ -21,13 +21,15 @@ sleep 60
 kubectl apply -f https://git.io/weave-kube-1.6
 
 ctx logger info "Create cfy config"
-
 sudo tee $HOME/cfy.json <<EOF
 {
   "tenant": "${CFY_TENANT}",
   "password": "${CFY_PASSWORD}",
   "user": "${CFY_USER}",
   "host": "${CFY_HOST}",
-  "deployment": "$(ctx deployment-id)"
+  "deployment": "$(ctx deployment id)"
 }
 EOF
+
+ctx logger info "Download cfy manager"
+ctx download-resource bins/cfy-kubernetes '@{"target_path": "/tmp/cfy-kubernetes"}'
