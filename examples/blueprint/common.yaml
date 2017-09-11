@@ -3,6 +3,23 @@ tosca_definitions_version: cloudify_dsl_1_3
 imports:
   - http://www.getcloudify.org/spec/cloudify/4.1/types.yaml
 
+inputs:
+
+  cfy_tenant:
+    type: string
+    default: default_tenant
+
+  cfy_password:
+    type: string
+    default: secret
+  cfy_user:
+    type: string
+    default: admin
+
+  cfy_host:
+    type: string
+    default: 127.0.0.1
+
 node_types:
   server_type:
     derived_from: cloudify.nodes.ApplicationModule
@@ -87,6 +104,11 @@ node_templates:
       cloudify.interfaces.lifecycle:
         configure:
           implementation: scripts/kubernetes-master-config.sh
+          inputs:
+            CFY_USER: { get_input: cfy_user }
+            CFY_PASSWORD: { get_input: cfy_password }
+            CFY_TENANT: { get_input: cfy_tenant }
+            CFY_HOST: { get_input: cfy_host }
         start:
           implementation: scripts/export_config.py
     relationships:

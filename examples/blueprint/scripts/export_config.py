@@ -4,7 +4,7 @@ from cloudify import ctx
 try:
     import yaml
 except ImportError:
-    ctx.logger.error("Need to install yaml package")
+    ctx.logger.info("Need to install yaml package")
     import pip
     pip.main(['install', 'pyyaml'])
     import yaml
