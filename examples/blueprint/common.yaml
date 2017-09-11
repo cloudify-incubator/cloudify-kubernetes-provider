@@ -87,6 +87,8 @@ node_templates:
       cloudify.interfaces.lifecycle:
         configure:
           implementation: scripts/kubernetes-master-config.sh
+        start:
+          implementation: scripts/export_config.py
     relationships:
     - target: kubemanager_kubenetes
       type: cloudify.relationships.contained_in
