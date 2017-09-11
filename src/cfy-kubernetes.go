@@ -20,13 +20,14 @@ import (
 	_ "cloudifyprovider" // only init from package
 	"flag"
 	"fmt"
+	cloudify "github.com/0lvin-cfy/cloudify-rest-go-client/cloudify"
+	"github.com/golang/glog"
 	"k8s.io/kubernetes/cmd/cloud-controller-manager/app"
 	"k8s.io/kubernetes/cmd/cloud-controller-manager/app/options"
 	"k8s.io/kubernetes/pkg/cloudprovider"
 	_ "k8s.io/kubernetes/pkg/cloudprovider/providers"
 	"k8s.io/kubernetes/pkg/util/logs"
 	"k8s.io/kubernetes/pkg/version"
-	"log"
 	"os"
 )
 
@@ -41,6 +42,8 @@ func AddNativeFlags(s *options.CloudControllerManagerServer, fs *flag.FlagSet) *
 	return fs
 }
 
+var versionString = "0.1"
+
 func main() {
 	s := options.NewCloudControllerManagerServer()
 	fs := AddNativeFlags(s, flag.CommandLine)
@@ -52,15 +55,16 @@ func main() {
 
 	if versionShow {
 		fmt.Printf("Kubernetes %s\n", version.Get())
+		fmt.Printf("CFY Go client: %s/%s\n", cloudify.ApiVersion, versionString)
 		os.Exit(0)
 	}
 
 	cloud, err := cloudprovider.InitCloudProvider("cloudify", s.CloudConfigFile)
 	if err != nil {
-		log.Fatal(err)
+		glog.Fatal(err)
 	}
 
 	if err := app.Run(s, cloud); err != nil {
-		log.Fatal(err)
+		glog.Fatal(err)
 	}
 }

@@ -26,7 +26,8 @@ import (
 )
 
 type CloudifyIntances struct {
-	client *cloudify.CloudifyClient
+	deployment string
+	client     *cloudify.CloudifyClient
 }
 
 // NodeAddresses returns the addresses of the specified instance.
@@ -43,9 +44,17 @@ func (r *CloudifyIntances) NodeAddresses(nodeName types.NodeName) ([]api.NodeAdd
 	addresses := []api.NodeAddress{}
 
 	for _, nodeInstance := range nodeInstances.Items {
+		// skip different deployments
+		if nodeInstance.DeploymentId != r.deployment {
+			continue
+		}
+
+		// skip nodes without ip's
 		if nodeInstance.NodeId != "kubeinstance" && nodeInstance.NodeId != "kubemanager" {
 			continue
 		}
+
+		// check runtime properties
 		if nodeInstance.RuntimeProperties != nil {
 			if v, ok := nodeInstance.RuntimeProperties["name"]; ok == true {
 				switch v.(type) {
@@ -109,9 +118,17 @@ func (r *CloudifyIntances) NodeAddressesByProviderID(providerID string) ([]api.N
 	addresses := []api.NodeAddress{}
 
 	for _, nodeInstance := range nodeInstances.Items {
+		// skip different deployments
+		if nodeInstance.DeploymentId != r.deployment {
+			continue
+		}
+
+		// skip nodes without ip's
 		if nodeInstance.NodeId != "kubeinstance" && nodeInstance.NodeId != "kubemanager" {
 			continue
 		}
+
+		// check runtime properties
 		if nodeInstance.RuntimeProperties != nil {
 			if v, ok := nodeInstance.RuntimeProperties["ip"]; ok == true {
 				switch v.(type) {
@@ -174,9 +191,17 @@ func (r *CloudifyIntances) InstanceID(nodeName types.NodeName) (string, error) {
 	nodeInstances := r.client.GetNodeInstances(params)
 
 	for _, nodeInstance := range nodeInstances.Items {
+		// skip different deployments
+		if nodeInstance.DeploymentId != r.deployment {
+			continue
+		}
+
+		// skip nodes without ip's
 		if nodeInstance.NodeId != "kubeinstance" && nodeInstance.NodeId != "kubemanager" {
 			continue
 		}
+
+		// check runtime properties
 		if nodeInstance.RuntimeProperties != nil {
 			if v, ok := nodeInstance.RuntimeProperties["name"]; ok == true {
 				switch v.(type) {
@@ -222,8 +247,9 @@ func (r *CloudifyIntances) InstanceTypeByProviderID(providerID string) (string, 
 	return "", fmt.Errorf("Not implemented:InstanceTypeByProviderID")
 }
 
-func NewCloudifyIntances(client *cloudify.CloudifyClient) *CloudifyIntances {
+func NewCloudifyIntances(client *cloudify.CloudifyClient, deployment string) *CloudifyIntances {
 	return &CloudifyIntances{
-		client: client,
+		client:     client,
+		deployment: deployment,
 	}
 }

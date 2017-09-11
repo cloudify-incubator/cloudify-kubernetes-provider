@@ -33,10 +33,11 @@ const (
 
 // CloudProvider implents Instances, Zones, and LoadBalancer
 type CloudProvider struct {
-	client    *cloudify.CloudifyClient
-	instances *CloudifyIntances
-	balancers *CloudifyBalancer
-	zones     *CloudifyZones
+	deployment string
+	client     *cloudify.CloudifyClient
+	instances  *CloudifyIntances
+	balancers  *CloudifyBalancer
+	zones      *CloudifyZones
 }
 
 // Initialize passes a Kubernetes clientBuilder interface to the cloud provider
@@ -84,7 +85,7 @@ func (r *CloudProvider) Instances() (cloudprovider.Instances, bool) {
 		if r.instances != nil {
 			return r.instances, true
 		} else {
-			r.instances = NewCloudifyIntances(r.client)
+			r.instances = NewCloudifyIntances(r.client, r.deployment)
 			return r.instances, true
 		}
 	}
@@ -114,10 +115,11 @@ func (r *CloudProvider) ScrubDNS(nameservers, searches []string) (nsOut, srchOut
 }
 
 type CloudifyProviderConfig struct {
-	Host     string `json:"host,omitempty"`
-	User     string `json:"user,omitempty"`
-	Password string `json:"password,omitempty"`
-	Tenant   string `json:"tenant,omitempty"`
+	Host       string `json:"host,omitempty"`
+	User       string `json:"user,omitempty"`
+	Password   string `json:"password,omitempty"`
+	Tenant     string `json:"tenant,omitempty"`
+	Deployment string `json:"deployment,omitempty"`
 }
 
 func newCloudifyCloud(config io.Reader) (cloudprovider.Interface, error) {
@@ -151,8 +153,13 @@ func newCloudifyCloud(config io.Reader) (cloudprovider.Interface, error) {
 		return nil, fmt.Errorf("You have empty tenant")
 	}
 
+	if len(cloudConfig.Deployment) == 0 {
+		return nil, fmt.Errorf("You have empty deployment")
+	}
+
 	glog.Warning("Config %+v", cloudConfig)
 	return &CloudProvider{
+		deployment: cloudConfig.Deployment,
 		client: cloudify.NewClient(
 			cloudConfig.Host, cloudConfig.User,
 			cloudConfig.Password, cloudConfig.Tenant),
