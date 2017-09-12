@@ -222,7 +222,7 @@ node_templates:
     capabilities:
       scalable:
         properties:
-          default_instances: 2
+          default_instances: 1
     properties:
       connection_config: *connection_config
       server:

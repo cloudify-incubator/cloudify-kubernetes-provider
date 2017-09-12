@@ -30,6 +30,31 @@ type CloudifyIntances struct {
 	client     *cloudify.CloudifyClient
 }
 
+func (r *CloudifyIntances) getInstances(params map[string]string) []cloudify.CloudifyNodeInstance {
+	// Add filter by deployment
+	params["deployment_id"] = r.deployment
+
+	nodeInstances := r.client.GetNodeInstances(params)
+	instances := []cloudify.CloudifyNodeInstance{}
+
+	for _, nodeInstance := range nodeInstances.Items {
+		// skip nodes without ip's
+		if nodeInstance.NodeId != "kubeinstance" && nodeInstance.NodeId != "kubemanager" {
+			continue
+		}
+
+		if nodeInstance.State != "started" {
+			continue
+		}
+
+		// check runtime properties
+		if nodeInstance.RuntimeProperties != nil {
+			instances = append(instances, nodeInstance)
+		}
+	}
+	return instances
+}
+
 // NodeAddresses returns the addresses of the specified instance.
 // This implementation only returns the address of the calling instance. This is ok
 // because the gce implementation makes that assumption and the comment for the interface
@@ -39,21 +64,11 @@ func (r *CloudifyIntances) NodeAddresses(nodeName types.NodeName) ([]api.NodeAdd
 	glog.Infof(">NodeAddresses [%s]", name)
 
 	var params = map[string]string{}
-	nodeInstances := r.client.GetNodeInstances(params)
+	nodeInstances := r.getInstances(params)
 
 	addresses := []api.NodeAddress{}
 
-	for _, nodeInstance := range nodeInstances.Items {
-		// skip different deployments
-		if nodeInstance.DeploymentId != r.deployment {
-			continue
-		}
-
-		// skip nodes without ip's
-		if nodeInstance.NodeId != "kubeinstance" && nodeInstance.NodeId != "kubemanager" {
-			continue
-		}
-
+	for _, nodeInstance := range nodeInstances {
 		// check runtime properties
 		if nodeInstance.RuntimeProperties != nil {
 			if v, ok := nodeInstance.RuntimeProperties["name"]; ok == true {
@@ -113,21 +128,11 @@ func (r *CloudifyIntances) NodeAddressesByProviderID(providerID string) ([]api.N
 	glog.Infof(">NodeAddressesByProviderID [%s]", providerID)
 
 	var params = map[string]string{}
-	nodeInstances := r.client.GetNodeInstances(params)
+	nodeInstances := r.getInstances(params)
 
 	addresses := []api.NodeAddress{}
 
-	for _, nodeInstance := range nodeInstances.Items {
-		// skip different deployments
-		if nodeInstance.DeploymentId != r.deployment {
-			continue
-		}
-
-		// skip nodes without ip's
-		if nodeInstance.NodeId != "kubeinstance" && nodeInstance.NodeId != "kubemanager" {
-			continue
-		}
-
+	for _, nodeInstance := range nodeInstances {
 		// check runtime properties
 		if nodeInstance.RuntimeProperties != nil {
 			if v, ok := nodeInstance.RuntimeProperties["ip"]; ok == true {
@@ -188,19 +193,9 @@ func (r *CloudifyIntances) InstanceID(nodeName types.NodeName) (string, error) {
 	glog.Infof("InstanceID [%s]", name)
 
 	var params = map[string]string{}
-	nodeInstances := r.client.GetNodeInstances(params)
+	nodeInstances := r.getInstances(params)
 
-	for _, nodeInstance := range nodeInstances.Items {
-		// skip different deployments
-		if nodeInstance.DeploymentId != r.deployment {
-			continue
-		}
-
-		// skip nodes without ip's
-		if nodeInstance.NodeId != "kubeinstance" && nodeInstance.NodeId != "kubemanager" {
-			continue
-		}
-
+	for _, nodeInstance := range nodeInstances {
 		// check runtime properties
 		if nodeInstance.RuntimeProperties != nil {
 			if v, ok := nodeInstance.RuntimeProperties["name"]; ok == true {
@@ -217,10 +212,9 @@ func (r *CloudifyIntances) InstanceID(nodeName types.NodeName) (string, error) {
 				// node without name
 				continue
 			}
-			if nodeInstance.State == "started" {
-				glog.Infof("Node is alive %+v", nodeInstance)
-				return fakeuuid + name, nil
-			}
+
+			glog.Infof("Node is alive %+v", nodeInstance)
+			return fakeuuid + name, nil
 		}
 	}
 

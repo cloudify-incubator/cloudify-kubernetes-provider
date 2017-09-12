@@ -76,7 +76,7 @@ pkg/linux_amd64/cloudifyprovider.a: pkg/linux_amd64/${PACKAGEPATH}/cloudify.a ${
 
 bin/cfy-kubernetes: pkg/linux_amd64/cloudifyprovider.a pkg/linux_amd64/${PACKAGEPATH}/cloudify.a src/cfy-kubernetes.go
 	$(call colorecho,"Install: ", $@)
-	# delete -s -w if you want to debaug
+	# delete -s -w if you want to debug
 	go install -ldflags "-s -w -X main.versionString=${VERSION}" -v src/cfy-kubernetes.go
 
 upload: bin/cfy-kubernetes

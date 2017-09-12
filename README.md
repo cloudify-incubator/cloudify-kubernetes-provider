@@ -128,6 +128,10 @@ make reformat
 cfy-kubernetes -version
 cfy-kubernetes --kubeconfig $HOME/.kube/config --cloud-config examples/config.json
 kubectl get nodes
+#scale
+cfy executions start scale -d slave  -p 'scalable_entity_name=kubeinstance'
+#downscale
+cfy executions start scale -d slave  -p 'scalable_entity_name=kubeinstance' -p 'delta=-1'
 ```
 
 ## Upload blueprint to manager

@@ -1,4 +1,5 @@
 ctx logger info "Init kubeadm"
+echo 1 | sudo tee /proc/sys/net/bridge/bridge-nf-call-iptables
 sudo kubeadm init --pod-network-cidr 10.244.0.0/16 --token-ttl 0
 
 ctx logger info "Get token"
