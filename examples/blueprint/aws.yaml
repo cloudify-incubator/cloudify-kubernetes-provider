@@ -2,6 +2,7 @@ tosca_definitions_version: cloudify_dsl_1_3
 
 imports:
   - https://raw.githubusercontent.com/cloudify-cosmo/cloudify-aws-plugin/1.5/plugin.yaml
+  - https://raw.githubusercontent.com/cloudify-incubator/cloudify-utilities-plugin/1.2.5/plugin.yaml
   - common.yaml
 
 inputs:
@@ -31,6 +32,21 @@ dsl_definitions:
 
 node_templates:
 
+  cloudify_host_cloud_config:
+    type: cloudify.nodes.CloudInit.CloudConfig
+    properties:
+      resource_config:
+        groups:
+          - docker
+        users:
+          - name: { get_input: agent_user }
+            primary-group: wheel
+            groups: docker
+            shell: /bin/bash
+            sudo: ['ALL=(ALL) NOPASSWD:ALL']
+            ssh-authorized-keys:
+              - { get_secret: agent_key_public }
+
   kubemanager:
     type: cloudify.aws.nodes.Instance
     capabilities:
@@ -49,6 +65,16 @@ node_templates:
     relationships:
       - type: cloudify.aws.relationships.instance_connected_to_eni
         target: kubemanager_port
+      - type: cloudify.relationships.depends_on
+        target: cloudify_host_cloud_config
+    interfaces:
+      cloudify.interfaces.lifecycle:
+        create:
+          implementation: aws.cloudify_aws.ec2.instance.create
+          inputs:
+            args:
+              placement: { get_secret: availability_zone }
+              user_data: { get_attribute: [ cloudify_host_cloud_config, cloud_config ] }
 
   kubemanager_port:
     type: cloudify.aws.nodes.Interface
@@ -86,6 +112,16 @@ node_templates:
     relationships:
       - type: cloudify.aws.relationships.instance_connected_to_eni
         target: kubeinstance_port
+      - type: cloudify.relationships.depends_on
+        target: cloudify_host_cloud_config
+    interfaces:
+      cloudify.interfaces.lifecycle:
+        create:
+          implementation: aws.cloudify_aws.ec2.instance.create
+          inputs:
+            args:
+              placement: { get_secret: availability_zone }
+              user_data: { get_attribute: [ cloudify_host_cloud_config, cloud_config ] }
 
   kubeinstance_port:
     type: cloudify.aws.nodes.Interface
@@ -210,6 +246,3 @@ node_templates:
       use_external_resource: true
       resource_id: { get_secret: vpc_id }
       cidr_block: N/A
-    relationships:
-    - type: cloudify.relationships.depends_on
-      target: cloudify_host_cloud_config
