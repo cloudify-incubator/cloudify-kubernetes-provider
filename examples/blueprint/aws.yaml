@@ -1,0 +1,264 @@
+tosca_definitions_version: cloudify_dsl_1_3
+
+imports:
+  - https://raw.githubusercontent.com/cloudify-cosmo/cloudify-aws-plugin/1.5/plugin.yaml
+  - https://raw.githubusercontent.com/cloudify-incubator/cloudify-utilities-plugin/1.2.5/plugin.yaml
+  - common.yaml
+
+inputs:
+
+  ami:
+    description: >
+      An AWS AMI. Tested with a Centos 7.0 image.
+    default: { get_secret: centos_core_image }
+
+  instance_type:
+    description: >
+      The AWS instance_type. Tested with m3.medium, although that is unnecessarily large.
+    default: t2.medium
+
+  agent_user:
+    description: >
+      The username of the agent running on the instance created from the image.
+    default: ec2-user
+
+dsl_definitions:
+
+    aws_config: &aws_config
+      aws_access_key_id: { get_secret: aws_access_key_id }
+      aws_secret_access_key: { get_secret: aws_secret_access_key }
+      ec2_region_name: { get_secret: ec2_region_name }
+      ec2_region_endpoint: { get_secret: ec2_region_endpoint }
+
+node_templates:
+
+  cloudify_host_cloud_config:
+    type: cloudify.nodes.CloudInit.CloudConfig
+    properties:
+      resource_config:
+        groups:
+          - docker
+        users:
+          - name: { get_input: agent_user }
+            primary-group: wheel
+            groups: docker
+            shell: /bin/bash
+            sudo: ['ALL=(ALL) NOPASSWD:ALL']
+            ssh-authorized-keys:
+              - { get_secret: agent_key_public }
+
+  kubemanager:
+    type: cloudify.aws.nodes.Instance
+    capabilities:
+      scalable:
+        properties:
+          default_instances: 1
+    properties:
+      agent_config:
+        install_method: remote
+        user: { get_input: agent_user }
+        port: 22
+        key: { get_secret: agent_key_private }
+      aws_config: *aws_config
+      image_id: { get_input: ami }
+      instance_type: { get_input: instance_type }
+    relationships:
+      - type: cloudify.aws.relationships.instance_connected_to_eni
+        target: kubemanager_port
+      - type: cloudify.relationships.depends_on
+        target: cloudify_host_cloud_config
+    interfaces:
+      cloudify.interfaces.lifecycle:
+        create:
+          implementation: aws.cloudify_aws.ec2.instance.create
+          inputs:
+            args:
+              placement: { get_secret: availability_zone }
+              user_data: { get_attribute: [ cloudify_host_cloud_config, cloud_config ] }
+
+  kubemanager_port:
+    type: cloudify.aws.nodes.Interface
+    properties:
+      aws_config: *aws_config
+    relationships:
+      - type: cloudify.aws.relationships.connected_to_subnet
+        target: public_subnet
+      - type: cloudify.aws.relationships.connected_to_security_group
+        target: security_group
+      - type: cloudify.aws.relationships.connected_to_elastic_ip
+        target: kubemanager_port_elastic_ip
+
+  kubemanager_port_elastic_ip:
+    type: cloudify.aws.nodes.ElasticIP
+    properties:
+      aws_config: *aws_config
+      domain: vpc
+
+  kubeinstance:
+    type: cloudify.aws.nodes.Instance
+    capabilities:
+      scalable:
+        properties:
+          default_instances: 1
+    properties:
+      agent_config:
+        install_method: remote
+        user: { get_input: agent_user }
+        port: 22
+        key: { get_secret: agent_key_private }
+      aws_config: *aws_config
+      image_id: { get_input: ami }
+      instance_type: { get_input: instance_type }
+    relationships:
+      - type: cloudify.aws.relationships.instance_connected_to_eni
+        target: kubeinstance_port
+      - type: cloudify.relationships.depends_on
+        target: cloudify_host_cloud_config
+    interfaces:
+      cloudify.interfaces.lifecycle:
+        create:
+          implementation: aws.cloudify_aws.ec2.instance.create
+          inputs:
+            args:
+              placement: { get_secret: availability_zone }
+              user_data: { get_attribute: [ cloudify_host_cloud_config, cloud_config ] }
+
+  kubeinstance_port:
+    type: cloudify.aws.nodes.Interface
+    properties:
+      aws_config: *aws_config
+    relationships:
+      - type: cloudify.aws.relationships.connected_to_subnet
+        target: public_subnet
+      - type: cloudify.aws.relationships.connected_to_security_group
+        target: security_group
+      - type: cloudify.aws.relationships.connected_to_elastic_ip
+        target: kubeinstance_port_elastic_ip
+
+  kubeinstance_port_elastic_ip:
+    type: cloudify.aws.nodes.ElasticIP
+    properties:
+      aws_config: *aws_config
+      domain: vpc
+
+  security_group:
+    type: cloudify.aws.nodes.SecurityGroup
+    properties:
+      aws_config: *aws_config
+      description: Security group for Kubernetes System
+      rules:
+        - ip_protocol: tcp
+          from_port: 22
+          to_port: 22
+          cidr_ip: 0.0.0.0/0
+        - ip_protocol: tcp
+          from_port: 53
+          to_port: 53
+          cidr_ip: 0.0.0.0/0
+        - ip_protocol: udp
+          from_port: 53
+          to_port: 53
+          cidr_ip: 0.0.0.0/0
+        - ip_protocol: tcp
+          from_port: 80
+          to_port: 80
+          cidr_ip: 0.0.0.0/0
+        - ip_protocol: tcp
+          from_port: 443
+          to_port: 443
+          cidr_ip: 0.0.0.0/0
+        - ip_protocol: tcp
+          from_port: 2379
+          to_port: 2379
+          cidr_ip: 0.0.0.0/0
+        - ip_protocol: tcp
+          from_port: 3306
+          to_port: 3306
+          cidr_ip: 0.0.0.0/0
+        - ip_protocol: tcp
+          from_port: 4001
+          to_port: 4001
+          cidr_ip: 0.0.0.0/0
+        - ip_protocol: tcp
+          from_port: 4789
+          to_port: 4789
+          cidr_ip: 0.0.0.0/0
+        - ip_protocol: tcp
+          from_port: 6443
+          to_port: 6443
+          cidr_ip: 0.0.0.0/0
+        - ip_protocol: udp
+          from_port: 6443
+          to_port: 6443
+          cidr_ip: 0.0.0.0/0
+        - ip_protocol: tcp
+          from_port: 6783
+          to_port: 6784
+          cidr_ip: 0.0.0.0/0
+        - ip_protocol: udp
+          from_port: 6783
+          to_port: 6784
+          cidr_ip: 0.0.0.0/0
+        - ip_protocol: tcp
+          from_port: 8080
+          to_port: 8080
+          cidr_ip: 0.0.0.0/0
+        - ip_protocol: tcp
+          from_port: 9090
+          to_port: 9090
+          cidr_ip: 0.0.0.0/0
+        - ip_protocol: tcp
+          from_port: 10250
+          to_port: 10250
+          cidr_ip: 0.0.0.0/0
+    relationships:
+      - type: cloudify.aws.relationships.security_group_contained_in_vpc
+        target: vpc
+
+  public_subnet:
+    type: cloudify.aws.nodes.Subnet
+    properties:
+      aws_config: *aws_config
+      use_external_resource: true
+      resource_id: { get_secret: public_subnet_id }
+      cidr_block: N/A
+      availability_zone: N/A
+    relationships:
+      - type: cloudify.aws.relationships.subnet_contained_in_vpc
+        target: vpc
+
+  private_subnet:
+    type: cloudify.aws.nodes.Subnet
+    properties:
+      aws_config: *aws_config
+      use_external_resource: true
+      resource_id: { get_secret: private_subnet_id }
+      cidr_block:  N/A
+      availability_zone:  N/A
+    relationships:
+      - type: cloudify.aws.relationships.subnet_contained_in_vpc
+        target: vpc
+
+  vpc:
+    type: cloudify.aws.nodes.VPC
+    properties:
+      aws_config: *aws_config
+      use_external_resource: true
+      resource_id: { get_secret: vpc_id }
+      cidr_block: N/A
+
+groups:
+
+  kubeinstance_group:
+    members:
+      - kubeinstance
+      - kubeinstance_port
+      - kubeinstance_port_elastic_ip
+
+policies:
+
+  kubeinstance_group_scaling_policy:
+    type: cloudify.policies.scaling
+    properties:
+      default_instances:  1
+    targets: [kubeinstance_group]

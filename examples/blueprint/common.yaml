@@ -11,7 +11,8 @@ inputs:
 
   cfy_password:
     type: string
-    default: secret
+    default: admin
+
   cfy_user:
     type: string
     default: admin
