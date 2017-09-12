@@ -246,3 +246,19 @@ node_templates:
       use_external_resource: true
       resource_id: { get_secret: vpc_id }
       cidr_block: N/A
+
+groups:
+
+  kubeinstance_group:
+    members:
+      - kubeinstance
+      - kubeinstance_port
+      - kubeinstance_port_elastic_ip
+
+policies:
+
+  kubeinstance_group_scaling_policy:
+    type: cloudify.policies.scaling
+    properties:
+      default_instances:  1
+    targets: [kubeinstance_group]
