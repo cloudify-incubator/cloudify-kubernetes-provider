@@ -22,9 +22,10 @@ EOF
 sudo groupadd docker || ctx logger info "Docker group already exist?"
 sudo usermod -aG docker centos  || ctx logger info "User already in docker group?"
 
-ctx logger info "Install docker"
 # install docker
+ctx logger info "Update repos"
 sudo yum update -y -q
+ctx logger info "Install docker"
 sudo yum install docker-engine-1.12.6 -y -q
 sudo systemctl enable docker.service
 sudo systemctl start docker

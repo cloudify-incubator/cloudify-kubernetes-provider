@@ -20,7 +20,6 @@ import (
 	_ "cloudifyprovider" // only init from package
 	"flag"
 	"fmt"
-	cloudify "github.com/0lvin-cfy/cloudify-rest-go-client/cloudify"
 	"github.com/golang/glog"
 	"k8s.io/kubernetes/cmd/cloud-controller-manager/app"
 	"k8s.io/kubernetes/cmd/cloud-controller-manager/app/options"
@@ -55,7 +54,7 @@ func main() {
 
 	if versionShow {
 		fmt.Printf("Kubernetes %s\n", version.Get())
-		fmt.Printf("CFY Go client: %s/%s\n", cloudify.ApiVersion, versionString)
+		fmt.Printf("CFY Go client: %s\n", versionString)
 		os.Exit(0)
 	}
 
