@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 import os
 from cloudify import ctx
+from cloudify.exceptions import RecoverableError
 try:
     import yaml
 except ImportError:
