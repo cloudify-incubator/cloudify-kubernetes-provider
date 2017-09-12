@@ -11,14 +11,14 @@ gpgkey=https://packages.cloud.google.com/yum/doc/yum-key.gpg
         https://packages.cloud.google.com/yum/doc/rpm-package-key.gpg
 EOF
 
-setenforce 0
+sudo setenforce 0
 
 ctx logger info "Install kubernetes"
 
-yum install -y kubelet kubeadm
-sed -i 's|cgroup-driver=systemd|cgroup-driver=cgroupfs|g' /etc/systemd/system/kubelet.service.d/10-kubeadm.conf
+sudo yum install -y kubelet kubeadm
+sudo sed -i 's|cgroup-driver=systemd|cgroup-driver=cgroupfs|g' /etc/systemd/system/kubelet.service.d/10-kubeadm.conf
 
 ctx logger info "Reload kubernetes"
 
-systemctl daemon-reload
-systemctl enable kubelet && systemctl start kubelet
+sudo systemctl daemon-reload
+sudo systemctl enable kubelet && sudo systemctl start kubelet
