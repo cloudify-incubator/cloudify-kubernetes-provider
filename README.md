@@ -130,6 +130,14 @@ cfy-kubernetes --kubeconfig $HOME/.kube/config --cloud-config examples/config.js
 kubectl get nodes
 ```
 
+## Upload blueprint to manager
+
+`CLOUDPROVIDER` can be `aws` or `vsphere`.
+
+```shell
+CLOUDPROVIDER=aws make upload
+```
+
 # Functionality from original cfy client
 
 * Common parameters:

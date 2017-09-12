@@ -5,6 +5,8 @@ PACKAGEPATH := github.com/0lvin-cfy/cloudify-rest-go-client
 
 VERSION := `cd src/${PACKAGEPATH} && git rev-parse --short HEAD`
 
+CLOUDPROVIDER ?= vsphere
+
 .PHONY: reformat
 reformat:
 	rm -rfv pkg/*
@@ -79,7 +81,7 @@ bin/cfy-kubernetes: pkg/linux_amd64/cloudifyprovider.a pkg/linux_amd64/${PACKAGE
 
 upload: bin/cfy-kubernetes
 	cp bin/cfy-kubernetes examples/blueprint/bins/cfy-kubernetes
-	cfy blueprints upload -b slave examples/blueprint/aws.yaml
+	cfy blueprints upload -b slave examples/blueprint/${CLOUDPROVIDER}.yaml
 
 .PHONY: test
 test:
