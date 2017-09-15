@@ -212,6 +212,7 @@ dsl_definitions:
     datacenter_name: {get_input: vcenter_datacenter }
     resource_pool_name: { get_input: vcenter_resource_pool }
     auto_placement: { get_input: vsphere_auto_placement }
+    allow_insecure: true
 
 node_templates:
 ###############################################################################

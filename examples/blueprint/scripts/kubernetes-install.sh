@@ -13,6 +13,16 @@ EOF
 
 sudo setenforce 0
 
+curl -o lvm https://raw.githubusercontent.com/kubernetes/kubernetes/master/examples/volumes/flexvolume/lvm
+
+PLUGINDIR=/usr/libexec/kubernetes/kubelet-plugins/volume/exec/kubernetes.io~lvm/
+
+mkdir -p $PLUGINDIR
+sudo cp lvm $PLUGINDIR
+
+sudo chmod 555 -R $PLUGINDIR
+sudo chown root:root -R $PLUGINDIR
+
 ctx logger info "Install kubernetes"
 
 sudo yum install -y kubelet kubeadm

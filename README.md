@@ -85,7 +85,7 @@ gpgkey=https://packages.cloud.google.com/yum/doc/yum-key.gpg
 EOF
 setenforce 0
 yum install -y kubelet kubeadm
-sed -i 's|cgroup-driver=systemd|cgroup-driver=cgroupfs|g' /etc/systemd/system/kubelet.service.d/10-kubeadm.conf
+sed -i 's|cgroup-driver=systemd|cgroup-driver=cgroupfs --enable-controller-attach-detach|g' /etc/systemd/system/kubelet.service.d/10-kubeadm.conf
 systemctl daemon-reload
 systemctl enable kubelet && systemctl start kubelet
 ````
@@ -138,6 +138,10 @@ kubectl create -f https://k8s.io/docs/tasks/run-application/deployment.yaml --ku
 kubectl describe deployment nginx-deployment --kubeconfig $HOME/.kube/config
 # delete
 kubectl delete deployment nginx-deployment --kubeconfig $HOME/.kube/config
+
+# volume
+kubectl create -f https://raw.githubusercontent.com/kubernetes/kubernetes/master/examples/volumes/flexvolume/nginx.yaml --kubeconfig /home/clouduser/.kube/config
+kubectl delete pod nginx --kubeconfig $HOME/.kube/config
 ```
 
 ## Upload blueprint to manager
