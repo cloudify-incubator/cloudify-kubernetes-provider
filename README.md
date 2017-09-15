@@ -132,6 +132,12 @@ kubectl get nodes
 cfy executions start scale -d slave  -p 'scalable_entity_name=kubeinstance'
 #downscale
 cfy executions start scale -d slave  -p 'scalable_entity_name=kubeinstance' -p 'delta=-1'
+# create simple pod https://kubernetes.io/docs/tasks/run-application/run-stateless-application-deployment/
+kubectl create -f https://k8s.io/docs/tasks/run-application/deployment.yaml --kubeconfig $HOME/.kube/config
+# look to description
+kubectl describe deployment nginx-deployment --kubeconfig $HOME/.kube/config
+# delete
+kubectl delete deployment nginx-deployment --kubeconfig $HOME/.kube/config
 ```
 
 ## Upload blueprint to manager
