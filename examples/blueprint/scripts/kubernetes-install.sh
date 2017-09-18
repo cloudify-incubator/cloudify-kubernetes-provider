@@ -13,22 +13,22 @@ EOF
 
 sudo setenforce 0
 
-curl -o lvm https://raw.githubusercontent.com/kubernetes/kubernetes/master/examples/volumes/flexvolume/lvm
-
-PLUGINDIR=/usr/libexec/kubernetes/kubelet-plugins/volume/exec/kubernetes.io~lvm/
-
-mkdir -p $PLUGINDIR
-sudo cp lvm $PLUGINDIR
-
-sudo chmod 555 -R $PLUGINDIR
-sudo chown root:root -R $PLUGINDIR
-
 ctx logger info "Install kubernetes"
 
-sudo yum install -y kubelet kubeadm
+sudo yum install -y kubelet kubeadm jq
 sudo sed -i 's|cgroup-driver=systemd|cgroup-driver=cgroupfs|g' /etc/systemd/system/kubelet.service.d/10-kubeadm.conf
 
 ctx logger info "Reload kubernetes"
 
 sudo systemctl daemon-reload
 sudo systemctl enable kubelet && sudo systemctl start kubelet
+
+ctx logger info "Add cloudify mount script"
+
+sudo yum install -y jq
+ctx download-resource bins/cfy-mount '@{"target_path": "/tmp/cfy-kubernetes"}'
+PLUGINDIR=/usr/libexec/kubernetes/kubelet-plugins/volume/exec/cloudify~mount/
+sudo mkdir -p $PLUGINDIR
+sudo cp /tmp/cfy-kubernetes $PLUGINDIR/mount
+sudo chmod 555 -R $PLUGINDIR
+sudo chown root:root -R $PLUGINDIR

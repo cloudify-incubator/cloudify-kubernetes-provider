@@ -81,6 +81,7 @@ bin/cfy-kubernetes: pkg/linux_amd64/cloudifyprovider.a pkg/linux_amd64/${PACKAGE
 
 upload: bin/cfy-kubernetes
 	cp bin/cfy-kubernetes examples/blueprint/bins/cfy-kubernetes
+	cp bin/cfy-go examples/blueprint/bins/cfy-go
 	cfy blueprints upload -b slave examples/blueprint/${CLOUDPROVIDER}.yaml
 
 .PHONY: test

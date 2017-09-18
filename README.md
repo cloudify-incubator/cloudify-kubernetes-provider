@@ -140,7 +140,7 @@ kubectl describe deployment nginx-deployment --kubeconfig $HOME/.kube/config
 kubectl delete deployment nginx-deployment --kubeconfig $HOME/.kube/config
 
 # volume
-kubectl create -f https://raw.githubusercontent.com/kubernetes/kubernetes/master/examples/volumes/flexvolume/nginx.yaml --kubeconfig /home/clouduser/.kube/config
+kubectl create -f examples/nginx.yaml --kubeconfig /home/clouduser/.kube/config
 kubectl delete pod nginx --kubeconfig $HOME/.kube/config
 ```
 
@@ -549,3 +549,13 @@ Handle Cloudify users
 ## workflows
 Handle deployment workflows
 * Not Implemented
+
+# Mount check
+/usr/libexec/kubernetes/kubelet-plugins/volume/exec/cloudify~mount/mount init
+/usr/libexec/kubernetes/kubelet-plugins/volume/exec/cloudify~mount/mount getvolumename "{\"kubernetes.io/fsType\":\"ext4\",\"kubernetes.io/pvOrVolumeName\":\"test\",\"kubernetes.io/readwrite\":\"rw\",\"size\":\"1000m\",\"volumeID\":\"vol1\",\"volumegroup\":\"kube_vg\"}"
+
+/usr/libexec/kubernetes/kubelet-plugins/volume/exec/cloudify~mount/mount attach "{\"volumeID\":\"1\",\"volumegroup\":\"2\",\"size\":\"1000\"}" "aaa"
+/usr/libexec/kubernetes/kubelet-plugins/volume/exec/cloudify~mount/mount mountdevice /tmp/aaa /tmp/2-1.img "{\"volumeID\":\"1\",\"volumegroup\":\"2\",\"size\":\"1000\"}"
+/usr/libexec/kubernetes/kubelet-plugins/volume/exec/cloudify~mount/mount unmountdevice /tmp/aaa
+/usr/libexec/kubernetes/kubelet-plugins/volume/exec/cloudify~mount/mount detach "{\"volumeID\":\"1\",\"volumegroup\":\"2\",\"size\":\"1000\"}" "aaa"
+
