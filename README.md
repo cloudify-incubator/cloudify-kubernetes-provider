@@ -551,11 +551,8 @@ Handle deployment workflows
 * Not Implemented
 
 # Mount check
+```
 /usr/libexec/kubernetes/kubelet-plugins/volume/exec/cloudify~mount/mount init
-/usr/libexec/kubernetes/kubelet-plugins/volume/exec/cloudify~mount/mount getvolumename "{\"kubernetes.io/fsType\":\"ext4\",\"kubernetes.io/pvOrVolumeName\":\"test\",\"kubernetes.io/readwrite\":\"rw\",\"size\":\"1000m\",\"volumeID\":\"vol1\",\"volumegroup\":\"kube_vg\"}"
-
-/usr/libexec/kubernetes/kubelet-plugins/volume/exec/cloudify~mount/mount attach "{\"volumeID\":\"1\",\"volumegroup\":\"2\",\"size\":\"1000\"}" "aaa"
-/usr/libexec/kubernetes/kubelet-plugins/volume/exec/cloudify~mount/mount mountdevice /tmp/aaa /tmp/2-1.img "{\"volumeID\":\"1\",\"volumegroup\":\"2\",\"size\":\"1000\"}"
-/usr/libexec/kubernetes/kubelet-plugins/volume/exec/cloudify~mount/mount unmountdevice /tmp/aaa
-/usr/libexec/kubernetes/kubelet-plugins/volume/exec/cloudify~mount/mount detach "{\"volumeID\":\"1\",\"volumegroup\":\"2\",\"size\":\"1000\"}" "aaa"
-
+/usr/libexec/kubernetes/kubelet-plugins/volume/exec/cloudify~mount/mount mount /var/lib/kubelet/pods/ee8f1baf-9dde-11e7-be2e-005056856911/volumes/cloudify~mount/someunxists '{"kubernetes.io/fsType":"ext4","kubernetes.io/pod.name":"nginx","kubernetes.io/pod.namespace":"default","kubernetes.io/pod.uid":"ee8f1baf-9dde-11e7-be2e-005056856911","kubernetes.io/pvOrVolumeName":"someunxists","kubernetes.io/readwrite":"rw","kubernetes.io/serviceAccount.name":"default","size":"1000m","volumeID":"vol1","volumegroup":"kube_vg"}'
+/usr/libexec/kubernetes/kubelet-plugins/volume/exec/cloudify~mount/mount unmount /var/lib/kubelet/pods/ee8f1baf-9dde-11e7-be2e-005056856911/volumes/cloudify~mount/someunxists
+```

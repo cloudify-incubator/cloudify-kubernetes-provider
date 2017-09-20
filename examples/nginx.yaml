@@ -8,12 +8,12 @@ spec:
   - name: nginx
     image: nginx
     volumeMounts:
-    - name: test
+    - name: someunxists
       mountPath: /data
     ports:
     - containerPort: 80
   volumes:
-  - name: test
+  - name: someunxists
     flexVolume:
       driver: "cloudify/mount"
       fsType: "ext4"

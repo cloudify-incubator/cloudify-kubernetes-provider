@@ -85,7 +85,7 @@ node_templates:
     - target: kubemanager
       type: cloudify.relationships.contained_in
 
-  kubemanager_kubenetes:
+  manager_kubenetes:
     type: cloudify.nodes.ApplicationServer
     interfaces:
       cloudify.interfaces.lifecycle:
@@ -99,7 +99,7 @@ node_templates:
     - target: kubemanager_docker
       type: cloudify.relationships.contained_in
 
-  kubemanager_server:
+  config_export:
     type: cloudify.nodes.ApplicationServer
     interfaces:
       cloudify.interfaces.lifecycle:
@@ -113,7 +113,7 @@ node_templates:
         start:
           implementation: scripts/export_config.py
     relationships:
-    - target: kubemanager_kubenetes
+    - target: manager_kubenetes
       type: cloudify.relationships.contained_in
 
   kubenetes_slave:
@@ -123,12 +123,12 @@ node_templates:
         configure:
           implementation: scripts/kubernetes-join.sh
           inputs:
-            TOKEN: { get_attribute: [kubemanager_server, token] }
+            TOKEN: { get_attribute: [config_export, token] }
             IP: { get_attribute: [kubemanager, ip] }
     relationships:
     - target: kubenetes
       type: cloudify.relationships.contained_in
-    - target: kubemanager_server
+    - target: config_export
       type: cloudify.relationships.depends_on
 
   server:
