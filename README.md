@@ -566,9 +566,13 @@ Handle deployment workflows
     "attached": true
 }
 
-[root@kubernetes-vm-ejq5xq ~/usr/libexec/kubernetes/kubelet-plugins/volume/exec/cloudify~mount/mount  unmount /var/lib/kubelet/pods/ecd89d9d-a44a-11e7-b34f-00505685ddd0/volumes/cloudify~mount/someunxists
+[root@kubernetes-vm-ejq5xq ~/usr/libexec/kubernetes/kubelet-plugins/volume/exec/cloudify~mount/mount unmount /var/lib/kubelet/pods/ecd89d9d-a44a-11e7-b34f-00505685ddd0/volumes/cloudify~mount/someunxists
 {
     "status": "Success",
     "attached": true
 }
+
+cfy-mount init
+cfy-mount mount /var/lib/kubelet/pods/ecd89d9d-a44a-11e7-b34f-00505685ddd0/volumes/cloudify~mount/someunxists '{"kubernetes.io/fsType":"ext4","kubernetes.io/pod.name":"nginx","kubernetes.io/pod.namespace":"default","kubernetes.io/pod.uid":"ecd89d9d-a44a-11e7-b34f-00505685ddd0","kubernetes.io/pvOrVolumeName":"someunxists","kubernetes.io/readwrite":"rw","kubernetes.io/serviceAccount.name":"default","size":"1000m","volumeID":"vol1","volumegroup":"kube_vg"}'
+cfy-mount unmount /var/lib/kubelet/pods/ecd89d9d-a44a-11e7-b34f-00505685ddd0/volumes/cloudify~mount/someunxists
 ```

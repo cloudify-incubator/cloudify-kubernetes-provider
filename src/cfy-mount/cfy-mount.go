@@ -23,7 +23,8 @@ import (
 )
 
 type baseResponse struct {
-	Status string `json:"status,omitempty"`
+	Status  string `json:"status,omitempty"`
+	Message string `json:"message,omitempty"`
 }
 
 type capabilitiesResponse struct {
@@ -36,38 +37,81 @@ type initResponse struct {
 }
 
 type mountResponse struct {
-	Message    string `json:"message,omitempty"`
-	Device     string `json:"device,omitempty"`
-	VolumeName string `json:"volumeName,omitempty"`
-	Attached   bool   `json:"attached,omitempty"`
+	baseResponse
+	Attached bool `json:"attached"`
 }
 
-func main() {
-	if len(os.Args) < 2 {
-		var response baseResponse
-		response.Status = "Not supported"
-		json_data, err := json.Marshal(response)
-		if err != nil {
-			fmt.Println(err)
-			os.Exit(1)
-		}
-		fmt.Println(string(json_data))
-		os.Exit(0)
-	}
-	command := os.Args[1]
+/*
+type otherResponse struct {
 
-	if command == "init" {
-		var response initResponse
-		response.Status = "Success"
-		response.Capabilities.Attach = false
-		json_data, err := json.Marshal(response)
-		if err != nil {
-			fmt.Println(err)
-			os.Exit(1)
+	Device     string `json:"device,omitempty"`
+	VolumeName string `json:"volumeName,omitempty"`
+}
+*/
+
+func main() {
+	var message string = "Unknown"
+	if len(os.Args) > 1 {
+		command := os.Args[1]
+
+		if len(os.Args) == 2 && command == "init" {
+			var response initResponse
+			response.Status = "Success"
+			response.Capabilities.Attach = false
+			json_data, err := json.Marshal(response)
+			if err != nil {
+				message = err.Error()
+			} else {
+				fmt.Println(string(json_data))
+				os.Exit(0)
+			}
 		}
-		fmt.Println(string(json_data))
-		os.Exit(0)
-	} else {
-		fmt.Println(command)
+		if len(os.Args) == 4 && command == "mount" {
+			path := os.Args[2]
+			in_data_unparsed := os.Args[3]
+			fmt.Println(path)
+			var in_data_parsed map[string]interface{}
+			err := json.Unmarshal([]byte(in_data_unparsed), &in_data_parsed)
+			if err != nil {
+				message = err.Error()
+			} else {
+				fmt.Printf("%+v", in_data_parsed)
+				var response mountResponse
+				response.Status = "Success"
+				response.Attached = true
+				json_data, err := json.Marshal(response)
+				if err != nil {
+					message = err.Error()
+				} else {
+					fmt.Println(string(json_data))
+					os.Exit(0)
+				}
+			}
+		}
+		if len(os.Args) == 3 && command == "unmount" {
+			path := os.Args[2]
+			fmt.Println(path)
+			var response mountResponse
+			response.Status = "Success"
+			response.Attached = false
+			json_data, err := json.Marshal(response)
+			if err != nil {
+				message = err.Error()
+			} else {
+				fmt.Println(string(json_data))
+				os.Exit(0)
+			}
+		}
 	}
+	var response baseResponse
+	response.Status = "Not supported"
+	response.Message = message
+	json_data, err := json.Marshal(response)
+	if err != nil {
+		fmt.Println(err)
+		os.Exit(1)
+	}
+	fmt.Println(string(json_data))
+	os.Exit(0)
+
 }
