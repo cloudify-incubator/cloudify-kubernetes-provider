@@ -1,5 +1,5 @@
 .PHONY: all
-all: bin/cfy-go bin/cfy-kubernetes
+all: bin/cfy-go bin/cfy-kubernetes bin/cfy-mount
 
 PACKAGEPATH := github.com/0lvin-cfy/cloudify-rest-go-client
 
@@ -16,6 +16,7 @@ reformat:
 	gofmt -w src/${PACKAGEPATH}/cloudify/*.go
 	gofmt -w src/${PACKAGEPATH}/cfy-go/*.go
 	gofmt -w src/cloudifyprovider/*.go
+	gofmt -w src/cfy-mount/*.go
 	gofmt -w src/*.go
 
 define colorecho
@@ -78,6 +79,11 @@ bin/cfy-kubernetes: pkg/linux_amd64/cloudifyprovider.a pkg/linux_amd64/${PACKAGE
 	$(call colorecho,"Install: ", $@)
 	# delete -s -w if you want to debug
 	go install -ldflags "-s -w -X main.versionString=${VERSION}" -v src/cfy-kubernetes.go
+
+bin/cfy-mount: src/cfy-mount/cfy-mount.go
+	$(call colorecho,"Install: ", $@)
+	# delete -s -w if you want to debug
+	go install -ldflags "-s -w -X main.versionString=${VERSION}" -v src/cfy-mount/cfy-mount.go
 
 upload: bin/cfy-kubernetes
 	cp bin/cfy-kubernetes examples/blueprint/bins/cfy-kubernetes
