@@ -22,6 +22,7 @@ import (
 	cloudify "github.com/0lvin-cfy/cloudify-rest-go-client/cloudify"
 	"io/ioutil"
 	"os"
+	"time"
 )
 
 type baseResponse struct {
@@ -96,6 +97,7 @@ func runAction(config *CloudifyConfig, action string, params map[string]interfac
 	executionGet := cl.PostExecution(exec)
 	execution = executionGet.CloudifyExecution
 	for execution.Status == "pending" || execution.Status == "started" {
+		time.Sleep(20 * time.Millisecond)
 		var params = map[string]string{}
 		params["id"] = execution.Id
 		executions := cl.GetExecutions(params)
