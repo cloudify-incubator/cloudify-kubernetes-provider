@@ -4,5 +4,5 @@
 	"user": "admin",
 	"host": "127.0.0.1",
 	"deployment": "slave",
-	"intance": "kubeinstance_*"
+	"intance": "kubenetes_slave_*"
 }

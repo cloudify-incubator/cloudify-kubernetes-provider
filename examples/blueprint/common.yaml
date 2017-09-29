@@ -125,6 +125,9 @@ node_templates:
           inputs:
             TOKEN: { get_attribute: [config_export, token] }
             IP: { get_attribute: [kubemanager, ip] }
+      maintenance:
+        mount: scripts/mount.py
+        unmount: scripts/unmount.py
     relationships:
     - target: kubenetes
       type: cloudify.relationships.contained_in

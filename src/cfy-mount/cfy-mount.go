@@ -138,8 +138,16 @@ func mountFunction(config *CloudifyConfig, path, config_json string) error {
 	return nil
 }
 
-func unMountFunction(path string) error {
-	fmt.Println(path)
+func unMountFunction(config *CloudifyConfig, path string) error {
+	var params = map[string]interface{}{
+		"path":   path}
+
+	err_action := runAction(config, "maintenance.unmount", params)
+
+	if err_action != nil {
+		return err_action
+	}
+
 	var response mountResponse
 	response.Status = "Success"
 	response.Attached = false
@@ -176,7 +184,7 @@ func main() {
 			}
 		}
 		if len(os.Args) == 3 && command == "unmount" {
-			err := unMountFunction(os.Args[2])
+			err := unMountFunction(config, os.Args[2])
 			if err != nil {
 				message = err.Error()
 			} else {
