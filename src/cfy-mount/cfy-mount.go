@@ -78,13 +78,7 @@ func initFunction() error {
 	return nil
 }
 
-func mountFunction(config *CloudifyConfig, path, config_json string) error {
-	var in_data_parsed map[string]interface{}
-	err := json.Unmarshal([]byte(config_json), &in_data_parsed)
-	if err != nil {
-		return err
-	}
-
+func runAction(config *CloudifyConfig, action string, params map[string]interface{}) error {
 	cl := cloudify.NewClient(config.Host, config.User, config.Password, config.Tenant)
 
 	var exec cloudify.CloudifyExecutionPost
@@ -97,12 +91,41 @@ func mountFunction(config *CloudifyConfig, path, config_json string) error {
 	exec.Parameters["run_by_dependency_order"] = false
 	exec.Parameters["allow_kwargs_override"] = nil
 	exec.Parameters["node_instance_ids"] = []string{config.Instance}
-	exec.Parameters["operation_kwargs"] = map[string]interface{}{
+	exec.Parameters["operation_kwargs"] = params
+	var execution cloudify.CloudifyExecution
+	executionGet := cl.PostExecution(exec)
+	execution = executionGet.CloudifyExecution
+	for execution.Status == "pending" || execution.Status == "started" {
+		var params = map[string]string{}
+		params["id"] = execution.Id
+		executions := cl.GetExecutions(params)
+		if len(executions.Items) != 1 {
+			return fmt.Errorf("Returned wrong count of results.")
+		}
+		execution = executions.Items[0]
+	}
+	if execution.Status == "failed" {
+		return fmt.Errorf(execution.ErrorMessage)
+	}
+	return nil
+}
+
+func mountFunction(config *CloudifyConfig, path, config_json string) error {
+	var in_data_parsed map[string]interface{}
+	err := json.Unmarshal([]byte(config_json), &in_data_parsed)
+	if err != nil {
+		return err
+	}
+
+	var params = map[string]interface{}{
 		"path":   path,
 		"params": in_data_parsed}
-	execution := cl.PostExecution(exec)
 
-	fmt.Printf("%+v\n", execution)
+	err_action := runAction(config, "maintenance.mount", params)
+
+	if err_action != nil {
+		return err_action
+	}
 
 	var response mountResponse
 	response.Status = "Success"
