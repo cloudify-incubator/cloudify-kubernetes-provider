@@ -85,7 +85,7 @@ func runAction(config *CloudifyConfig, action string, params map[string]interfac
 	exec.WorkflowId = "execute_operation"
 	exec.DeploymentId = config.Deployment
 	exec.Parameters = map[string]interface{}{}
-	exec.Parameters["operation"] = "maintenance.mount"
+	exec.Parameters["operation"] = action
 	exec.Parameters["node_ids"] = []string{}
 	exec.Parameters["type_names"] = []string{}
 	exec.Parameters["run_by_dependency_order"] = false

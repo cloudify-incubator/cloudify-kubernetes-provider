@@ -138,10 +138,15 @@ kubectl create -f https://k8s.io/docs/tasks/run-application/deployment.yaml --ku
 kubectl describe deployment nginx-deployment --kubeconfig $HOME/.kube/config
 # delete
 kubectl delete deployment nginx-deployment --kubeconfig $HOME/.kube/config
-
 # volume
-kubectl create -f examples/nginx.yaml --kubeconfig /home/clouduser/.kube/config
-kubectl delete pod nginx --kubeconfig $HOME/.kube/config
+kubectl create -f examples/nginx.yaml
+kubectl describe pod nginx
+kubectl delete pod nginx
+# Mount check
+export CFY_CONFIG=examples/mount-config.json
+cfy-mount init
+cfy-mount mount /var/lib/kubelet/pods/ecd89d9d-a44a-11e7-b34f-00505685ddd0/volumes/cloudify~mount/someunxists '{"kubernetes.io/fsType":"ext4","kubernetes.io/pod.name":"nginx","kubernetes.io/pod.namespace":"default","kubernetes.io/pod.uid":"ecd89d9d-a44a-11e7-b34f-00505685ddd0","kubernetes.io/pvOrVolumeName":"someunxists","kubernetes.io/readwrite":"rw","kubernetes.io/serviceAccount.name":"default","size":"1000m","volumeID":"vol1","volumegroup":"kube_vg"}'
+cfy-mount unmount /var/lib/kubelet/pods/ecd89d9d-a44a-11e7-b34f-00505685ddd0/volumes/cloudify~mount/someunxists
 ```
 
 ## Upload blueprint to manager
@@ -549,31 +554,3 @@ Handle Cloudify users
 ## workflows
 Handle deployment workflows
 * Not Implemented
-
-# Mount check
-```
-export CFY_CONFIG=examples/mount-config.json
-[root@kubernetes-vm-ejq5xq ~]# /usr/libexec/kubernetes/kubelet-plugins/volume/exec/cloudify~mount/mount init
-{
-    "status": "Success",
-    "capabilities": {
-        "attach": false
-    }
-}
-
-[root@kubernetes-vm-ejq5xq ~]# /usr/libexec/kubernetes/kubelet-plugins/volume/exec/cloudify~mount/mount mount /var/lib/kubelet/pods/ecd89d9d-a44a-11e7-b34f-00505685ddd0/volumes/cloudify~mount/someunxists '{"kubernetes.io/fsType":"ext4","kubernetes.io/pod.name":"nginx","kubernetes.io/pod.namespace":"default","kubernetes.io/pod.uid":"ecd89d9d-a44a-11e7-b34f-00505685ddd0","kubernetes.io/pvOrVolumeName":"someunxists","kubernetes.io/readwrite":"rw","kubernetes.io/serviceAccount.name":"default","size":"1000m","volumeID":"vol1","volumegroup":"kube_vg"}'
-{
-    "status": "Success",
-    "attached": true
-}
-
-[root@kubernetes-vm-ejq5xq ~/usr/libexec/kubernetes/kubelet-plugins/volume/exec/cloudify~mount/mount unmount /var/lib/kubelet/pods/ecd89d9d-a44a-11e7-b34f-00505685ddd0/volumes/cloudify~mount/someunxists
-{
-    "status": "Success",
-    "attached": true
-}
-
-cfy-mount init
-cfy-mount mount /var/lib/kubelet/pods/ecd89d9d-a44a-11e7-b34f-00505685ddd0/volumes/cloudify~mount/someunxists '{"kubernetes.io/fsType":"ext4","kubernetes.io/pod.name":"nginx","kubernetes.io/pod.namespace":"default","kubernetes.io/pod.uid":"ecd89d9d-a44a-11e7-b34f-00505685ddd0","kubernetes.io/pvOrVolumeName":"someunxists","kubernetes.io/readwrite":"rw","kubernetes.io/serviceAccount.name":"default","size":"1000m","volumeID":"vol1","volumegroup":"kube_vg"}'
-cfy-mount unmount /var/lib/kubelet/pods/ecd89d9d-a44a-11e7-b34f-00505685ddd0/volumes/cloudify~mount/someunxists
-```

@@ -28,7 +28,8 @@ sudo tee $HOME/cfy.json <<EOF
   "password": "${CFY_PASSWORD}",
   "user": "${CFY_USER}",
   "host": "${CFY_HOST}",
-  "deployment": "$(ctx deployment id)"
+  "deployment": "$(ctx deployment id)",
+  "intance": "$(ctx instance id)"
 }
 EOF
 

@@ -125,6 +125,11 @@ node_templates:
           inputs:
             TOKEN: { get_attribute: [config_export, token] }
             IP: { get_attribute: [kubemanager, ip] }
+            # mount params
+            CFY_USER: { get_input: cfy_user }
+            CFY_PASSWORD: { get_input: cfy_password }
+            CFY_TENANT: { get_input: cfy_tenant }
+            CFY_HOST: { get_input: cfy_host }
       maintenance:
         mount: scripts/mount.py
         unmount: scripts/unmount.py

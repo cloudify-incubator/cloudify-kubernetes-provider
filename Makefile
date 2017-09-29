@@ -88,6 +88,7 @@ bin/cfy-mount: src/cfy-mount/cfy-mount.go
 upload: bin/cfy-kubernetes
 	cp bin/cfy-kubernetes examples/blueprint/bins/cfy-kubernetes
 	cp bin/cfy-go examples/blueprint/bins/cfy-go
+	cp bin/cfy-mount examples/blueprint/bins/cfy-mount
 	cfy blueprints upload -b slave examples/blueprint/${CLOUDPROVIDER}.yaml
 
 .PHONY: test
