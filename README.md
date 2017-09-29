@@ -552,6 +552,7 @@ Handle deployment workflows
 
 # Mount check
 ```
+export CFY_CONFIG=examples/mount-config.json
 [root@kubernetes-vm-ejq5xq ~]# /usr/libexec/kubernetes/kubelet-plugins/volume/exec/cloudify~mount/mount init
 {
     "status": "Success",
