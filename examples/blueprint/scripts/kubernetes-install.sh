@@ -15,7 +15,7 @@ sudo setenforce 0
 
 ctx logger info "Install kubernetes"
 
-sudo yum install -y kubelet kubeadm jq
+sudo yum install -y kubelet-1.7.5-0.x86_64 kubeadm-1.7.5-0
 sudo sed -i 's|cgroup-driver=systemd|cgroup-driver=cgroupfs --v 6|g' /etc/systemd/system/kubelet.service.d/10-kubeadm.conf
 
 ctx logger info "Reload kubernetes"
