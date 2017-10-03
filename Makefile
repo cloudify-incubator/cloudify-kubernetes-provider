@@ -85,7 +85,7 @@ bin/cfy-mount: src/cfy-mount/cfy-mount.go
 	# delete -s -w if you want to debug
 	go install -ldflags "-s -w -X main.versionString=${VERSION}" -v src/cfy-mount/cfy-mount.go
 
-upload: bin/cfy-kubernetes
+upload: all
 	cp bin/cfy-kubernetes examples/blueprint/bins/cfy-kubernetes
 	cp bin/cfy-go examples/blueprint/bins/cfy-go
 	cp bin/cfy-mount examples/blueprint/bins/cfy-mount

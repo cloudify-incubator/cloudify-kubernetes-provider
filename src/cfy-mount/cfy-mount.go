@@ -21,6 +21,7 @@ import (
 	"fmt"
 	cloudify "github.com/0lvin-cfy/cloudify-rest-go-client/cloudify"
 	"io/ioutil"
+	"log"
 	"os"
 	"time"
 )
@@ -59,6 +60,9 @@ func getConfig() (*CloudifyConfig, error) {
 	if configFile == "" {
 		configFile = "/etc/cloudify/mount.json"
 	}
+
+	log.Printf("Use %s as config.", configFile)
+
 	configContent, err := ioutil.ReadFile(configFile)
 	if err != nil {
 		return nil, err
@@ -82,6 +86,8 @@ func initFunction() error {
 func runAction(config *CloudifyConfig, action string, params map[string]interface{}) error {
 	cl := cloudify.NewClient(config.Host, config.User, config.Password, config.Tenant)
 
+	log.Printf("Run %v with %v", action, params)
+
 	var exec cloudify.CloudifyExecutionPost
 	exec.WorkflowId = "execute_operation"
 	exec.DeploymentId = config.Deployment
@@ -97,7 +103,10 @@ func runAction(config *CloudifyConfig, action string, params map[string]interfac
 	executionGet := cl.PostExecution(exec)
 	execution = executionGet.CloudifyExecution
 	for execution.Status == "pending" || execution.Status == "started" {
-		time.Sleep(20 * time.Millisecond)
+		log.Printf("Check status for %v, last status: %v", execution.Id, execution.Status)
+
+		time.Sleep(15 * time.Second)
+
 		var params = map[string]string{}
 		params["id"] = execution.Id
 		executions := cl.GetExecutions(params)
@@ -106,6 +115,9 @@ func runAction(config *CloudifyConfig, action string, params map[string]interfac
 		}
 		execution = executions.Items[0]
 	}
+
+	log.Printf("Final status for %v, last status: %v", execution.Id, execution.Status)
+
 	if execution.Status == "failed" {
 		return fmt.Errorf(execution.ErrorMessage)
 	}
@@ -142,7 +154,7 @@ func mountFunction(config *CloudifyConfig, path, config_json string) error {
 
 func unMountFunction(config *CloudifyConfig, path string) error {
 	var params = map[string]interface{}{
-		"path":   path}
+		"path": path}
 
 	err_action := runAction(config, "maintenance.unmount", params)
 
@@ -164,6 +176,17 @@ func unMountFunction(config *CloudifyConfig, path string) error {
 
 func main() {
 	var message string = "Unknown"
+
+	f, err := os.OpenFile("/var/log/cfy-mount.log", os.O_WRONLY|os.O_CREATE|os.O_APPEND, 0666)
+	if err != nil {
+		message = err.Error()
+	} else {
+		defer f.Close()
+		log.SetOutput(f)
+	}
+
+	log.Printf("Run with %+v", os.Args)
+
 	config, config_err := getConfig()
 	if config_err != nil {
 		message = config_err.Error()
@@ -194,6 +217,9 @@ func main() {
 			}
 		}
 	}
+
+	log.Printf("Error: %v", message)
+
 	var response baseResponse
 	response.Status = "Not supported"
 	response.Message = message
