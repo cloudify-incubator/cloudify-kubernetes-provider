@@ -89,6 +89,8 @@ node_templates:
     type: cloudify.nodes.ApplicationServer
     interfaces:
       cloudify.interfaces.lifecycle:
+        create:
+          implementation: scripts/tools-build.sh
         configure:
           implementation: scripts/kubernetes-uninstall.sh
         start:

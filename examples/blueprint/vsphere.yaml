@@ -53,12 +53,12 @@ inputs:
 
   cpus:
     type: integer
-    default: 1
+    default: 2
 
   memory:
     type: integer
     description: RAM in MB
-    default: 1024
+    default: 2048
 
   vcenter_network:
     type: string
