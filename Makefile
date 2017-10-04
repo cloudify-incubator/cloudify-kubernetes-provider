@@ -1,5 +1,5 @@
 .PHONY: all
-all: bin/cfy-go bin/cfy-kubernetes bin/cfy-mount
+all: bin/cfy-go bin/cfy-mount bin/cfy-kubernetes
 
 PACKAGEPATH := github.com/0lvin-cfy/cloudify-rest-go-client
 
@@ -15,8 +15,8 @@ reformat:
 	gofmt -w src/${PACKAGEPATH}/cloudifyutils/*.go
 	gofmt -w src/${PACKAGEPATH}/cloudify/*.go
 	gofmt -w src/${PACKAGEPATH}/cfy-go/*.go
+	gofmt -w src/${PACKAGEPATH}/cfy-mount/*.go
 	gofmt -w src/cloudifyprovider/*.go
-	gofmt -w src/cfy-mount/*.go
 	gofmt -w src/*.go
 
 define colorecho
@@ -62,7 +62,13 @@ pkg/linux_amd64/${PACKAGEPATH}/cloudify.a: ${CLOUDIFYCOMMON} pkg/linux_amd64/${P
 
 bin/cfy-go: src/${PACKAGEPATH}/cfy-go/cfy-go.go pkg/linux_amd64/${PACKAGEPATH}/cloudifyutils.a pkg/linux_amd64/${PACKAGEPATH}/cloudify.a
 	$(call colorecho,"Install: ", $@)
-	go install -v -ldflags "-X main.versionString=${VERSION}" src/${PACKAGEPATH}/cfy-go/cfy-go.go
+	# delete -s -w if you want to debug
+	go install -v -ldflags "-s -w -X main.versionString=${VERSION}" src/${PACKAGEPATH}/cfy-go/cfy-go.go
+
+bin/cfy-mount: src/${PACKAGEPATH}/cfy-mount/cfy-mount.go pkg/linux_amd64/${PACKAGEPATH}/cloudify.a
+	$(call colorecho,"Install: ", $@)
+	# delete -s -w if you want to debug
+	go install -v -ldflags "-s -w -X main.versionString=${VERSION}" src/${PACKAGEPATH}/cfy-mount/cfy-mount.go
 
 # cloudify provider
 CLOUDIFYPROVIDER := \
@@ -80,16 +86,11 @@ bin/cfy-kubernetes: pkg/linux_amd64/cloudifyprovider.a pkg/linux_amd64/${PACKAGE
 	# delete -s -w if you want to debug
 	go install -ldflags "-s -w -X main.versionString=${VERSION}" -v src/cfy-kubernetes.go
 
-bin/cfy-mount: src/cfy-mount/cfy-mount.go
-	$(call colorecho,"Install: ", $@)
-	# delete -s -w if you want to debug
-	go install -ldflags "-s -w -X main.versionString=${VERSION}" -v src/cfy-mount/cfy-mount.go
-
 upload: all
 	cp bin/cfy-kubernetes examples/blueprint/bins/cfy-kubernetes
 	cp bin/cfy-go examples/blueprint/bins/cfy-go
 	cp bin/cfy-mount examples/blueprint/bins/cfy-mount
-	cfy blueprints upload -b slave examples/blueprint/${CLOUDPROVIDER}.yaml
+	cfy blueprints upload -b kubernetes_cluster examples/blueprint/${CLOUDPROVIDER}.yaml
 
 .PHONY: test
 test:
