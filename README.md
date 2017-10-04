@@ -1,21 +1,9 @@
 # cloudify-rest-go-client
 
-# install golang to centos(only for kubenetes build)
-```shell
-#https://go-repo.io/
-rpm --import https://mirror.go-repo.io/centos/RPM-GPG-KEY-GO-REPO
-curl -s https://mirror.go-repo.io/centos/go-repo.repo | tee /etc/yum.repos.d/go-repo.repo
-yum install golang
-```
-# install golang to ubuntu(only for kubenetes build)
-```shell
-# https://github.com/golang/go/wiki/Ubuntu
-sudo add-apt-repository ppa:longsleep/golang-backports
-sudo apt-get update
-sudo apt-get install golang-go curl
-```
+* Install [go lang on CentOs](examples/blueprint/scripts/tools-build.sh#L8-L12)
+* Install [go lang on Ubuntu](examples/blueprint/scripts/tools-build.sh#L14-L17)
 
-# git
+# git (Disc Usage: 699-872Mb)
 ```shell
 git clone --recursive git@github.com:0lvin-cfy/cloudify-rest-go-client.git -b kubernetes
 # show state for submodules

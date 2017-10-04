@@ -13,6 +13,8 @@
 [submodule "src/github.com/0lvin-cfy/cloudify-rest-go-client"]
 	path = src/github.com/0lvin-cfy/cloudify-rest-go-client
 	url = git@github.com:0lvin-cfy/cloudify-rest-go-client.git
+	branch = master
 [submodule "src/github.com/google/gofuzz"]
 	path = src/github.com/google/gofuzz
 	url = git@github.com:google/gofuzz.git
+	branch = master
