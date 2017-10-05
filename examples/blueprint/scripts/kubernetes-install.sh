@@ -42,9 +42,9 @@ sudo systemctl enable kubelet && sudo systemctl start kubelet
 
 ctx logger info "Add cloudify mount script"
 
-ctx download-resource bins/cfy-mount '@{"target_path": "/tmp/cfy-kubernetes"}'
+ctx download-resource bins/cfy-mount '@{"target_path": "/tmp/cfy-mount"}'
 PLUGINDIR=/usr/libexec/kubernetes/kubelet-plugins/volume/exec/cloudify~mount/
 sudo mkdir -p $PLUGINDIR
-sudo cp /tmp/cfy-kubernetes $PLUGINDIR/mount
+sudo cp /tmp/cfy-mount $PLUGINDIR/mount
 sudo chmod 555 -R $PLUGINDIR
 sudo chown root:root -R $PLUGINDIR

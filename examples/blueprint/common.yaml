@@ -85,12 +85,26 @@ node_templates:
     - target: kubemanager
       type: cloudify.relationships.contained_in
 
-  manager_kubenetes:
+  tools_build:
     type: cloudify.nodes.ApplicationServer
     interfaces:
       cloudify.interfaces.lifecycle:
         create:
-          implementation: scripts/tools-build.sh
+          implementation: scripts/tools-install.sh
+        configure:
+          implementation: scripts/code-download.sh
+        start:
+          implementation: scripts/code-build.sh
+        delete:
+          implementation: scripts/code-delete.sh
+    relationships:
+    - target: kubemanager_docker
+      type: cloudify.relationships.contained_in
+
+  manager_kubenetes:
+    type: cloudify.nodes.ApplicationServer
+    interfaces:
+      cloudify.interfaces.lifecycle:
         configure:
           implementation: scripts/kubernetes-uninstall.sh
         start:
@@ -98,7 +112,7 @@ node_templates:
         delete:
           implementation: scripts/kubernetes-uninstall.sh
     relationships:
-    - target: kubemanager_docker
+    - target: tools_build
       type: cloudify.relationships.contained_in
 
   config_export:

@@ -1,7 +1,7 @@
 # cloudify-rest-go-client
 
-* Install [GO on CentOs](examples/blueprint/scripts/tools-build.sh#L8-L12)
-* Install [GO on Ubuntu](examples/blueprint/scripts/tools-build.sh#L14-L17)
+* Install [GO on CentOs](examples/blueprint/scripts/tools-install.sh#L8-L12)
+* Install [GO on Ubuntu](examples/blueprint/scripts/tools-install.sh#L14-L17)
 
 # git (Disc Usage: 699-872Mb)
 ```shell
