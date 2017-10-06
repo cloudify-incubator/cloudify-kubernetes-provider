@@ -95,7 +95,7 @@ bin/cfy-kubernetes: pkg/linux_amd64/cloudifyprovider.a pkg/linux_amd64/${PACKAGE
 	# delete -s -w if you want to debug
 	go install -v -ldflags "-s -w -X main.versionString=${VERSION}" src/cfy-kubernetes.go
 
-upload: all
+upload:
 	cfy blueprints upload -b kubernetes_cluster examples/blueprint/${CLOUDPROVIDER}.yaml
 
 .PHONY: test
