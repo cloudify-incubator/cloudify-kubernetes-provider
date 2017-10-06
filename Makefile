@@ -96,7 +96,6 @@ bin/cfy-kubernetes: pkg/linux_amd64/cloudifyprovider.a pkg/linux_amd64/${PACKAGE
 	go install -v -ldflags "-s -w -X main.versionString=${VERSION}" src/cfy-kubernetes.go
 
 upload: all
-	cp bin/cfy-go examples/blueprint/bins/cfy-go
 	cfy blueprints upload -b kubernetes_cluster examples/blueprint/${CLOUDPROVIDER}.yaml
 
 .PHONY: test

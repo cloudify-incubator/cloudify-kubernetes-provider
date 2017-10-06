@@ -49,6 +49,8 @@ node_templates:
       cloudify.interfaces.lifecycle:
         create:
           implementation: scripts/tools-install.sh
+        configure:
+          implementation: scripts/client-build.sh
         start:
           implementation: scripts/prepare-mount.sh
           inputs:

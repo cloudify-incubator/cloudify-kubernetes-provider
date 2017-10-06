@@ -53,11 +53,13 @@ watch -n 5 -d kubectl describe pod nginx
 kubectl delete pod nginx
 ```
 
-## Upload blueprint to manager
+## Upload blueprint to manager (without build sources)
 
 `CLOUDPROVIDER` can be `aws` or `vsphere`.
 
 ```shell
+git clone https://github.com/0lvin-cfy/cloudify-rest-go-client.git -b kubernetes --depth 1
+cd cloudify-rest-go-client
 CLOUDPROVIDER=aws make upload
 cfy deployments create kubernetes_cluster -b kubernetes_cluster -i ../kubenetes.yaml --skip-plugins-validation
 cfy executions start install -d kubernetes_cluster

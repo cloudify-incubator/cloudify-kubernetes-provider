@@ -1,6 +1,5 @@
 ctx logger info "Download cfy-go"
-ctx download-resource bins/cfy-go '@{"target_path": "/tmp/cfy-go"}'
-sudo cp /tmp/cfy-go /usr/bin/cfy-go
+cp /opt/bin/cfy-go /usr/bin/cfy-go
 sudo chmod 555 /usr/bin/cfy-go
 sudo chown root:root /usr/bin/cfy-go
 
