@@ -43,6 +43,29 @@ node_types:
 ###############################################################################
 node_templates:
 
+  clienttools_build:
+    type: cloudify.nodes.ApplicationServer
+    interfaces:
+      cloudify.interfaces.lifecycle:
+        create:
+          implementation: scripts/tools-install.sh
+        start:
+          implementation: scripts/prepare-mount.sh
+          inputs:
+            # mount params
+            CFY_USER: { get_input: cfy_user }
+            CFY_PASSWORD: { get_input: cfy_password }
+            CFY_TENANT: { get_input: cfy_tenant }
+            CFY_HOST: { get_input: cfy_host }
+        delete:
+          implementation: scripts/code-delete.sh
+      maintenance:
+        mount: scripts/mount.py
+        unmount: scripts/unmount.py
+    relationships:
+    - target: kubeinstance
+      type: cloudify.relationships.contained_in
+
   docker:
     type: cloudify.nodes.ApplicationServer
     interfaces:
@@ -54,7 +77,7 @@ node_templates:
         delete:
           implementation: scripts/docker-uninstall.sh
     relationships:
-    - target: kubeinstance
+    - target: clienttools_build
       type: cloudify.relationships.contained_in
 
   kubenetes:
@@ -141,14 +164,6 @@ node_templates:
           inputs:
             TOKEN: { get_attribute: [config_export, token] }
             IP: { get_attribute: [kubemanager, ip] }
-            # mount params
-            CFY_USER: { get_input: cfy_user }
-            CFY_PASSWORD: { get_input: cfy_password }
-            CFY_TENANT: { get_input: cfy_tenant }
-            CFY_HOST: { get_input: cfy_host }
-      maintenance:
-        mount: scripts/mount.py
-        unmount: scripts/unmount.py
     relationships:
     - target: kubenetes
       type: cloudify.relationships.contained_in

@@ -49,13 +49,8 @@ kubectl describe deployment nginx-deployment --kubeconfig $HOME/.kube/config
 kubectl delete deployment nginx-deployment --kubeconfig $HOME/.kube/config
 # volume
 kubectl create -f examples/nginx.yaml
-kubectl describe pod nginx
+watch -n 5 -d kubectl describe pod nginx
 kubectl delete pod nginx
-# Mount check
-export CFY_CONFIG=examples/mount-config.json
-cfy-mount init
-cfy-mount mount /var/lib/kubelet/pods/ecd89d9d-a44a-11e7-b34f-00505685ddd0/volumes/cloudify~mount/someunxists '{"kubernetes.io/fsType":"ext4","kubernetes.io/pod.name":"nginx","kubernetes.io/pod.namespace":"default","kubernetes.io/pod.uid":"ecd89d9d-a44a-11e7-b34f-00505685ddd0","kubernetes.io/pvOrVolumeName":"someunxists","kubernetes.io/readwrite":"rw","kubernetes.io/serviceAccount.name":"default","size":"1000m","volumeID":"vol1","volumegroup":"kube_vg"}'
-cfy-mount unmount /var/lib/kubelet/pods/ecd89d9d-a44a-11e7-b34f-00505685ddd0/volumes/cloudify~mount/someunxists
 ```
 
 ## Upload blueprint to manager

@@ -18,6 +18,3 @@ elif [[ "$VM_VERSION" == 'NAME="Ubuntu"' ]]; then
 else
 	ctx logger info "Unknow OS"
 fi
-
-ctx logger info "Update compiler"
-sudo CGO_ENABLED=0 go install -a -installsuffix cgo std

@@ -1,5 +1,5 @@
 .PHONY: all
-all: bin/cfy-go bin/cfy-mount bin/cfy-kubernetes
+all: bin/cfy-go bin/cfy-kubernetes
 
 PACKAGEPATH := github.com/0lvin-cfy/cloudify-rest-go-client
 
@@ -15,7 +15,7 @@ reformat:
 	gofmt -w src/${PACKAGEPATH}/cloudifyutils/*.go
 	gofmt -w src/${PACKAGEPATH}/cloudify/*.go
 	gofmt -w src/${PACKAGEPATH}/cfy-go/*.go
-	gofmt -w src/${PACKAGEPATH}/cfy-mount/*.go
+	gofmt -w src/${PACKAGEPATH}/kubernetes/*.go
 	gofmt -w src/cloudifyprovider/*.go
 	gofmt -w src/*.go
 
@@ -35,6 +35,15 @@ CLOUDIFYREST := \
 pkg/linux_amd64/${PACKAGEPATH}/cloudify/cloudifyrest.a: ${CLOUDIFYREST}
 	$(call colorecho,"Build: ", $@)
 	go build -v -i -o pkg/linux_amd64/${PACKAGEPATH}/cloudify/cloudifyrest.a ${CLOUDIFYREST}
+
+# cloudify kubernetes support
+CLOUDIFYKUBERNETES := \
+	src/${PACKAGEPATH}/kubernetes/kubernetes.go \
+	src/${PACKAGEPATH}/kubernetes/types.go
+
+pkg/linux_amd64/${PACKAGEPATH}/kubernetes.a: ${CLOUDIFYKUBERNETES}
+	$(call colorecho,"Build: ", $@)
+	go build -v -i -o pkg/linux_amd64/${PACKAGEPATH}/kubernetes.a ${CLOUDIFYKUBERNETES}
 
 # cloudify utils
 CLOUDIFYUTILS := \
@@ -60,15 +69,15 @@ pkg/linux_amd64/${PACKAGEPATH}/cloudify.a: ${CLOUDIFYCOMMON} pkg/linux_amd64/${P
 	$(call colorecho,"Build: ",$@)
 	go build -v -i -o pkg/linux_amd64/${PACKAGEPATH}/cloudify.a ${CLOUDIFYCOMMON}
 
-bin/cfy-go: src/${PACKAGEPATH}/cfy-go/cfy-go.go pkg/linux_amd64/${PACKAGEPATH}/cloudifyutils.a pkg/linux_amd64/${PACKAGEPATH}/cloudify.a
+CFYGOLIBS := \
+	pkg/linux_amd64/${PACKAGEPATH}/cloudifyutils.a \
+	pkg/linux_amd64/${PACKAGEPATH}/kubernetes.a \
+	pkg/linux_amd64/${PACKAGEPATH}/cloudify.a
+
+bin/cfy-go: src/${PACKAGEPATH}/cfy-go/cfy-go.go ${CFYGOLIBS}
 	$(call colorecho,"Install: ", $@)
 	# delete -s -w if you want to debug
 	go install -v -ldflags "-s -w -X main.versionString=${VERSION}" src/${PACKAGEPATH}/cfy-go/cfy-go.go
-
-bin/cfy-mount: src/${PACKAGEPATH}/cfy-mount/cfy-mount.go pkg/linux_amd64/${PACKAGEPATH}/cloudify.a
-	$(call colorecho,"Install: ", $@)
-	# delete -s -w if you want to debug
-	go install -v -ldflags "-s -w -X main.versionString=${VERSION}" src/${PACKAGEPATH}/cfy-mount/cfy-mount.go
 
 # cloudify provider
 CLOUDIFYPROVIDER := \
@@ -88,7 +97,6 @@ bin/cfy-kubernetes: pkg/linux_amd64/cloudifyprovider.a pkg/linux_amd64/${PACKAGE
 
 upload: all
 	cp bin/cfy-go examples/blueprint/bins/cfy-go
-	cp bin/cfy-mount examples/blueprint/bins/cfy-mount
 	cfy blueprints upload -b kubernetes_cluster examples/blueprint/${CLOUDPROVIDER}.yaml
 
 .PHONY: test

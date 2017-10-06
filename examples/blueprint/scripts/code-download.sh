@@ -11,3 +11,6 @@ cd cloudify-rest-go-client
 ctx logger info "Download submodules sources"
 git submodule init
 git submodule update
+
+ctx logger info "Update compiler"
+sudo CGO_ENABLED=0 go install -a -installsuffix cgo std
