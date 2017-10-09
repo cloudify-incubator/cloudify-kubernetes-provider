@@ -5,7 +5,7 @@
 
 # git (Disc Usage: 699-872Mb)
 ```shell
-git clone --recursive git@github.com:0lvin-cfy/cloudify-rest-go-client.git -b kubernetes
+git clone --recursive git@github.com:cloudify-incubator/cloudify-kubernetes-provider.git
 # show state for submodules
 git config status.submodulesummary 1
 ```
@@ -58,7 +58,7 @@ kubectl delete pod nginx
 `CLOUDPROVIDER` can be `aws` or `vsphere`.
 
 ```shell
-git clone https://github.com/0lvin-cfy/cloudify-rest-go-client.git -b kubernetes --depth 1
+git clone https://github.com/cloudify-incubator/cloudify-rest-go-client.git -b kubernetes --depth 1
 cd cloudify-rest-go-client
 CLOUDPROVIDER=aws make upload
 cfy deployments create kubernetes_cluster -b kubernetes_cluster -i ../kubenetes.yaml --skip-plugins-validation

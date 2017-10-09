@@ -17,7 +17,7 @@ limitations under the License.
 package cloudifyprovider
 
 import (
-	cloudify "github.com/0lvin-cfy/cloudify-rest-go-client/cloudify"
+	cloudify "github.com/cloudify-incubator/cloudify-rest-go-client/cloudify"
 	"github.com/golang/glog"
 	"k8s.io/kubernetes/pkg/cloudprovider"
 )

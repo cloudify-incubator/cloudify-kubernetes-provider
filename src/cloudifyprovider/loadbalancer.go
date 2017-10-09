@@ -18,7 +18,7 @@ package cloudifyprovider
 
 import (
 	"fmt"
-	cloudify "github.com/0lvin-cfy/cloudify-rest-go-client/cloudify"
+	cloudify "github.com/cloudify-incubator/cloudify-rest-go-client/cloudify"
 	"github.com/golang/glog"
 	api "k8s.io/kubernetes/pkg/api/v1"
 )

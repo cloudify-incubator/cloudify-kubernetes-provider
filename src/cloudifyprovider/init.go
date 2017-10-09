@@ -19,7 +19,7 @@ package cloudifyprovider
 import (
 	"encoding/json"
 	"fmt"
-	cloudify "github.com/0lvin-cfy/cloudify-rest-go-client/cloudify"
+	cloudify "github.com/cloudify-incubator/cloudify-rest-go-client/cloudify"
 	"github.com/golang/glog"
 	"io"
 	"k8s.io/kubernetes/pkg/cloudprovider"
