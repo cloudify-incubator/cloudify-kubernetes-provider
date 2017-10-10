@@ -20,8 +20,8 @@ import (
 	"fmt"
 	cloudify "github.com/cloudify-incubator/cloudify-rest-go-client/cloudify"
 	"github.com/golang/glog"
+	api "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/types"
-	api "k8s.io/kubernetes/pkg/api/v1"
 	"k8s.io/kubernetes/pkg/cloudprovider"
 )
 
@@ -239,6 +239,12 @@ func (r *CloudifyIntances) InstanceType(nodeName types.NodeName) (string, error)
 func (r *CloudifyIntances) InstanceTypeByProviderID(providerID string) (string, error) {
 	glog.Infof("?InstanceTypeByProviderID [%s]", providerID)
 	return "", fmt.Errorf("Not implemented:InstanceTypeByProviderID")
+}
+
+// InstanceExistsByProviderID returns true if the instance with the given provider id still exists and is running.
+// If false is returned with no error, the instance will be immediately deleted by the cloud controller manager.
+func (r *CloudifyIntances) InstanceExistsByProviderID(providerID string) (bool, error) {
+	return false, fmt.Errorf("Not implemented:InstanceExistsByProviderID")
 }
 
 func NewCloudifyIntances(client *cloudify.CloudifyClient, deployment string) *CloudifyIntances {

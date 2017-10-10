@@ -20,6 +20,8 @@ import (
 	cloudify "github.com/cloudify-incubator/cloudify-rest-go-client/cloudify"
 	"github.com/golang/glog"
 	"k8s.io/kubernetes/pkg/cloudprovider"
+	"k8s.io/apimachinery/pkg/types"
+	"fmt"
 )
 
 type CloudifyZones struct {
@@ -33,6 +35,20 @@ func (r *CloudifyZones) GetZone() (cloudprovider.Zone, error) {
 		FailureDomain: "FailureDomain",
 		Region:        "Region",
 	}, nil
+}
+
+// GetZoneByProviderID implements Zones.GetZoneByProviderID
+// This is particularly useful in external cloud providers where the kubelet
+// does not initialize node data.
+func (r *CloudifyZones) GetZoneByProviderID(providerID string) (cloudprovider.Zone, error) {
+	return cloudprovider.Zone{}, fmt.Errorf("GetZoneByProviderID not implemented")
+}
+
+// GetZoneByNodeName implements Zones.GetZoneByNodeName
+// This is particularly useful in external cloud providers where the kubelet
+// does not initialize node data.
+func (r *CloudifyZones) GetZoneByNodeName(nodeName types.NodeName) (cloudprovider.Zone, error) {
+	return cloudprovider.Zone{}, fmt.Errorf("GetZoneByNodeName not imeplemented")
 }
 
 func NewCloudifyZones(client *cloudify.CloudifyClient) *CloudifyZones {

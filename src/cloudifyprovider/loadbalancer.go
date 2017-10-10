@@ -20,7 +20,7 @@ import (
 	"fmt"
 	cloudify "github.com/cloudify-incubator/cloudify-rest-go-client/cloudify"
 	"github.com/golang/glog"
-	api "k8s.io/kubernetes/pkg/api/v1"
+	api "k8s.io/api/core/v1"
 )
 
 type CloudifyBalancer struct {

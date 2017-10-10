@@ -16,8 +16,7 @@ git config status.submodulesummary 1
 sudo apt-get install golang-go
 export GOBIN=`pwd`/bin
 export PATH=$PATH:`pwd`/bin
-export PKGBASE=`pwd`
-export GOPATH=${PKGBASE}
+export GOPATH=`pwd`
 # kubernetes
 sudo CGO_ENABLED=0 go install -a -installsuffix cgo std
 git submodule update
@@ -30,6 +29,18 @@ make all
 ```shell
 make reformat
 ```
+# Preparation to use new version of kubernetes
+After update to new version of kubernates run:
+```shell
+rm -rfv src/k8s.io/kubernetes/vendor/github.com/golang/glog
+rm -rfv src/k8s.io/kubernetes/vendor/github.com/google/gofuzz
+rm -rfv src/k8s.io/kubernetes/vendor/github.com/davecgh/go-spew
+rm -rfv src/k8s.io/kubernetes/vendor/github.com/json-iterator/go
+rm -rfv src/k8s.io/kubernetes/vendor/k8s.io/apimachinery
+rm -rfv src/k8s.io/kubernetes/vendor/k8s.io/api
+rm -rfv src/k8s.io/kubernetes/staging/src/k8s.io/apimachinery
+```
+
 # Functionality related to kubernetes
 ## version
 
