@@ -18,7 +18,7 @@ if [[ "$VM_VERSION" == 'NAME="CentOS Linux"' ]]; then
 
 	ctx logger info "Install kubernetes"
 
-	sudo yum install -y kubelet-1.7.5-0.x86_64 kubeadm-1.7.5-0
+	sudo yum install -y kubelet kubeadm
 elif [[ "$VM_VERSION" == 'NAME="Ubuntu"' ]]; then
 	apt-get update && apt-get install -y apt-transport-https curl
 	curl -s https://packages.cloud.google.com/apt/doc/apt-key.gpg | apt-key add -
@@ -33,6 +33,8 @@ else
 	ctx logger info "Unknow OS"
 fi
 
+# we need to disable swaps before use
+swapon -s | awk '{print "sudo swapoff " $1}' | grep -v "Filename" | sh -
 sudo sed -i 's|cgroup-driver=systemd|cgroup-driver=cgroupfs --v 6|g' /etc/systemd/system/kubelet.service.d/10-kubeadm.conf
 
 ctx logger info "Reload kubernetes"

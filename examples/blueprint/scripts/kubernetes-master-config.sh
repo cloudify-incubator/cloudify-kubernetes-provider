@@ -1,6 +1,12 @@
+ctx logger info "Reload kubeadm"
+sudo systemctl daemon-reload
+sudo systemctl stop kubelet && sleep 20 && sudo systemctl start kubelet
+sleep 20
+
 ctx logger info "Init kubeadm"
 echo 1 | sudo tee /proc/sys/net/bridge/bridge-nf-call-iptables
-sudo kubeadm init --pod-network-cidr 10.244.0.0/16 --token-ttl 0
+sudo kubeadm reset || ctx logger info "Insure that no previos configs"
+sudo kubeadm init --pod-network-cidr 10.244.0.0/16 --token-ttl 0 || ctx logger info "Have issue with init kubeadm"
 
 ctx logger info "Get token"
 TOKEN=`sudo kubeadm token list | grep authentication,signing | awk '{print $1}' | base64`
