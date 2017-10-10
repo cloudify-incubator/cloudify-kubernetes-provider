@@ -69,7 +69,7 @@ kubectl delete pod nginx
 `CLOUDPROVIDER` can be `aws` or `vsphere`.
 
 ```shell
-git clone https://github.com/cloudify-incubator/cloudify-rest-go-client.git -b kubernetes --depth 1
+git clone https://github.com/cloudify-incubator/cloudify-kubernetes-provider.git -b master --depth 1
 cd cloudify-rest-go-client
 CLOUDPROVIDER=aws make upload
 cfy deployments create kubernetes_cluster -b kubernetes_cluster -i ../kubenetes.yaml --skip-plugins-validation

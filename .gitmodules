@@ -38,10 +38,6 @@
 	path = src/gopkg.in/yaml.v2
 	url = https://gopkg.in/yaml.v2
 	branch = master
-[submodule "src/gopkg.in/inf.v2"]
-	path = src/gopkg.in/inf.v2
-	url = https://gopkg.in/inf.v0
-	branch = master
 [submodule "src/golang.org/x/text"]
 	path = src/golang.org/x/text
 	url = https://go.googlesource.com/text
@@ -98,3 +94,6 @@
 	path = src/github.com/spf13/pflag
 	url = git@github.com:spf13/pflag.git
 	branch = master
+[submodule "src/gopkg.in/inf.v0"]
+	path = src/gopkg.in/inf.v0
+	url = https://gopkg.in/inf.v0
