@@ -49,9 +49,9 @@ cfy-kubernetes -version
 cfy-kubernetes --kubeconfig $HOME/.kube/config --cloud-config examples/config.json
 kubectl get nodes
 #scale
-cfy executions start scale -d slave  -p 'scalable_entity_name=kubeinstance'
+cfy executions start scale -d kubernetes_cluster -p 'scalable_entity_name=kubeinstance'
 #downscale
-cfy executions start scale -d slave  -p 'scalable_entity_name=kubeinstance' -p 'delta=-1'
+cfy executions start scale -d kubernetes_cluster -p 'scalable_entity_name=kubeinstance' -p 'delta=-1'
 # create simple pod https://kubernetes.io/docs/tasks/run-application/run-stateless-application-deployment/
 kubectl create -f https://k8s.io/docs/tasks/run-application/deployment.yaml --kubeconfig $HOME/.kube/config
 # look to description
