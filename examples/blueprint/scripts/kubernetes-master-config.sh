@@ -39,8 +39,8 @@ sudo tee $HOME/cfy.json <<EOF
 }
 EOF
 
-ctx logger info "Download cfy manager"
-cp /opt/cloudify-rest-go-client/bin/cfy-kubernetes /usr/bin/cfy-kubernetes
+ctx logger info "Install cfy-kubernetes provider"
+cp /opt/cloudify-kubernetes-provider/bin/cfy-kubernetes /usr/bin/cfy-kubernetes
 sudo chmod 555 /usr/bin/cfy-kubernetes
 sudo chown root:root /usr/bin/cfy-kubernetes
 

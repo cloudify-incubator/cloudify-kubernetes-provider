@@ -35,7 +35,7 @@ fi
 
 # we need to disable swaps before use
 swapon -s | awk '{print "sudo swapoff " $1}' | grep -v "Filename" | sh -
-sudo sed -i 's|cgroup-driver=systemd|cgroup-driver=cgroupfs --v 6|g' /etc/systemd/system/kubelet.service.d/10-kubeadm.conf
+sudo sed -i 's|cgroup-driver=systemd|cgroup-driver=cgroupfs|g' /etc/systemd/system/kubelet.service.d/10-kubeadm.conf
 
 ctx logger info "Reload kubernetes"
 
