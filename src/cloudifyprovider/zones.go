@@ -17,11 +17,11 @@ limitations under the License.
 package cloudifyprovider
 
 import (
+	"fmt"
 	cloudify "github.com/cloudify-incubator/cloudify-rest-go-client/cloudify"
 	"github.com/golang/glog"
-	"k8s.io/kubernetes/pkg/cloudprovider"
 	"k8s.io/apimachinery/pkg/types"
-	"fmt"
+	"k8s.io/kubernetes/pkg/cloudprovider"
 )
 
 type CloudifyZones struct {
