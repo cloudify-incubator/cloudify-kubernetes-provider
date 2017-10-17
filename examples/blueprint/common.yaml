@@ -22,21 +22,30 @@ inputs:
     default: 127.0.0.1
 
 node_types:
-  server_type:
-    derived_from: cloudify.nodes.ApplicationModule
-    properties:
-      use_external_resource:
-        default: false
-      resource_id:
-        default: ''
+
+  # type represent node with installed kubernetes code
+  kubernetes_type:
+    derived_from: cloudify.nodes.ApplicationServer
     interfaces:
-      maintenance:
-        suspend:
-          implementation: scripts/suspend.py
-          executor: central_deployment_agent
-        resume:
-          implementation: scripts/resume.py
-          executor: central_deployment_agent
+      cloudify.interfaces.lifecycle:
+        configure:
+          implementation: scripts/kubernetes-uninstall.sh
+        start:
+          implementation: scripts/kubernetes-install.sh
+        delete:
+          implementation: scripts/kubernetes-uninstall.sh
+
+  # type represent node with installed docker code
+  docker_type:
+    derived_from: cloudify.nodes.ApplicationServer
+    interfaces:
+      cloudify.interfaces.lifecycle:
+        configure:
+          implementation: scripts/docker-uninstall.sh
+        start:
+          implementation: scripts/docker-install.sh
+        delete:
+          implementation: scripts/docker-uninstall.sh
 
 ###############################################################################
 # Node templates section
@@ -69,43 +78,19 @@ node_templates:
       type: cloudify.relationships.contained_in
 
   docker:
-    type: cloudify.nodes.ApplicationServer
-    interfaces:
-      cloudify.interfaces.lifecycle:
-        configure:
-          implementation: scripts/docker-uninstall.sh
-        start:
-          implementation: scripts/docker-install.sh
-        delete:
-          implementation: scripts/docker-uninstall.sh
+    type: docker_type
     relationships:
     - target: clienttools_build
       type: cloudify.relationships.contained_in
 
   kubenetes:
-    type: cloudify.nodes.ApplicationServer
-    interfaces:
-      cloudify.interfaces.lifecycle:
-        configure:
-          implementation: scripts/kubernetes-uninstall.sh
-        start:
-          implementation: scripts/kubernetes-install.sh
-        delete:
-          implementation: scripts/kubernetes-uninstall.sh
+    type: kubernetes_type
     relationships:
     - target: docker
       type: cloudify.relationships.contained_in
 
   kubemanager_docker:
-    type: cloudify.nodes.ApplicationServer
-    interfaces:
-      cloudify.interfaces.lifecycle:
-        configure:
-          implementation: scripts/docker-uninstall.sh
-        start:
-          implementation: scripts/docker-install.sh
-        delete:
-          implementation: scripts/docker-uninstall.sh
+    type: docker_type
     relationships:
     - target: kubemanager
       type: cloudify.relationships.contained_in
@@ -127,15 +112,7 @@ node_templates:
       type: cloudify.relationships.contained_in
 
   manager_kubenetes:
-    type: cloudify.nodes.ApplicationServer
-    interfaces:
-      cloudify.interfaces.lifecycle:
-        configure:
-          implementation: scripts/kubernetes-uninstall.sh
-        start:
-          implementation: scripts/kubernetes-install.sh
-        delete:
-          implementation: scripts/kubernetes-uninstall.sh
+    type: kubernetes_type
     relationships:
     - target: tools_build
       type: cloudify.relationships.contained_in
@@ -171,8 +148,3 @@ node_templates:
       type: cloudify.relationships.contained_in
     - target: config_export
       type: cloudify.relationships.depends_on
-
-  server:
-    type: server_type
-    properties:
-      resource_id: KubenetesSubActions

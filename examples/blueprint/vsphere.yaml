@@ -214,48 +214,43 @@ dsl_definitions:
     auto_placement: { get_input: vsphere_auto_placement }
     allow_insecure: true
 
+node_types:
+  kubernetes_host:
+    derived_from: cloudify.vsphere.nodes.Server
+    properties:
+      connection_config:
+        default: *connection_config
+      server:
+        default:
+          name: { get_input: vsphere_centos_name }
+          template: { get_input: template_name }
+          cpus: { get_input: cpus }
+          memory: { get_input: memory }
+      agent_config:
+        default:
+          install_method: remote
+          user: { get_input: servers_user }
+          key: { get_input: user_private_key }
+      networking:
+        default:
+          dns_servers: { get_input: dns_servers }
+          connect_networks:
+            - name: { get_input: vcenter_network }
+
 node_templates:
 ###############################################################################
 # vsphere section
 ###############################################################################
   kubeinstance:
-    type: cloudify.vsphere.nodes.Server
+    type: kubernetes_host
     capabilities:
       scalable:
         properties:
           default_instances: 1
-    properties:
-      connection_config: *connection_config
-      server:
-        name: { get_input: vsphere_centos_name }
-        template: { get_input: template_name }
-        cpus: { get_input: cpus }
-        memory: { get_input: memory }
-      agent_config:
-        user: { get_input: servers_user }
-        key: { get_input: user_private_key }
-      networking:
-        dns_servers: { get_input: dns_servers }
-        connect_networks:
-          - name: { get_input: vcenter_network }
 
   kubemanager:
-    type: cloudify.vsphere.nodes.Server
+    type: kubernetes_host
     capabilities:
       scalable:
         properties:
           default_instances: 1
-    properties:
-      connection_config: *connection_config
-      server:
-        name: { get_input: vsphere_centos_name }
-        template: { get_input: template_name }
-        cpus: { get_input: cpus }
-        memory: { get_input: memory }
-      agent_config:
-        user: { get_input: servers_user }
-        key: { get_input: user_private_key }
-      networking:
-        dns_servers: { get_input: dns_servers }
-        connect_networks:
-          - name: { get_input: vcenter_network }
