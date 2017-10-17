@@ -23,7 +23,6 @@ import (
 	api "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/kubernetes/pkg/cloudprovider"
-	s "strings"
 )
 
 type CloudifyInstances struct {
@@ -39,11 +38,23 @@ func (r *CloudifyInstances) getInstances(params map[string]string) []cloudify.Cl
 	instances := []cloudify.CloudifyNodeInstance{}
 
 	for _, nodeInstance := range nodeInstances.Items {
+		var node_params = map[string]string{}
 		node_params["id"] = nodeInstance.NodeId
-		node := r.client.GetNodes(node_params)
-		node_type_hierarchy := s.Join(node.TypeHierarchy)
+		nodes := r.client.GetNodes(node_params)
+		if len(nodes.Items) != 1 {
+			glog.Infof("Found more than one node by nodeId: %+v", nodeInstance.NodeId)
+			continue
+		}
 
-		if s.Contains(node_type_hierarchy, "cloudify.nodes.Compute") == false {
+		var not_kubernetes_host bool = true
+		for _, type_name := range nodes.Items[0].TypeHierarchy {
+			if type_name == "kubernetes_host" {
+				not_kubernetes_host = true
+				break
+			}
+		}
+
+		if not_kubernetes_host {
 			continue
 		}
 

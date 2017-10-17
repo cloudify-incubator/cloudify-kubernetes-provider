@@ -4,7 +4,7 @@ cd /opt/
 ctx logger info "Download top level sources"
 # take ~ 16m34.350s for rebuild, 841M Disk Usage
 rm -rf cloudify-rest-go-client
-git clone https://github.com/cloudify-incubator/cloudify-kubernetes-provider.git --depth 1 -b kube-1.8.1
+git clone https://github.com/cloudify-incubator/cloudify-kubernetes-provider.git --depth 1 -b master
 sed -i "s|git@github.com:|https://github.com/|g" cloudify-kubernetes-provider/.gitmodules
 
 cd cloudify-kubernetes-provider

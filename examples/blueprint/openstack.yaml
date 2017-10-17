@@ -29,6 +29,26 @@ dsl_definitions:
     auth_url: { get_secret: keystone_url }
     region: { get_secret: region }
 
+node_types:
+  kubernetes_host:
+    derived_from: cloudify.openstack.nodes.Server
+    properties:
+      openstack_config:
+        default: *openstack_config
+      agent_config:
+        default:
+          user: { get_input: agent_user }
+          install_method: remote
+          port: 22
+          key: { get_secret: agent_key_private }
+      server:
+        default:
+          key_name: ''
+          image: ''
+          flavor: ''
+      management_network_name:
+        default: ''
+
 node_templates:
 
   cloudify_host_cloud_config:
@@ -48,18 +68,8 @@ node_templates:
             - { get_secret: agent_key_public }
 
   kubemanager:
-    type: cloudify.openstack.nodes.Server
+    type: kubernetes_host
     properties:
-      openstack_config: *openstack_config
-      agent_config:
-          user: { get_input: agent_user }
-          install_method: remote
-          port: 22
-          key: { get_secret: agent_key_private }
-      server:
-        key_name: ''
-        image: ''
-        flavor: ''
       management_network_name: { get_property: [ public_network, resource_id ] }
     interfaces:
       cloudify.interfaces.lifecycle:
@@ -97,18 +107,8 @@ node_templates:
         floating_network_name: { get_property: [ external_network, resource_id ] }
 
   kubeinstance:
-    type: cloudify.openstack.nodes.Server
+    type: kubernetes_host
     properties:
-      openstack_config: *openstack_config
-      agent_config:
-        user: { get_input: agent_user }
-        install_method: remote
-        port: 22
-        key: { get_secret: agent_key_private }
-      server:
-        key_name: ''
-        image: ''
-        flavor: ''
       management_network_name: { get_property: [ public_network, resource_id ] }
     relationships:
     - type: cloudify.relationships.contained_in
