@@ -59,7 +59,11 @@ ExecStart=/usr/bin/cfy-kubernetes --kubeconfig $HOME/.kube/config --cloud-config
 KillMode=process
 Restart=on-failure
 RestartSec=60s
+
+[Install]
+WantedBy=multi-user.target
 EOF
+sudo cp /etc/systemd/system/cfy-kubernetes.service /etc/systemd/system/multi-user.target.wants/
 
 ctx logger info "Start service"
 sudo systemctl daemon-reload
