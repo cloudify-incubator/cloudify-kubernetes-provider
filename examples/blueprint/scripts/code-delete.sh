@@ -1,2 +1,2 @@
 ctx logger info "Remove source code"
-sudo rm -rvf /opt/cloudify-rest-go-client
+rm -rvf /opt/cloudify-rest-go-client

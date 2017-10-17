@@ -19,4 +19,4 @@ else
 	ctx logger info "Unknow OS"
 fi
 
-sudo chmod -R 775 /opt
+sudo chmod -R 777 /opt

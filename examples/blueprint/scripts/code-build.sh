@@ -1,4 +1,5 @@
 ctx logger info "Build everything"
+sudo mkdir -p /opt/cloudify-kubernetes-provider
 cd /opt/cloudify-kubernetes-provider
 
 # kubernetes
@@ -9,6 +10,6 @@ export GOPATH=`pwd`
 # cfy part
 PACKAGEPATH=github.com/cloudify-incubator/cloudify-kubernetes-provider
 ctx logger info "Build cfy-go"
-sudo go install src/${PACKAGEPATH}/cfy-go/cfy-go.go
+go install src/${PACKAGEPATH}/cfy-go/cfy-go.go
 ctx logger info "Build cfy-kubernetes"
-sudo go install src/cfy-kubernetes.go
+go install src/cfy-kubernetes.go
