@@ -49,7 +49,7 @@ func (r *CloudifyInstances) getInstances(params map[string]string) []cloudify.Cl
 		var not_kubernetes_host bool = true
 		for _, type_name := range nodes.Items[0].TypeHierarchy {
 			if type_name == "kubernetes_host" {
-				not_kubernetes_host = true
+				not_kubernetes_host = false
 				break
 			}
 		}
