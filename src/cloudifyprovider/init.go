@@ -35,7 +35,7 @@ const (
 type CloudProvider struct {
 	deployment string
 	client     *cloudify.CloudifyClient
-	instances  *CloudifyIntances
+	instances  *CloudifyInstances
 	balancers  *CloudifyBalancer
 	zones      *CloudifyZones
 }
@@ -85,7 +85,7 @@ func (r *CloudProvider) Instances() (cloudprovider.Instances, bool) {
 		if r.instances != nil {
 			return r.instances, true
 		} else {
-			r.instances = NewCloudifyIntances(r.client, r.deployment)
+			r.instances = NewCloudifyInstances(r.client, r.deployment)
 			return r.instances, true
 		}
 	}
