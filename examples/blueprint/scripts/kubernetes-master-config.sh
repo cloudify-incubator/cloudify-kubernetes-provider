@@ -25,7 +25,7 @@ sudo chown $(id -u):$(id -g) $HOME/.kube/config
 
 ctx logger info "Apply network"
 sleep 60
-kubectl apply -f https://git.io/weave-kube-1.6
+kubectl apply -f https://git.io/weave-kube-1.6 || ctx logger info "Init network configuration failed?"
 
 ctx logger info "Create cfy config"
 sudo tee $HOME/cfy.json <<EOF
