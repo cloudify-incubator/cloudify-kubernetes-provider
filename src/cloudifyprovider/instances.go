@@ -23,14 +23,15 @@ import (
 	api "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/kubernetes/pkg/cloudprovider"
+	s "strings"
 )
 
-type CloudifyIntances struct {
+type CloudifyInstances struct {
 	deployment string
 	client     *cloudify.CloudifyClient
 }
 
-func (r *CloudifyIntances) getInstances(params map[string]string) []cloudify.CloudifyNodeInstance {
+func (r *CloudifyInstances) getInstances(params map[string]string) []cloudify.CloudifyNodeInstance {
 	// Add filter by deployment
 	params["deployment_id"] = r.deployment
 
@@ -38,8 +39,11 @@ func (r *CloudifyIntances) getInstances(params map[string]string) []cloudify.Clo
 	instances := []cloudify.CloudifyNodeInstance{}
 
 	for _, nodeInstance := range nodeInstances.Items {
-		// skip nodes without ip's
-		if nodeInstance.NodeId != "kubeinstance" && nodeInstance.NodeId != "kubemanager" {
+		node_params["id"] = nodeInstance.NodeId
+		node := r.client.GetNodes(node_params)
+		node_type_hierarchy := s.Join(node.TypeHierarchy)
+
+		if s.Contains(node_type_hierarchy, "cloudify.nodes.Compute") == false {
 			continue
 		}
 
@@ -59,7 +63,7 @@ func (r *CloudifyIntances) getInstances(params map[string]string) []cloudify.Clo
 // This implementation only returns the address of the calling instance. This is ok
 // because the gce implementation makes that assumption and the comment for the interface
 // states it as a todo to clarify that it is only for the current host
-func (r *CloudifyIntances) NodeAddresses(nodeName types.NodeName) ([]api.NodeAddress, error) {
+func (r *CloudifyInstances) NodeAddresses(nodeName types.NodeName) ([]api.NodeAddress, error) {
 	name := string(nodeName)
 	glog.Infof(">NodeAddresses [%s]", name)
 
@@ -124,7 +128,7 @@ func (r *CloudifyIntances) NodeAddresses(nodeName types.NodeName) ([]api.NodeAdd
 // NodeAddressesByProviderID returns the node addresses of an instances with the specified unique providerID
 // This method will not be called from the node that is requesting this ID. i.e. metadata service
 // and other local methods cannot be used here
-func (r *CloudifyIntances) NodeAddressesByProviderID(providerID string) ([]api.NodeAddress, error) {
+func (r *CloudifyInstances) NodeAddressesByProviderID(providerID string) ([]api.NodeAddress, error) {
 	glog.Infof(">NodeAddressesByProviderID [%s]", providerID)
 
 	var params = map[string]string{}
@@ -167,19 +171,19 @@ func (r *CloudifyIntances) NodeAddressesByProviderID(providerID string) ([]api.N
 
 // AddSSHKeyToAllInstances adds an SSH public key as a legal identity for all instances
 // expected format for the key is standard ssh-keygen format: <protocol> <blob>
-func (r *CloudifyIntances) AddSSHKeyToAllInstances(user string, keyData []byte) error {
+func (r *CloudifyInstances) AddSSHKeyToAllInstances(user string, keyData []byte) error {
 	glog.Infof("?AddSSHKeyToAllInstances [%s]", user)
 	return fmt.Errorf("Not implemented:AddSSHKeyToAllInstances")
 }
 
 // CurrentNodeName returns the name of the node we are currently running on
-func (r *CloudifyIntances) CurrentNodeName(hostname string) (types.NodeName, error) {
+func (r *CloudifyInstances) CurrentNodeName(hostname string) (types.NodeName, error) {
 	glog.Infof("?CurrentNodeName [%s]", hostname)
 	return types.NodeName(hostname), nil
 }
 
 // ExternalID returns the cloud provider ID of the specified instance (deprecated).
-func (r *CloudifyIntances) ExternalID(nodeName types.NodeName) (string, error) {
+func (r *CloudifyInstances) ExternalID(nodeName types.NodeName) (string, error) {
 	name := string(nodeName)
 	glog.Infof("?ExternalID [%s]", name)
 	return r.InstanceID(nodeName)
@@ -188,7 +192,7 @@ func (r *CloudifyIntances) ExternalID(nodeName types.NodeName) (string, error) {
 const fakeuuid = "fakeuuid:"
 
 // InstanceID returns the cloud provider ID of the specified instance.
-func (r *CloudifyIntances) InstanceID(nodeName types.NodeName) (string, error) {
+func (r *CloudifyInstances) InstanceID(nodeName types.NodeName) (string, error) {
 	name := string(nodeName)
 	glog.Infof("InstanceID [%s]", name)
 
@@ -225,7 +229,7 @@ func (r *CloudifyIntances) InstanceID(nodeName types.NodeName) (string, error) {
 
 // InstanceType returns the type of the specified instance.
 // Note that if the instance does not exist or is no longer running, we must return ("", cloudprovider.InstanceNotFound)
-func (r *CloudifyIntances) InstanceType(nodeName types.NodeName) (string, error) {
+func (r *CloudifyInstances) InstanceType(nodeName types.NodeName) (string, error) {
 	_, err := r.InstanceID(nodeName)
 	if err != nil {
 		return "", err
@@ -236,19 +240,19 @@ func (r *CloudifyIntances) InstanceType(nodeName types.NodeName) (string, error)
 // InstanceTypeByProviderID returns the cloudprovider instance type of the node with the specified unique providerID
 // This method will not be called from the node that is requesting this ID. i.e. metadata service
 // and other local methods cannot be used here
-func (r *CloudifyIntances) InstanceTypeByProviderID(providerID string) (string, error) {
+func (r *CloudifyInstances) InstanceTypeByProviderID(providerID string) (string, error) {
 	glog.Infof("?InstanceTypeByProviderID [%s]", providerID)
 	return "", fmt.Errorf("Not implemented:InstanceTypeByProviderID")
 }
 
 // InstanceExistsByProviderID returns true if the instance with the given provider id still exists and is running.
 // If false is returned with no error, the instance will be immediately deleted by the cloud controller manager.
-func (r *CloudifyIntances) InstanceExistsByProviderID(providerID string) (bool, error) {
+func (r *CloudifyInstances) InstanceExistsByProviderID(providerID string) (bool, error) {
 	return false, fmt.Errorf("Not implemented:InstanceExistsByProviderID")
 }
 
-func NewCloudifyIntances(client *cloudify.CloudifyClient, deployment string) *CloudifyIntances {
-	return &CloudifyIntances{
+func NewCloudifyInstances(client *cloudify.CloudifyClient, deployment string) *CloudifyInstances {
+	return &CloudifyInstances{
 		client:     client,
 		deployment: deployment,
 	}

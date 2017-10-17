@@ -18,3 +18,5 @@ elif [[ "$VM_VERSION" == 'NAME="Ubuntu"' ]]; then
 else
 	ctx logger info "Unknow OS"
 fi
+
+sudo chmod -R 777 /opt

@@ -1,0 +1,269 @@
+tosca_definitions_version: cloudify_dsl_1_3
+
+imports:
+  - https://raw.githubusercontent.com/cloudify-cosmo/cloudify-openstack-plugin/2.2.0/plugin.yaml
+  - https://raw.githubusercontent.com/cloudify-incubator/cloudify-utilities-plugin/1.2.5/plugin.yaml
+  - common.yaml
+
+inputs:
+
+  image:
+    description: Image to be used when launching agent VMs
+    default: { get_secret: centos_core_image }
+
+  flavor:
+    description: Flavor of the agent VMs
+    default: { get_secret: large_image_flavor }
+
+  agent_user:
+    description: >
+      User for connecting to agent VMs
+    default: centos
+
+dsl_definitions:
+
+  openstack_config: &openstack_config
+    username: { get_secret: keystone_username }
+    password: { get_secret: keystone_password }
+    tenant_name: { get_secret: keystone_tenant_name }
+    auth_url: { get_secret: keystone_url }
+    region: { get_secret: region }
+
+node_templates:
+
+  cloudify_host_cloud_config:
+    type: cloudify.nodes.CloudInit.CloudConfig
+    properties:
+      resource_config:
+        manage_etc_hosts: True
+        groups:
+        - docker
+        users:
+        - name: { get_input: agent_user }
+          primary-group: wheel
+          groups: docker
+          shell: /bin/bash
+          sudo: ['ALL=(ALL) NOPASSWD:ALL']
+          ssh-authorized-keys:
+            - { get_secret: agent_key_public }
+
+  kubemanager:
+    type: cloudify.openstack.nodes.Server
+    properties:
+      openstack_config: *openstack_config
+      agent_config:
+          user: { get_input: agent_user }
+          install_method: remote
+          port: 22
+          key: { get_secret: agent_key_private }
+      server:
+        key_name: ''
+        image: ''
+        flavor: ''
+      management_network_name: { get_property: [ public_network, resource_id ] }
+    interfaces:
+      cloudify.interfaces.lifecycle:
+        create:
+          inputs:
+            args:
+              image: { get_input: image }
+              flavor: { get_input: flavor }
+              userdata: { get_attribute: [ cloudify_host_cloud_config, cloud_config ] }
+    relationships:
+      - target: kubemanager_port
+        type: cloudify.openstack.server_connected_to_port
+      - type: cloudify.relationships.depends_on
+        target: cloudify_host_cloud_config
+
+  kubemanager_port:
+    type: cloudify.openstack.nodes.Port
+    properties:
+      openstack_config: *openstack_config
+    relationships:
+    - type: cloudify.relationships.connected_to
+      target: public_network
+    - type: cloudify.relationships.depends_on
+      target: public_subnet
+    - type: cloudify.openstack.port_connected_to_security_group
+      target: kubernetes_security_group
+    - type: cloudify.openstack.port_connected_to_floating_ip
+      target: kubemanager_port_elastic_ip
+
+  kubemanager_port_elastic_ip:
+    type: cloudify.openstack.nodes.FloatingIP
+    properties:
+      openstack_config: *openstack_config
+      floatingip:
+        floating_network_name: { get_property: [ external_network, resource_id ] }
+
+  kubeinstance:
+    type: cloudify.openstack.nodes.Server
+    properties:
+      openstack_config: *openstack_config
+      agent_config:
+        user: { get_input: agent_user }
+        install_method: remote
+        port: 22
+        key: { get_secret: agent_key_private }
+      server:
+        key_name: ''
+        image: ''
+        flavor: ''
+      management_network_name: { get_property: [ public_network, resource_id ] }
+    relationships:
+    - type: cloudify.relationships.contained_in
+      target: k8s_node_scaling_tier
+    - target: kubeinstance_port
+      type: cloudify.openstack.server_connected_to_port
+    interfaces:
+      cloudify.interfaces.lifecycle:
+        create:
+          inputs:
+            args:
+              image: { get_input: image }
+              flavor: { get_input: flavor }
+              userdata: { get_attribute: [ cloudify_host_cloud_config, cloud_config ] }
+
+  kubeinstance_port:
+    type: cloudify.openstack.nodes.Port
+    properties:
+      openstack_config: *openstack_config
+    relationships:
+    - type: cloudify.relationships.contained_in
+      target: k8s_node_scaling_tier
+    - type: cloudify.relationships.connected_to
+      target: public_network
+    - type: cloudify.relationships.depends_on
+      target: public_subnet
+    - type: cloudify.openstack.port_connected_to_security_group
+      target: kubernetes_security_group
+    - type: cloudify.openstack.port_connected_to_floating_ip
+      target: kubeinstance_port_elastic_ip
+
+  kubeinstance_port_elastic_ip:
+    type: cloudify.openstack.nodes.FloatingIP
+    properties:
+      openstack_config: *openstack_config
+      floatingip:
+        floating_network_name: { get_property: [ external_network, resource_id ] }
+
+  kubernetes_security_group:
+    type: cloudify.openstack.nodes.SecurityGroup
+    properties:
+      openstack_config: *openstack_config
+      security_group:
+        name: kubernetes_security_group
+        description: kubernetes master security group
+      rules:
+      - remote_ip_prefix: 0.0.0.0/0
+        port: 22
+      - remote_ip_prefix: 0.0.0.0/0
+        port: 53
+      - remote_ip_prefix: 0.0.0.0/0
+        port: 53
+        protocol: udp
+      - remote_ip_prefix: 0.0.0.0/0
+        port: 80
+      - remote_ip_prefix: 0.0.0.0/0
+        port: 443
+      - remote_ip_prefix: 0.0.0.0/0
+        port: 2379
+      - remote_ip_prefix: 0.0.0.0/0
+        port: 4001
+      - remote_ip_prefix: 0.0.0.0/0
+        port: 4789
+      - remote_ip_prefix: 0.0.0.0/0
+        port: 6443
+      - remote_ip_prefix: 0.0.0.0/0
+        port: 6783
+        protocol: tcp
+      - remote_ip_prefix: 0.0.0.0/0
+        port: 6783
+        protocol: udp
+      - remote_ip_prefix: 0.0.0.0/0
+        port: 6784
+        protocol: tcp
+      - remote_ip_prefix: 0.0.0.0/0
+        port: 6784
+        protocol: udp
+      - remote_ip_prefix: 0.0.0.0/0
+        port: 8000
+      - remote_ip_prefix: 0.0.0.0/0
+        port: 8080
+      - remote_ip_prefix: 0.0.0.0/0
+        port: 9090
+      - remote_ip_prefix: 0.0.0.0/0
+        port: 10250
+
+  private_subnet:
+    type: cloudify.openstack.nodes.Subnet
+    properties:
+      openstack_config: *openstack_config
+      use_external_resource: true
+      resource_id: { get_secret: private_subnet_name }
+    relationships:
+      - target: private_network
+        type: cloudify.relationships.contained_in
+
+  private_network:
+    type: cloudify.openstack.nodes.Network
+    properties:
+      openstack_config: *openstack_config
+      use_external_resource: true
+      resource_id: { get_secret: private_network_name }
+
+  public_subnet:
+    type: cloudify.openstack.nodes.Subnet
+    properties:
+      openstack_config: *openstack_config
+      use_external_resource: true
+      resource_id: { get_secret: public_subnet_name }
+    relationships:
+      - target: public_network
+        type: cloudify.relationships.contained_in
+      - target: router
+        type: cloudify.openstack.subnet_connected_to_router
+
+  public_network:
+    type: cloudify.openstack.nodes.Network
+    properties:
+      openstack_config: *openstack_config
+      use_external_resource: true
+      resource_id: { get_secret: public_network_name }
+
+  router:
+    type: cloudify.openstack.nodes.Router
+    properties:
+      openstack_config: *openstack_config
+      use_external_resource: true
+      resource_id: { get_secret: router_name }
+    relationships:
+      - target: external_network
+        type: cloudify.relationships.connected_to
+
+  external_network:
+    type: cloudify.openstack.nodes.Network
+    properties:
+      openstack_config: *openstack_config
+      use_external_resource: true
+      resource_id: { get_secret: external_network_name }
+
+  k8s_node_scaling_tier:
+    type: cloudify.nodes.Root
+
+groups:
+
+  kubeinstance_group:
+    members:
+    - k8s_node_scaling_tier
+    - kubeinstance
+    - kubeinstance_port
+    - kubeinstance_port_elastic_ip
+
+policies:
+
+  kubeinstance_group_scaling_policy:
+    type: cloudify.policies.scaling
+    properties:
+      default_instances:  1
+    targets: [kubeinstance_group]

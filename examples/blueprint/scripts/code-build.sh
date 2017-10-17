@@ -1,4 +1,5 @@
 ctx logger info "Build everything"
+sudo mkdir -p /opt/cloudify-kubernetes-provider
 cd /opt/cloudify-kubernetes-provider
 
 # kubernetes
