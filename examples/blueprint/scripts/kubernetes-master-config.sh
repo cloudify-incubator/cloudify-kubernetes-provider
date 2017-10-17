@@ -24,8 +24,13 @@ sudo cp -i /etc/kubernetes/admin.conf $HOME/.kube/config
 sudo chown $(id -u):$(id -g) $HOME/.kube/config
 
 ctx logger info "Apply network"
-sleep 60
-kubectl apply -f https://git.io/weave-kube-1.6 || ctx logger info "Init network configuration failed?"
+
+for i in {1..10}
+do
+	sleep 30
+	kubectl apply -f https://git.io/weave-kube-1.6 && break
+	ctx logger info "Init network configuration failed?"
+done
 
 ctx logger info "Create cfy config"
 sudo tee $HOME/cfy.json <<EOF
