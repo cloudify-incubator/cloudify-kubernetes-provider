@@ -3,6 +3,9 @@ sudo systemctl daemon-reload
 sudo systemctl stop kubelet && sleep 20 && sudo systemctl start kubelet
 sleep 20
 
+status=`sudo systemctl status kubelet | grep "Active:"| awk '{print $2}'`
+ctx logger info "Kubelet state: ${status}"
+
 ctx logger info "Init kubeadm"
 echo 1 | sudo tee /proc/sys/net/bridge/bridge-nf-call-iptables
 sudo kubeadm reset || ctx logger info "Insure that no previos configs"
@@ -17,6 +20,9 @@ ctx logger info "Reload kubeadm"
 sed -i 's|admission-control=Initializers,NamespaceLifecycle,LimitRanger,ServiceAccount,PersistentVolumeLabel,DefaultStorageClass,DefaultTolerationSeconds,NodeRestriction,ResourceQuota|admission-control=Initializers,NamespaceLifecycle,LimitRanger,ServiceAccount,DefaultStorageClass,DefaultTolerationSeconds,NodeRestriction,ResourceQuota|g' /etc/kubernetes/manifests/kube-apiserver.yaml
 sudo systemctl daemon-reload
 sudo systemctl stop kubelet && sudo systemctl start kubelet
+sleep 20
+status=`sudo systemctl status kubelet | grep "Active:"| awk '{print $2}'`
+ctx logger info "Kubelet state: ${status}"
 
 ctx logger info "Copy config"
 mkdir -p $HOME/.kube
@@ -25,11 +31,11 @@ sudo chown $(id -u):$(id -g) $HOME/.kube/config
 
 ctx logger info "Apply network"
 
-for i in {1..10}
+for retry_count in {1..10}
 do
 	sleep 30
 	kubectl apply -f https://git.io/weave-kube-1.6 && break
-	ctx logger info "Init network configuration failed?"
+	ctx logger info "${retry_count}:Init network configuration failed?"
 done
 
 ctx logger info "Create cfy config"
@@ -69,3 +75,7 @@ ctx logger info "Start service"
 sudo systemctl daemon-reload
 sudo systemctl enable cfy-kubernetes.service
 sudo systemctl start cfy-kubernetes.service
+
+sleep 10
+status=`sudo systemctl status cfy-kubernetes.service | grep "Active:"| awk '{print $2}'`
+ctx logger info "CFY Kubernetes state: ${status}"
