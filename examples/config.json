@@ -3,5 +3,5 @@
 	"password": "secret",
 	"user": "admin",
 	"host": "127.0.0.1",
-	"deployment": "slave"
+	"deployment": "kubernetes_cluster"
 }
