@@ -40,6 +40,8 @@ node_types:
     derived_from: cloudify.nodes.ApplicationServer
     interfaces:
       cloudify.interfaces.lifecycle:
+        create:
+          implementation: scripts/tools-install.sh
         configure:
           implementation: scripts/docker-uninstall.sh
         start:
@@ -52,15 +54,19 @@ node_types:
 ###############################################################################
 node_templates:
 
+  docker:
+    type: docker_type
+    relationships:
+    - target: kubeinstance
+      type: cloudify.relationships.contained_in
+
   clienttools_build:
     type: cloudify.nodes.ApplicationServer
     interfaces:
       cloudify.interfaces.lifecycle:
         create:
-          implementation: scripts/tools-install.sh
-        configure:
           implementation: scripts/client-build.sh
-        start:
+        configure:
           implementation: scripts/prepare-mount.sh
           inputs:
             # mount params
@@ -74,13 +80,7 @@ node_templates:
         mount: scripts/mount.py
         unmount: scripts/unmount.py
     relationships:
-    - target: kubeinstance
-      type: cloudify.relationships.contained_in
-
-  docker:
-    type: docker_type
-    relationships:
-    - target: clienttools_build
+    - target: docker
       type: cloudify.relationships.contained_in
 
   kubenetes:
@@ -100,10 +100,8 @@ node_templates:
     interfaces:
       cloudify.interfaces.lifecycle:
         create:
-          implementation: scripts/tools-install.sh
-        configure:
           implementation: scripts/code-download.sh
-        start:
+        configure:
           implementation: scripts/code-build.sh
         delete:
           implementation: scripts/code-delete.sh
@@ -133,6 +131,8 @@ node_templates:
     relationships:
     - target: manager_kubenetes
       type: cloudify.relationships.contained_in
+    - target: tools_build
+      type: cloudify.relationships.depends_on
 
   kubenetes_slave:
     type: cloudify.nodes.ApplicationServer
@@ -146,5 +146,19 @@ node_templates:
     relationships:
     - target: kubenetes
       type: cloudify.relationships.contained_in
+    - target: clienttools_build
+      type: cloudify.relationships.depends_on
     - target: config_export
+      type: cloudify.relationships.depends_on
+
+  kubenetes_final_state:
+    type: cloudify.nodes.ApplicationServer
+    interfaces:
+      cloudify.interfaces.lifecycle:
+        configure:
+          implementation: scripts/kubernetes-master-status.sh
+    relationships:
+    - target: config_export
+      type: cloudify.relationships.contained_in
+    - target: kubenetes_slave
       type: cloudify.relationships.depends_on

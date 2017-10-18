@@ -40,4 +40,16 @@ sudo sed -i 's|cgroup-driver=systemd|cgroup-driver=cgroupfs|g' /etc/systemd/syst
 ctx logger info "Reload kubernetes"
 
 sudo systemctl daemon-reload
-sudo systemctl enable kubelet && sudo systemctl start kubelet
+sudo systemctl stop kubelet && sleep 20 && sudo systemctl start kubelet
+
+for retry_count in {1..10}
+do
+	status=`sudo systemctl status kubelet | grep "Active:"| awk '{print $2}'`
+	ctx logger info "${retry_count}: Kubelet state: ${status}"
+	if [ "z$status" == 'zactive' ]; then
+		break
+	else
+		ctx logger info "Wait little more."
+		sleep 10
+	fi
+done
