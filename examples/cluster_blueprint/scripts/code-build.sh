@@ -17,8 +17,5 @@ ctx logger info "Build cfy-kubernetes"
 go install src/cfy-kubernetes.go
 
 ctx logger info "Build cluster-autoscaler"
-cd /opt/scaller/src/k8s.io/autoscaler/cluster-autoscaler/
-export GOBIN=/opt/scaller/bin
-export PATH=$PATH:/opt/scaller/bin
-export GOPATH=/opt/scaller/
+cd /opt/cloudify-kubernetes-provider/src/k8s.io/autoscaler/cluster-autoscaler/
 make

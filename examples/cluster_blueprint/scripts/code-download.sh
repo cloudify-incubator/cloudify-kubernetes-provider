@@ -14,10 +14,3 @@ cd cloudify-kubernetes-provider
 ctx logger info "Kubernetes Provider: Download submodules sources"
 git submodule init
 git submodule update
-
-ctx logger info "Kubernetes Autoscale: Download top level sources"
-
-rm -rf /opt/scaller
-mkdir -p /opt/scaller/src/k8s.io
-cd /opt/scaller/src/k8s.io
-git clone https://github.com/cloudify-incubator/kubernetes-autoscaler.git --depth 1 -b master autoscaler
