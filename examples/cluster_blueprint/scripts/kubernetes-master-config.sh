@@ -5,7 +5,7 @@ sudo systemctl stop kubelet && sleep 20 && sudo systemctl start kubelet
 for retry_count in {1..10}
 do
 	status=`sudo systemctl status kubelet | grep "Active:"| awk '{print $2}'`
-	ctx logger info "${retry_count}: Kubelet state: ${status}"
+	ctx logger info "#${retry_count}: Kubelet state: ${status}"
 	if [ "z$status" == 'zactive' ]; then
 		break
 	else
@@ -32,7 +32,7 @@ sudo systemctl stop kubelet && sleep 20 && sudo systemctl start kubelet
 for retry_count in {1..10}
 do
 	status=`sudo systemctl status kubelet | grep "Active:"| awk '{print $2}'`
-	ctx logger info "${retry_count}: Kubelet state: ${status}"
+	ctx logger info "#${retry_count}: Kubelet state: ${status}"
 	if [ "z$status" == 'zactive' ]; then
 		break
 	else
@@ -52,7 +52,7 @@ for retry_count in {1..10}
 do
 	sleep 30
 	kubectl apply -f https://git.io/weave-kube-1.6 && break
-	ctx logger info "${retry_count}:Init network configuration failed?"
+	ctx logger info "#${retry_count}:Init network configuration failed?"
 done
 
 ctx logger info "Create cfy config"
@@ -96,7 +96,7 @@ sudo systemctl start cfy-kubernetes.service
 for retry_count in {1..10}
 do
 	status=`sudo systemctl status cfy-kubernetes.service | grep "Active:"| awk '{print $2}'`
-	ctx logger info "${retry_count}: CFY Kubernetes state: ${status}"
+	ctx logger info "#${retry_count}: CFY Kubernetes state: ${status}"
 	if [ "z$status" == 'zactive' ]; then
 		break
 	else

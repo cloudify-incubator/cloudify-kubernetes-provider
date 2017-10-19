@@ -8,7 +8,7 @@ sudo kubeadm join --token ${TOKENDECODED} ${IP}:6443 --skip-preflight-checks || 
 for retry_count in {1..10}
 do
 	status=`sudo systemctl status kubelet | grep "Active:"| awk '{print $2}'`
-	ctx logger info "${retry_count}: Kubelet state: ${status}"
+	ctx logger info "#${retry_count}: Kubelet state: ${status}"
 	if [ "z$status" == 'zactive' ]; then
 		break
 	else

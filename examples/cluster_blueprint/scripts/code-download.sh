@@ -17,11 +17,7 @@ git submodule update
 
 ctx logger info "Kubernetes Autoscale: Download top level sources"
 
+rm -rf /opt/scaller
 mkdir -p /opt/scaller/src/k8s.io
-git clone git@github.com:cloudify-incubator/kubernetes-autoscaler.git --depth 1 -b master
-sed -i "s|git@github.com:|https://github.com/|g" kubernetes-autoscaler/.gitmodules
-
-cd kubernetes-autoscaler
-ctx logger info "Kubernetes Autoscale: Download submodules sources"
-git submodule init
-git submodule update
+cd /opt/scaller/src/k8s.io
+git clone https://github.com/cloudify-incubator/kubernetes-autoscaler.git --depth 1 -b master autoscaler
