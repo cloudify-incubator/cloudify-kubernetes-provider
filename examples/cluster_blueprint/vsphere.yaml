@@ -218,6 +218,9 @@ node_types:
   kubernetes_host:
     derived_from: cloudify.vsphere.nodes.Server
     properties:
+      kubescale:
+        # by default: not scalled by kubernetes
+        default: false
       connection_config:
         default: *connection_config
       server:
@@ -243,6 +246,8 @@ node_templates:
 ###############################################################################
   kubeinstance:
     type: kubernetes_host
+    properties:
+      kubescale: true
     capabilities:
       scalable:
         properties:

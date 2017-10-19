@@ -34,6 +34,9 @@ node_types:
   kubernetes_host:
     derived_from: cloudify.aws.nodes.Instance
     properties:
+      kubescale:
+        # by default: not scalled by kubernetes
+        default: false
       agent_config:
         default:
           install_method: remote
@@ -113,6 +116,8 @@ node_templates:
         target: kubeinstance_port
       - type: cloudify.relationships.depends_on
         target: cloudify_host_cloud_config
+    properties:
+      kubescale: true
     interfaces:
       cloudify.interfaces.lifecycle:
         create:
