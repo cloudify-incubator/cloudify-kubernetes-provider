@@ -22,6 +22,9 @@ sudo CGO_ENABLED=0 go install -a -installsuffix cgo std
 git submodule update
 # cfy part
 make all
+# build autoscaller
+cd src/k8s.io/autoscaler/cluster-autoscaler/
+make
 ```
 
 # reformat code
@@ -45,12 +48,15 @@ rm -rfv src/k8s.io/kubernetes/staging/src/k8s.io/apimachinery
 ## version
 
 ```shell
+# cfy-kubernetes
 cfy-kubernetes -version
 cfy-kubernetes --kubeconfig $HOME/.kube/config --cloud-config examples/config.json
 kubectl get nodes
-#scale
+# autoscale
+src/k8s.io/autoscaler/cluster-autoscaler/cluster-autoscaler --kubeconfig $HOME/.kube/config --cloud-provider cloudify --cloud-config examples/config.json
+# scale
 cfy executions start scale -d kubernetes_cluster -p 'scalable_entity_name=kubeinstance'
-#downscale
+# downscale
 cfy executions start scale -d kubernetes_cluster -p 'scalable_entity_name=kubeinstance' -p 'delta=-1'
 # create simple pod https://kubernetes.io/docs/tasks/run-application/run-stateless-application-deployment/
 kubectl create -f https://k8s.io/docs/tasks/run-application/deployment.yaml --kubeconfig $HOME/.kube/config

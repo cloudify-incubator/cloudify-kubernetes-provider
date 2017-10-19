@@ -100,5 +100,5 @@
 	branch = master
 [submodule "src/k8s.io/autoscaler"]
 	path = src/k8s.io/autoscaler
-	url = https://github.com/cloudify-incubator/kubernetes-autoscaler.git
+	url = git@github.com:cloudify-incubator/kubernetes-autoscaler.git
 	branch = master
