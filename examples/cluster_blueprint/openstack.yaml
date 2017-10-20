@@ -33,6 +33,9 @@ node_types:
   kubernetes_host:
     derived_from: cloudify.openstack.nodes.Server
     properties:
+      kubetag:
+        # by default: initial node group
+        default: initial
       kubescale:
         # by default: not scalled by kubernetes
         default: false
