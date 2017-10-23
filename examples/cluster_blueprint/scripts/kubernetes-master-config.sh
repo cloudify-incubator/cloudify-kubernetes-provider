@@ -50,9 +50,9 @@ ctx logger info "Apply network"
 
 for retry_count in {1..10}
 do
-	sleep 30
 	kubectl apply -f https://git.io/weave-kube-1.6 && break
 	ctx logger info "#${retry_count}:Init network configuration failed?"
+	sleep 10
 done
 
 ctx logger info "Create cfy config"
