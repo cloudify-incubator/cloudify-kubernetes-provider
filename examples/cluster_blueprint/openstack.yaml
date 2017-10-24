@@ -64,6 +64,7 @@ node_templates:
         manage_etc_hosts: True
         groups:
         - docker
+        - wheel
         users:
         - name: { get_input: agent_user }
           primary-group: wheel

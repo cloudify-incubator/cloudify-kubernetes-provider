@@ -1,3 +1,5 @@
+#!/bin/bash
+
 ctx logger info "Download cfy-go"
 cp /opt/bin/cfy-go /usr/bin/cfy-go
 sudo chmod 555 /usr/bin/cfy-go

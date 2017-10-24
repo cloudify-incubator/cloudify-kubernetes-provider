@@ -1,3 +1,5 @@
+#!/bin/bash
+
 ctx logger info "Try to join to ${IP} by ${TOKEN}"
 
 echo 1 | sudo tee /proc/sys/net/bridge/bridge-nf-call-iptables

@@ -1,3 +1,5 @@
+#!/bin/bash
+
 ctx logger info "Add kubernetes repository"
 
 VM_VERSION=`grep -w '^NAME=' /etc/os-release`

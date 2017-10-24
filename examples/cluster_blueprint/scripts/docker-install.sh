@@ -1,3 +1,5 @@
+#!/bin/bash
+
 # before run: %wheel    ALL=(ALL)   NOPASSWD: ALL
 # https://docs.docker.com/engine/installation/linux/centos/
 # little cleanup
