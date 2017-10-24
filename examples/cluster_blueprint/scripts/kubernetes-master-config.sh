@@ -1,3 +1,5 @@
+#!/bin/bash
+
 ctx logger info "Reload kubeadm"
 sudo systemctl daemon-reload
 sudo systemctl stop kubelet && sleep 20 && sudo systemctl start kubelet

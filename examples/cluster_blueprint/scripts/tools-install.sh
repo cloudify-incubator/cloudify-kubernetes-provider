@@ -6,7 +6,7 @@ ctx logger info "Install compiler"
 
 if [[ "$VM_VERSION" == 'NAME="CentOS Linux"' ]]; then
 	#https://go-repo.io/
-	sudo yum install -y git
+	sudo yum install -y git build-essential gcc-c++ make
 	sudo rpm --import https://mirror.go-repo.io/centos/RPM-GPG-KEY-GO-REPO
 	curl -s https://mirror.go-repo.io/centos/go-repo.repo | sudo tee /etc/yum.repos.d/go-repo.repo
 	sudo yum -y install golang
