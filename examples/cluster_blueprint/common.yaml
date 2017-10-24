@@ -2,6 +2,7 @@ tosca_definitions_version: cloudify_dsl_1_3
 
 imports:
   - http://www.getcloudify.org/spec/cloudify/4.1/types.yaml
+  - monitoring.yaml
 
 inputs:
 
@@ -157,6 +158,10 @@ node_templates:
       cloudify.interfaces.lifecycle:
         configure:
           implementation: scripts/kubernetes-master-status.sh
+        start:
+          implementation: scripts/create_secrets.py
+        stop:
+          implementation: scripts/delete_secrets.py
     relationships:
     - target: config_export
       type: cloudify.relationships.contained_in
