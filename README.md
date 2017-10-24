@@ -70,8 +70,8 @@ watch -n 5 -d kubectl describe pod nginx
 kubectl delete pod nginx
 # check scale
 kubectl run php-apache --image=gcr.io/google_containers/hpa-example --requests=cpu=500m,memory=500M --expose --port=80
-kubectl autoscale deployment php-apache --cpu-percent=50 --min=1 --max=10
-kubectl get hpa
+kubectl autoscale deployment php-apache --cpu-percent=1 --min=10 --max=20
+watch -n 10 -d "kubectl get hpa; kubectl get pods; cfy executions list"
 ```
 
 ## Upload blueprint to manager (without build sources)
