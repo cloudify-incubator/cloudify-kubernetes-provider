@@ -20,7 +20,7 @@ inputs:
 
   cfy_host:
     type: string
-    default: 127.0.0.1
+    default: { get_attribute: [ kubemanager, cloudify_agent, broker_ip ] }
 
 node_types:
 
