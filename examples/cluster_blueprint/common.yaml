@@ -30,11 +30,11 @@ node_types:
     interfaces:
       cloudify.interfaces.lifecycle:
         configure:
-          implementation: scripts/kubernetes-uninstall.sh
+          implementation: scripts/kubernetes/uninstall.sh
         start:
-          implementation: scripts/kubernetes-install.sh
+          implementation: scripts/kubernetes/install.sh
         delete:
-          implementation: scripts/kubernetes-uninstall.sh
+          implementation: scripts/kubernetes/uninstall.sh
 
   # type represent node with installed docker code
   docker_type:
@@ -44,11 +44,11 @@ node_types:
         create:
           implementation: scripts/tools-install.sh
         configure:
-          implementation: scripts/docker-uninstall.sh
+          implementation: scripts/docker/uninstall.sh
         start:
-          implementation: scripts/docker-install.sh
+          implementation: scripts/docker/install.sh
         delete:
-          implementation: scripts/docker-uninstall.sh
+          implementation: scripts/docker/uninstall.sh
 
 ###############################################################################
 # Node templates section
@@ -121,7 +121,7 @@ node_templates:
     interfaces:
       cloudify.interfaces.lifecycle:
         configure:
-          implementation: scripts/kubernetes-master-config.sh
+          implementation: scripts/kubernetes/master-config.sh
           inputs:
             CFY_USER: { get_input: cfy_user }
             CFY_PASSWORD: { get_input: cfy_password }
@@ -140,7 +140,7 @@ node_templates:
     interfaces:
       cloudify.interfaces.lifecycle:
         configure:
-          implementation: scripts/kubernetes-join.sh
+          implementation: scripts/kubernetes/join.sh
           inputs:
             TOKEN: { get_attribute: [config_export, token] }
             IP: { get_attribute: [kubemanager, ip] }
@@ -157,7 +157,7 @@ node_templates:
     interfaces:
       cloudify.interfaces.lifecycle:
         configure:
-          implementation: scripts/kubernetes-master-status.sh
+          implementation: scripts/kubernetes/master-status.sh
         start:
           implementation: scripts/create_secrets.py
         stop:
