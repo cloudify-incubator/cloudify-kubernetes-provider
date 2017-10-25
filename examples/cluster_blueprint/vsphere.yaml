@@ -218,6 +218,14 @@ node_types:
   kubernetes_host:
     derived_from: cloudify.vsphere.nodes.Server
     properties:
+      kubecpu:
+        # by default: amount of cpu's on vm avaible for kubepods,
+        # in most cases it must be same as full count of cpu on vm
+        default: { get_input: cpus }
+      kubemem:
+        # by default: amount of memory on vm avaible for kubepods,
+        # in most cases it must be same as full count of memory on vm
+        default: { get_input: memory }
       kubetag:
         # by default: initial node group
         default: initial

@@ -30,7 +30,7 @@ elif [[ "$VM_VERSION" == 'NAME="Ubuntu"' ]]; then
 	EOF
 
 	sudo apt-get update
-	sudo apt-get install -y kubelet=1.8.1-00 kubeadm=1.8.1-01
+	sudo apt-get install -y kubelet=1.8.2-00 kubeadm=1.8.2-00
 else
 	ctx logger info "Unknow OS"
 fi

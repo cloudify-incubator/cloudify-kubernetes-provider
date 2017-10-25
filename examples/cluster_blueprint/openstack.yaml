@@ -33,6 +33,14 @@ node_types:
   kubernetes_host:
     derived_from: cloudify.openstack.nodes.Server
     properties:
+      kubecpu:
+        # by default: amount of cpu's on vm avaible for kubepods,
+        # in most cases it must be same as full count of cpu on vm
+        default: 1
+      kubemem:
+        # by default: amount of memory on vm avaible for kubepods,
+        # in most cases it must be same as full count of memory on vm
+        default: 1024
       kubetag:
         # by default: initial node group
         default: initial
