@@ -4,6 +4,21 @@ imports:
   - http://www.getcloudify.org/spec/cloudify/4.1/types.yaml
   - monitoring.yaml
 
+plugins:
+  cloudify_node_drop:
+    executor: central_deployment_agent
+    source: cloudify_node_drop
+
+workflows:
+  delete:
+    mapping: cloudify_node_drop.cloudify_drop.workflow.delete
+    parameters:
+      ignore_failure:
+        description: ignore any failures in workflow
+        default: false
+      instance_ids:
+        description: this parameter is mandatory
+
 inputs:
 
   cfy_tenant:
