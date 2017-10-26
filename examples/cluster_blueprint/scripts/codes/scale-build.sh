@@ -17,7 +17,7 @@ AUTOSCALER_BINARY=$(ctx download-resource resources/cluster-autoscaler)
 
 mkdir -p /opt/cloudify-kubernetes-provider/src/k8s.io/autoscaler/cluster-autoscaler
 
-if [[ $? == 0 ]]; then
+if [[ $? == 0 ]] && [[ -e "$AUTOSCALER_BINARY" ]]; then
     ctx logger info "Downloaded provided cluster-autoscaler"
     cp $AUTOSCALER_BINARY /opt/cloudify-kubernetes-provider/src/k8s.io/autoscaler/cluster-autoscaler/
 else
