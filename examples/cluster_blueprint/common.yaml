@@ -37,6 +37,10 @@ inputs:
     type: string
     default: { get_attribute: [ kubemanager, cloudify_agent, broker_ip ] }
 
+  update_package_manager:
+    type: boolean
+    default: false
+
 node_types:
 
   # type represent node with installed kubernetes code
@@ -62,6 +66,12 @@ node_types:
           implementation: scripts/docker/uninstall.sh
         start:
           implementation: scripts/docker/install.sh
+          inputs:
+            process:
+              default:
+                process:
+                  args:
+                    - { get_input: update_package_manager } # $1 in script will represent to update package manager or not.
         delete:
           implementation: scripts/docker/uninstall.sh
 
