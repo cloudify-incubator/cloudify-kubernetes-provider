@@ -12,12 +12,6 @@ export GOPATH=`pwd`
 # cfy part
 PACKAGEPATH=github.com/cloudify-incubator/cloudify-kubernetes-provider
 
-ctx logger info "Build cfy-go"
-go install src/${PACKAGEPATH}/cfy-go/cfy-go.go
-
-ctx logger info "Build cfy-kubernetes"
-go install src/cfy-kubernetes.go
-
 ctx logger info "Build cluster-autoscaler"
 cd /opt/cloudify-kubernetes-provider/src/k8s.io/autoscaler/cluster-autoscaler/
 make

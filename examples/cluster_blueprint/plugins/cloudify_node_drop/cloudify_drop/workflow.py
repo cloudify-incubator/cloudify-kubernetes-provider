@@ -12,8 +12,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 from cloudify.decorators import workflow
-from cloudify.workflows import ctx
 from cloudify.plugins.lifecycle import uninstall_node_instances
+
 
 @workflow
 def delete(ctx, **kwargs):
@@ -31,7 +31,11 @@ def delete(ctx, **kwargs):
     uninstall_node_instances(
         graph=ctx.graph_mode(),
         node_instances=set([
-            instance for instance in ctx.node_instances
-                     if instance.id in instance_ids
+            instance for instance in ctx.node_instances if (
+                instance.id in instance_ids or (
+                    instance._node_instance.host_id and
+                    instance._node_instance.host_id in instance_ids
+                )
+            )
         ]),
         ignore_failure=ignore_failure)

@@ -91,7 +91,7 @@ node_templates:
             CFY_TENANT: { get_input: cfy_tenant }
             CFY_HOST: { get_input: cfy_host }
         delete:
-          implementation: scripts/code-delete.sh
+          implementation: scripts/codes/delete.sh
       maintenance:
         mount: scripts/mount.py
         unmount: scripts/unmount.py
@@ -116,11 +116,11 @@ node_templates:
     interfaces:
       cloudify.interfaces.lifecycle:
         create:
-          implementation: scripts/code-download.sh
+          implementation: scripts/codes/download.sh
         configure:
-          implementation: scripts/code-build.sh
+          implementation: scripts/codes/build.sh
         delete:
-          implementation: scripts/code-delete.sh
+          implementation: scripts/codes/delete.sh
     relationships:
     - target: kubemanager_docker
       type: cloudify.relationships.contained_in
@@ -182,3 +182,26 @@ node_templates:
       type: cloudify.relationships.contained_in
     - target: kubenetes_slave
       type: cloudify.relationships.depends_on
+
+  kubenetes_autoscale_build:
+    type: cloudify.nodes.ApplicationServer
+    interfaces:
+      cloudify.interfaces.lifecycle:
+        configure:
+          implementation: scripts/codes/scale-build.sh
+        start:
+          implementation: scripts/codes/scale-run.sh
+    relationships:
+    - target: tools_build
+      type: cloudify.relationships.contained_in
+
+  kubenetes_autoscale_run:
+    type: cloudify.nodes.ApplicationServer
+    interfaces:
+        start:
+          implementation: scripts/codes/scale-run.sh
+    relationships:
+    - target: kubenetes_autoscale_build
+      type: cloudify.relationships.depends_on
+    - target: config_export
+      type: cloudify.relationships.contained_in
