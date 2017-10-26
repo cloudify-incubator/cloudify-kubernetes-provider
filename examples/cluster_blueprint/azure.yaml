@@ -1,0 +1,504 @@
+tosca_definitions_version: cloudify_dsl_1_3
+
+imports:
+  - https://raw.githubusercontent.com/cloudify-cosmo/cloudify-azure-plugin/1.4.3/plugin.yaml
+  - common.yaml
+
+inputs:
+
+  resource_prefix:
+    default: k8s
+
+  resource_suffix:
+    default: '0'
+
+  retry_after:
+    type: integer
+    default: 60
+
+  size:
+    default: Standard_A3
+
+  image:
+    default:
+      publisher: OpenLogic
+      offer: CentOS
+      sku: '7.3'
+      version: latest
+
+  agent_user:
+    description: The user name of the agent on the instance created from the image.
+    default: docker # currently this is required
+
+  ssh_public_keys:
+    description: the public key
+    default:
+    - path: {concat:[ '/home/', { get_input: agent_user }, '/.ssh/authorized_keys' ]}
+      keyData: { get_secret: agent_key_public }
+
+dsl_definitions:
+
+  azure_config: &azure_config
+    subscription_id: { get_secret: subscription_id }
+    tenant_id: { get_secret: tenant_id }
+    client_id: { get_secret: client_id }
+    client_secret: { get_secret: client_secret }
+
+node_types:
+  kubernetes_host:
+    derived_from: cloudify.azure.nodes.compute.VirtualMachine
+    properties:
+      kubecpu:
+        # by default: amount of cpu's on vm avaible for kubepods,
+        # in most cases it must be same as full count of cpu on vm
+        default: 1
+      kubemem:
+        # by default: amount of memory on vm avaible for kubepods,
+        # in most cases it must be same as full count of memory on vm
+        default: 1024
+      kubetag:
+        # by default: initial node group
+        default: initial
+      kubescale:
+        # by default: not scalled by kubernetes
+        default: false
+      agent_config:
+        default:
+          install_method: remote
+          user: { get_input: agent_user }
+          port: 22
+          key: { get_secret: agent_key_private }
+      azure_config:
+        default: *azure_config
+      location:
+        default:
+          { get_secret: location }
+      retry_after:
+        default:
+          { get_input: retry_after }
+      os_family:
+        default:
+          linux
+      resource_config:
+        default:
+          hardwareProfile: {}
+          storageProfile: {}
+          osProfile: {}
+
+node_templates:
+
+  kubemanager:
+    type: kubernetes_host
+    properties:
+    relationships:
+    - type: cloudify.azure.relationships.contained_in_resource_group
+      target: resource_group
+    - type: cloudify.azure.relationships.connected_to_storage_account
+      target: storage_account
+    - type: cloudify.azure.relationships.connected_to_availability_set
+      target: availability_set
+    - type: cloudify.azure.relationships.connected_to_nic
+      target: kubernetes_master_host_nic
+    interfaces:
+      cloudify.interfaces.lifecycle:
+        create:
+          implementation: pkg.cloudify_azure.resources.compute.virtualmachine.create
+          inputs:
+            args:
+              hardwareProfile:
+                vmSize: { get_input: size }
+              storageProfile:
+                imageReference: { get_input: image}
+              osProfile:
+                adminUsername: { get_input: agent_user }
+                adminPassword: ''
+                # customData: { get_attribute: [ cloudify_host_cloud_config, cloud_config ] }
+                linuxConfiguration:
+                  ssh:
+                    publicKeys: { get_input: ssh_public_keys }
+                  disablePasswordAuthentication: true
+
+  kubeinstance:
+    type: kubernetes_host
+    properties:
+      kubescale: true
+    relationships:
+    - type: cloudify.azure.relationships.contained_in_resource_group
+      target: resource_group
+    - type: cloudify.azure.relationships.connected_to_storage_account
+      target: storage_account
+    - type: cloudify.azure.relationships.connected_to_availability_set
+      target: availability_set
+    - type: cloudify.azure.relationships.connected_to_nic
+      target: kubernetes_node_host_nic
+    interfaces:
+      cloudify.interfaces.lifecycle:
+        create:
+          implementation: pkg.cloudify_azure.resources.compute.virtualmachine.create
+          inputs:
+            args:
+              hardwareProfile:
+                vmSize: { get_input: size }
+              storageProfile:
+                imageReference: { get_input: image}
+              osProfile:
+                adminUsername: { get_input: agent_user }
+                adminPassword: ''
+#                customData: { get_attribute: [ cloudify_host_cloud_config, cloud_config ] }
+                linuxConfiguration:
+                  ssh:
+                    publicKeys: { get_input: ssh_public_keys }
+                  disablePasswordAuthentication: true
+
+  network_security_group:
+    type: cloudify.azure.nodes.network.NetworkSecurityGroup
+    properties:
+      name: {concat:[{get_input: resource_prefix},nsg,{get_input: resource_suffix}]}
+      location: { get_secret: location }
+      azure_config: *azure_config
+      retry_after: { get_input: retry_after }
+      resource_config:
+        securityRules:
+        - name: {concat:[{get_input: resource_prefix},nsg,{get_input: resource_suffix},ssh]}
+          properties:
+            description: SSH access
+            protocol: Tcp
+            sourcePortRange: '*'
+            destinationPortRange: 22
+            sourceAddressPrefix: '*'
+            destinationAddressPrefix: '*'
+            priority: 102
+            access: Allow
+            direction: Inbound
+        - name: {concat:[{get_input: resource_prefix},nsg,{get_input: resource_suffix},udp]}
+          properties:
+            description: 53 UDP access
+            protocol: Udp
+            sourcePortRange: '*'
+            destinationPortRange: 53
+            sourceAddressPrefix: '*'
+            destinationAddressPrefix: '*'
+            priority: 103
+            access: Allow
+            direction: Inbound
+        - name: {concat:[{get_input: resource_prefix},nsg,{get_input: resource_suffix},tcp53]}
+          properties:
+            description: 53 TCP access
+            protocol: Tcp
+            sourcePortRange: '*'
+            destinationPortRange: 53
+            sourceAddressPrefix: '*'
+            destinationAddressPrefix: '*'
+            priority: 104
+            access: Allow
+            direction: Inbound
+        - name: {concat:[{get_input: resource_prefix},nsg,{get_input: resource_suffix},http]}
+          properties:
+            description: HTTP access
+            protocol: Tcp
+            sourcePortRange: '*'
+            destinationPortRange: 80
+            sourceAddressPrefix: '*'
+            destinationAddressPrefix: '*'
+            priority: 105
+            access: Allow
+            direction: Inbound
+        - name: {concat:[{get_input: resource_prefix},nsg,{get_input: resource_suffix},https]}
+          properties:
+            description: HTTPS access
+            protocol: Tcp
+            sourcePortRange: '*'
+            destinationPortRange: 443
+            sourceAddressPrefix: '*'
+            destinationAddressPrefix: '*'
+            priority: 106
+            access: Allow
+            direction: Inbound
+        - name: {concat:[{get_input: resource_prefix},nsg,{get_input: resource_suffix},2379tcp]}
+          properties:
+            description: 2379 TCP access
+            protocol: Tcp
+            sourcePortRange: '*'
+            destinationPortRange: 2379
+            sourceAddressPrefix: '*'
+            destinationAddressPrefix: '*'
+            priority: 107
+            access: Allow
+            direction: Inbound
+        - name: {concat:[{get_input: resource_prefix},nsg,{get_input: resource_suffix},4001tcp]}
+          properties:
+            description: 4001 TCP access
+            protocol: Tcp
+            sourcePortRange: '*'
+            destinationPortRange: 4001
+            sourceAddressPrefix: '*'
+            destinationAddressPrefix: '*'
+            priority: 108
+            access: Allow
+            direction: Inbound
+        - name: {concat:[{get_input: resource_prefix},nsg,{get_input: resource_suffix},4789tcp]}
+          properties:
+            description: 4789 TCP access
+            protocol: Tcp
+            sourcePortRange: '*'
+            destinationPortRange: 4789
+            sourceAddressPrefix: '*'
+            destinationAddressPrefix: '*'
+            priority: 1080
+            access: Allow
+            direction: Inbound
+        - name: {concat:[{get_input: resource_prefix},nsg,{get_input: resource_suffix},6443tcp]}
+          properties:
+            description: 6443 TCP access
+            protocol: Tcp
+            sourcePortRange: '*'
+            destinationPortRange: 6443
+            sourceAddressPrefix: '*'
+            destinationAddressPrefix: '*'
+            priority: 109
+            access: Allow
+            direction: Inbound
+        - name: {concat:[{get_input: resource_prefix},nsg,{get_input: resource_suffix},6783tcp]}
+          properties:
+            description: 6783 TCP access
+            protocol: Tcp
+            sourcePortRange: '*'
+            destinationPortRange: 6783
+            sourceAddressPrefix: '*'
+            destinationAddressPrefix: '*'
+            priority: 1090
+            access: Allow
+            direction: Inbound
+        - name: {concat:[{get_input: resource_prefix},nsg,{get_input: resource_suffix},6784tcp]}
+          properties:
+            description: 6784 TCP access
+            protocol: Tcp
+            sourcePortRange: '*'
+            destinationPortRange: 6784
+            sourceAddressPrefix: '*'
+            destinationAddressPrefix: '*'
+            priority: 1091
+            access: Allow
+            direction: Inbound
+        - name: {concat:[{get_input: resource_prefix},nsg,{get_input: resource_suffix},6783udp]}
+          properties:
+            description: 6783 UDP access
+            protocol: Udp
+            sourcePortRange: '*'
+            destinationPortRange: 6783
+            sourceAddressPrefix: '*'
+            destinationAddressPrefix: '*'
+            priority: 1092
+            access: Allow
+            direction: Inbound
+        - name: {concat:[{get_input: resource_prefix},nsg,{get_input: resource_suffix},6784udp]}
+          properties:
+            description: 6784 UDP access
+            protocol: Udp
+            sourcePortRange: '*'
+            destinationPortRange: 6784
+            sourceAddressPrefix: '*'
+            destinationAddressPrefix: '*'
+            priority: 1093
+            access: Allow
+            direction: Inbound
+        - name: {concat:[{get_input: resource_prefix},nsg,{get_input: resource_suffix},8000tcp]}
+          properties:
+            description: 8000 TCP access
+            protocol: Tcp
+            sourcePortRange: '*'
+            destinationPortRange: 8000
+            sourceAddressPrefix: '*'
+            destinationAddressPrefix: '*'
+            priority: 110
+            access: Allow
+            direction: Inbound
+        - name: {concat:[{get_input: resource_prefix},nsg,{get_input: resource_suffix},http8080]}
+          properties:
+            description: 8080 TCP access
+            protocol: Tcp
+            sourcePortRange: '*'
+            destinationPortRange: 8080
+            sourceAddressPrefix: '*'
+            destinationAddressPrefix: '*'
+            priority: 111
+            access: Allow
+            direction: Inbound
+        - name: {concat:[{get_input: resource_prefix},nsg,{get_input: resource_suffix},9090tcp]}
+          properties:
+            description: 9090 TCP access
+            protocol: Tcp
+            sourcePortRange: '*'
+            destinationPortRange: 9090
+            sourceAddressPrefix: '*'
+            destinationAddressPrefix: '*'
+            priority: 112
+            access: Allow
+            direction: Inbound
+        - name: {concat:[{get_input: resource_prefix},nsg,{get_input: resource_suffix},10250tcp]}
+          properties:
+            description: 10250 TCP access
+            protocol: Tcp
+            sourcePortRange: '*'
+            destinationPortRange: 10250
+            sourceAddressPrefix: '*'
+            destinationAddressPrefix: '*'
+            priority: 113
+            access: Allow
+            direction: Inbound
+    relationships:
+    - type: cloudify.azure.relationships.contained_in_resource_group
+      target: resource_group
+
+  availability_set:
+    type: cloudify.azure.nodes.compute.AvailabilitySet
+    properties:
+      name: {concat:[{get_input: resource_prefix},availset,{get_input: resource_suffix}]}
+      location: { get_secret: location }
+      azure_config: *azure_config
+      retry_after: { get_input: retry_after }
+    relationships:
+    - type: cloudify.azure.relationships.contained_in_resource_group
+      target: resource_group
+
+  kubernetes_node_host_nic:
+    type: cloudify.azure.nodes.network.NetworkInterfaceCard
+    properties:
+      location: { get_secret: location }
+      azure_config: *azure_config
+      retry_after: { get_input: retry_after }
+    relationships:
+    - type: cloudify.azure.relationships.contained_in_resource_group
+      target: resource_group
+    - type: cloudify.azure.relationships.nic_connected_to_network_security_group
+      target: network_security_group
+    - type: cloudify.azure.relationships.nic_connected_to_ip_configuration
+      target: kubernetes_node_host_nic_ip_cfg
+
+  kubernetes_master_host_nic:
+    type: cloudify.azure.nodes.network.NetworkInterfaceCard
+    properties:
+      location: { get_secret: location }
+      azure_config: *azure_config
+      retry_after: { get_input: retry_after }
+    relationships:
+    - type: cloudify.azure.relationships.contained_in_resource_group
+      target: resource_group
+    - type: cloudify.azure.relationships.nic_connected_to_network_security_group
+      target: network_security_group
+    - type: cloudify.azure.relationships.nic_connected_to_ip_configuration
+      target: kubernetes_master_host_nic_ip_cfg
+
+  kubernetes_node_host_nic_ip_cfg:
+    type: cloudify.azure.nodes.network.IPConfiguration
+    properties:
+      location: { get_secret: location }
+      azure_config: *azure_config
+      retry_after: { get_input: retry_after }
+      resource_config:
+        privateIPAllocationMethod: Dynamic
+    relationships:
+    - type: cloudify.azure.relationships.contained_in_resource_group
+      target: resource_group
+    - type: cloudify.azure.relationships.ip_configuration_connected_to_subnet
+      target: subnet
+    - type: cloudify.azure.relationships.ip_configuration_connected_to_public_ip
+      target: kubernetes_node_ip
+
+  kubernetes_master_host_nic_ip_cfg:
+    type: cloudify.azure.nodes.network.IPConfiguration
+    properties:
+      location: { get_secret: location }
+      azure_config: *azure_config
+      retry_after: { get_input: retry_after }
+      resource_config:
+        privateIPAllocationMethod: Dynamic
+    relationships:
+    - type: cloudify.azure.relationships.ip_configuration_connected_to_subnet
+      target: subnet
+    - type: cloudify.azure.relationships.ip_configuration_connected_to_public_ip
+      target: kubernetes_master_ip
+
+  kubernetes_node_ip:
+    type: cloudify.azure.nodes.network.PublicIPAddress
+    properties:
+      location: { get_secret: location }
+      azure_config: *azure_config
+      retry_after: { get_input: retry_after }
+      resource_config:
+        publicIPAllocationMethod: Static
+    relationships:
+    - type: cloudify.azure.relationships.contained_in_resource_group
+      target: resource_group
+
+  kubernetes_master_ip:
+    type: cloudify.azure.nodes.network.PublicIPAddress
+    properties:
+      location: { get_secret: location }
+      azure_config: *azure_config
+      retry_after: { get_input: retry_after }
+      resource_config:
+        publicIPAllocationMethod: Static
+    relationships:
+    - type: cloudify.azure.relationships.contained_in_resource_group
+      target: resource_group
+
+  subnet:
+    type: cloudify.azure.nodes.network.Subnet
+    properties:
+      resource_group_name: { get_secret: mgr_resource_group_name }
+      name: { get_secret: mgr_subnet_name }
+      azure_config: *azure_config
+      use_external_resource: true
+      location: { get_secret: location }
+    relationships:
+    - type: cloudify.azure.relationships.contained_in_virtual_network
+      target: virtual_network
+
+  virtual_network:
+    type: cloudify.azure.nodes.network.VirtualNetwork
+    properties:
+      resource_group_name: { get_secret: mgr_resource_group_name }
+      name: { get_secret: mgr_virtual_network_name }
+      azure_config: *azure_config
+      use_external_resource: true
+      location: { get_secret: location }
+    relationships:
+    - type: cloudify.azure.relationships.contained_in_resource_group
+      target: resource_group
+
+  storage_account:
+    type: cloudify.azure.nodes.storage.StorageAccount
+    properties:
+      location: { get_secret: location }
+      azure_config: *azure_config
+      retry_after: { get_input: retry_after }
+      resource_config:
+        accountType: Standard_LRS
+    relationships:
+    - type: cloudify.azure.relationships.contained_in_resource_group
+      target: resource_group
+
+  resource_group:
+    type: cloudify.azure.nodes.ResourceGroup
+    properties:
+      name: {concat:[{get_input: resource_prefix},arg,{get_input: resource_suffix}]}
+      location: { get_secret: location }
+      azure_config: *azure_config
+
+groups:
+
+  k8s_node_scale_group:
+    members:
+      - kubernetes_node_ip
+      - kubernetes_node_host_nic_ip_cfg
+      - kubernetes_node_host_nic
+      - kubeinstance
+
+policies:
+
+  kubernetes_node_vms_scaling_policy:
+    type: cloudify.policies.scaling
+    properties:
+      default_instances:  1
+    targets: [k8s_node_scale_group]
