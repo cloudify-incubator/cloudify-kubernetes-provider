@@ -259,10 +259,7 @@ node_templates:
     type: kubernetes_host
     properties:
       kubescale: true
-    capabilities:
-      scalable:
-        properties:
-          default_instances: 1
+      kubetag: k8s_node_scale_group
 
   kubemanager:
     type: kubernetes_host
@@ -270,3 +267,18 @@ node_templates:
       scalable:
         properties:
           default_instances: 1
+
+
+groups:
+
+  k8s_node_scale_group:
+    members:
+      - kubeinstance
+
+policies:
+
+  kubernetes_node_vms_scaling_policy:
+    type: cloudify.policies.scaling
+    properties:
+      default_instances:  1
+    targets: [k8s_node_scale_group]
