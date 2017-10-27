@@ -15,10 +15,19 @@ set -e
 rm -rf cloudify-rest-go-client || true
 set +e
 
-git clone https://github.com/cloudify-incubator/cloudify-kubernetes-provider.git --depth 1 -b master
-sed -i "s|git@github.com:|https://github.com/|g" cloudify-kubernetes-provider/.gitmodules
+ctx logger info "Attempting to download cluster-autoscaler from CFY Manager"
+AUTOSCALER_BINARY=$(ctx download-resource resources/cluster-autoscaler)
+ctx logger info "Attempting to download cfy-kubernetes from CFY Manager"
+KUBERNETES_BINARY=$(ctx download-resource resources/cfy-kubernetes)
+if [[ $? == 0 ]] && [[ -e "$KUBERNETES_BINARY" ]] && [[ -e "$AUTOSCALER_BINARY" ]]; then
+	ctx logger info "Kubernetes Provider: Onlu create directories"
+	mkdir -p /opt/cloudify-kubernetes-provider/src/k8s.io/autoscaler/cluster-autoscaler
+else
+	git clone https://github.com/cloudify-incubator/cloudify-kubernetes-provider.git --depth 1 -b master
+	sed -i "s|git@github.com:|https://github.com/|g" cloudify-kubernetes-provider/.gitmodules
 
-cd cloudify-kubernetes-provider
-ctx logger info "Kubernetes Provider: Download submodules sources"
-git submodule init
-git submodule update
+	cd cloudify-kubernetes-provider
+	ctx logger info "Kubernetes Provider: Download submodules sources"
+	git submodule init
+	git submodule update
+fi
