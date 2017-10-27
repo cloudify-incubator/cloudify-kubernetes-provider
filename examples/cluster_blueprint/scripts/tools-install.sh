@@ -16,7 +16,7 @@ elif [[ "$VM_VERSION" == 'NAME="Ubuntu"' ]]; then
 	sudo apt-get update
 	sudo apt-get install golang-go git
 else
-	ctx logger info "Unknow OS"
+	ctx logger info "Unknown OS"
 fi
 
 sudo chmod -R 777 /opt
