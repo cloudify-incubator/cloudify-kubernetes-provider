@@ -9,7 +9,7 @@ sudo tee /etc/systemd/system/cfy-autoscale.service <<EOF
 Description=cfy autoscale
 
 [Service]
-ExecStart=/usr/bin/cfy-autoscale --kubeconfig $HOME/.kube/config --cloud-config $HOME/cfy.json --cloud-provider cloudify
+ExecStart=/usr/bin/cfy-autoscale --kubeconfig $HOME/.kube/config --cloud-config $HOME/cfy.json --cloud-provider cloudify --alsologtostderr
 KillMode=process
 Restart=on-failure
 RestartSec=60s

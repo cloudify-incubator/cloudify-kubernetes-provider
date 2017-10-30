@@ -31,16 +31,25 @@ type CloudifyInstances struct {
 }
 
 func (r *CloudifyInstances) getInstances(params map[string]string) []cloudify.CloudifyNodeInstance {
+	instances := []cloudify.CloudifyNodeInstance{}
+
 	// Add filter by deployment
 	params["deployment_id"] = r.deployment
 
-	nodeInstances := r.client.GetNodeInstances(params)
-	instances := []cloudify.CloudifyNodeInstance{}
+	nodeInstances, err := r.client.GetNodeInstances(params)
+	if err != nil {
+		glog.Infof("Not found instances: %+v", err)
+		return instances
+	}
 
 	for _, nodeInstance := range nodeInstances.Items {
 		var node_params = map[string]string{}
 		node_params["id"] = nodeInstance.NodeId
-		nodes := r.client.GetNodes(node_params)
+		nodes, err := r.client.GetNodes(node_params)
+		if err != nil {
+			glog.Infof("Not found instances: %+v", err)
+			continue
+		}
 		if len(nodes.Items) != 1 {
 			glog.Infof("Found more than one node by nodeId: %+v", nodeInstance.NodeId)
 			continue
