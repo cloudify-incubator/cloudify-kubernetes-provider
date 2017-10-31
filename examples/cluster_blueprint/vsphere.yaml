@@ -229,9 +229,6 @@ node_types:
       kubetag:
         # by default: initial node group
         default: initial
-      kubescale:
-        # by default: not scalled by kubernetes
-        default: false
       connection_config:
         default: *connection_config
       server:
@@ -258,7 +255,6 @@ node_templates:
   kubeinstance:
     type: kubernetes_host
     properties:
-      kubescale: true
       kubetag: k8s_node_scale_group
 
   kubemanager:

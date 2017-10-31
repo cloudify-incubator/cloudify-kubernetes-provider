@@ -44,9 +44,6 @@ node_types:
       kubetag:
         # by default: initial node group
         default: initial
-      kubescale:
-        # by default: not scalled by kubernetes
-        default: false
       openstack_config:
         default: *openstack_config
       agent_config:
@@ -124,7 +121,6 @@ node_templates:
   kubeinstance:
     type: kubernetes_host
     properties:
-      kubescale: true
       management_network_name: { get_property: [ public_network, resource_id ] }
     relationships:
     - type: cloudify.relationships.contained_in

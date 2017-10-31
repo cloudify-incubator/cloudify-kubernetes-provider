@@ -59,9 +59,6 @@ node_types:
       kubetag:
         # by default: initial node group
         default: initial
-      kubescale:
-        # by default: not scalled by kubernetes
-        default: false
       agent_config:
         default:
           install_method: remote
@@ -119,8 +116,6 @@ node_templates:
 
   kubeinstance:
     type: kubernetes_host
-    properties:
-      kubescale: true
     relationships:
     - type: cloudify.azure.relationships.contained_in_resource_group
       target: resource_group

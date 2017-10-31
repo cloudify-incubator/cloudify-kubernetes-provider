@@ -88,9 +88,6 @@ node_types:
       kubetag:
         # by default: initial node group
         default: initial
-      kubescale:
-        # by default: not scalled by kubernetes
-        default: false
       agent_config:
         default:
           install_method: remote
@@ -133,7 +130,6 @@ node_templates:
     type: kubernetes_host
     properties:
       gcp_config: *gcp_config
-      kubescale: true
     relationships:
       - type: cloudify.relationships.depends_on
         target: subnetwork

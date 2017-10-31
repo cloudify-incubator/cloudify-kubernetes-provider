@@ -20,19 +20,19 @@
 	branch = master
 [submodule "src/github.com/PuerkitoBio/purell"]
 	path = src/github.com/PuerkitoBio/purell
-	url = https://github.com/PuerkitoBio/purell
+	url = git@github.com:PuerkitoBio/purell
 	branch = master
 [submodule "src/github.com/PuerkitoBio/urlesc"]
 	path = src/github.com/PuerkitoBio/urlesc
-	url = https://github.com/PuerkitoBio/urlesc
+	url = git@github.com:PuerkitoBio/urlesc
 	branch = master
 [submodule "src/k8s.io/kube-openapi"]
 	path = src/k8s.io/kube-openapi
-	url = https://github.com/kubernetes/kube-openapi
+	url = git@github.com:kubernetes/kube-openapi
 	branch = master
 [submodule "src/k8s.io/api"]
 	path = src/k8s.io/api
-	url = https://github.com/kubernetes/api
+	url = git@github.com:kubernetes/api
 	branch = master
 [submodule "src/gopkg.in/yaml.v2"]
 	path = src/gopkg.in/yaml.v2
@@ -101,4 +101,16 @@
 [submodule "src/k8s.io/autoscaler"]
 	path = src/k8s.io/autoscaler
 	url = git@github.com:cloudify-incubator/kubernetes-autoscaler.git
+	branch = master
+[submodule "src/github.com/tools/godep"]
+	path = src/github.com/tools/godep
+	url = git@github.com:tools/godep
+	branch = master
+[submodule "src/github.com/docker/spdystream"]
+	path = src/github.com/docker/spdystream
+	url = git@github.com:docker/spdystream
+	branch = master
+[submodule "src/github.com/pborman/uuid"]
+	path = src/github.com/pborman/uuid
+	url = git@github.com:pborman/uuid
 	branch = master
