@@ -54,8 +54,11 @@ if __name__ == '__main__':
         host_instance = \
             get_instance_by_target_type(
                 target_id, target_type)
-        public_ip = host_instance.runtime_properties.get(
-            'public_ip', ip)
+        public_ip_prop = host_instance.runtime_properties.get(
+            'public_ip')
+        public_ip_address_prop = host_instance.runtime_properties.get(
+            'public_ip_address')
+        public_ip = public_ip_prop or public_ip_address_prop or ip
 
     new_runtime_properties = {
         'name': ctx.instance.id,
