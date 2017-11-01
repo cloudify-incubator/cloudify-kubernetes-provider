@@ -23,7 +23,7 @@ if [[ $? == 0 ]] && [[ -e "$KUBERNETES_BINARY" ]] && [[ -e "$AUTOSCALER_BINARY" 
 	ctx logger info "Kubernetes Provider: Onlu create directories"
 	mkdir -p /opt/cloudify-kubernetes-provider/src/k8s.io/autoscaler/cluster-autoscaler
 else
-	git clone https://github.com/cloudify-incubator/cloudify-kubernetes-provider.git --depth 1 -b master
+	git clone https://github.com/cloudify-incubator/cloudify-kubernetes-provider.git --depth 1 -b stable-0.1
 	sed -i "s|git@github.com:|https://github.com/|g" cloudify-kubernetes-provider/.gitmodules
 
 	cd cloudify-kubernetes-provider

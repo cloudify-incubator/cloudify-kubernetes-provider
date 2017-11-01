@@ -1,7 +1,7 @@
 [submodule "src/k8s.io/kubernetes"]
 	path = src/k8s.io/kubernetes
 	url = git@github.com:cloudify-incubator/kubernetes.git
-	branch = release-1.8
+	branch = stable-0.1
 [submodule "src/k8s.io/apimachinery"]
 	path = src/k8s.io/apimachinery
 	url = git@github.com:kubernetes/apimachinery.git
@@ -13,7 +13,7 @@
 [submodule "src/github.com/cloudify-incubator/cloudify-rest-go-client"]
 	path = src/github.com/cloudify-incubator/cloudify-rest-go-client
 	url = git@github.com:cloudify-incubator/cloudify-rest-go-client.git
-	branch = master
+	branch = stable-0.1
 [submodule "src/github.com/google/gofuzz"]
 	path = src/github.com/google/gofuzz
 	url = git@github.com:google/gofuzz.git
@@ -101,4 +101,4 @@
 [submodule "src/k8s.io/autoscaler"]
 	path = src/k8s.io/autoscaler
 	url = git@github.com:cloudify-incubator/kubernetes-autoscaler.git
-	branch = master
+	branch = stable-0.1
