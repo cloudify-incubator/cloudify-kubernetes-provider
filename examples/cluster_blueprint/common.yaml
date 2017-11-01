@@ -82,24 +82,26 @@ node_types:
           implementation: scripts/kubernetes/uninstall.sh
 
   # type represent node with installed docker code
-  docker_type:
+  cloudify.nodes.ApplicationServer.Docker:
     derived_from: cloudify.nodes.ApplicationServer
     interfaces:
       cloudify.interfaces.lifecycle:
         create:
-          implementation: scripts/tools-install.sh
-        configure:
-          implementation: scripts/docker/uninstall.sh
-        start:
-          implementation: scripts/docker/install.sh
+          implementation: scripts/docker/install.py
           inputs:
-            process:
-              default:
-                process:
-                  args:
-                    - { get_input: update_package_manager } # $1 in script will represent to update package manager or not.
+            agent_user:
+              default: { get_input: agent_user }
+            update_package_manager:
+              default: { get_input: update_package_manager }
         delete:
-          implementation: scripts/docker/uninstall.sh
+          implementation: scripts/docker/uninstall.py
+
+  cloudify.nodes.SoftwareComponent.BuildTools:
+    derived_from: cloudify.nodes.SoftwareComponent
+    interfaces:
+      cloudify.interfaces.lifecycle:
+        create:
+          implementation: scripts/buildtools/install.py
 
   cloudify.nodes.ApplicationServer.kubernetes.Node:
     derived_from: cloudify.nodes.ApplicationServer
@@ -118,16 +120,34 @@ node_templates:
     - target: kubeinstance
       type: cloudify.relationships.contained_in
 
+  kubeinstance_buildtools:
+    type: cloudify.nodes.SoftwareComponent.BuildTools
+    relationships:
+    - target: kubeinstance
+      type: cloudify.relationships.contained_in
+
   kubernetes_master_node:
     type: cloudify.nodes.ApplicationServer.kubernetes.Node
     relationships:
     - target: kubemanager
       type: cloudify.relationships.contained_in
 
+  kubemanager_buildtools:
+    type: cloudify.nodes.SoftwareComponent.BuildTools
+    relationships:
+    - target: kubemanager
+      type: cloudify.relationships.contained_in
+
   docker:
-    type: docker_type
+    type: cloudify.nodes.ApplicationServer.Docker
     relationships:
     - target: kubeinstance
+      type: cloudify.relationships.contained_in
+
+  kubemanager_docker:
+    type: cloudify.nodes.ApplicationServer.Docker
+    relationships:
+    - target: kubemanager
       type: cloudify.relationships.contained_in
 
   clienttools_build:
@@ -152,17 +172,13 @@ node_templates:
     relationships:
     - target: docker
       type: cloudify.relationships.contained_in
+    - target: kubeinstance_buildtools
+      type: cloudify.relationships.depends_on
 
   kubenetes:
     type: kubernetes_type
     relationships:
     - target: docker
-      type: cloudify.relationships.contained_in
-
-  kubemanager_docker:
-    type: docker_type
-    relationships:
-    - target: kubemanager
       type: cloudify.relationships.contained_in
 
   tools_build:
@@ -178,6 +194,8 @@ node_templates:
     relationships:
     - target: kubemanager_docker
       type: cloudify.relationships.contained_in
+    - target: kubemanager_buildtools
+      type: cloudify.relationships.depends_on
 
   manager_kubenetes:
     type: kubernetes_type
