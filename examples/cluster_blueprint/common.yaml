@@ -101,10 +101,28 @@ node_types:
         delete:
           implementation: scripts/docker/uninstall.sh
 
+  cloudify.nodes.ApplicationServer.kubernetes.Node:
+    derived_from: cloudify.nodes.ApplicationServer
+    interfaces:
+      cloudify.interfaces.lifecycle:
+        create: scripts/kubernetes/node/create.py
+
 ###############################################################################
 # Node templates section
 ###############################################################################
 node_templates:
+
+  kubernetes_slave_node:
+    type: cloudify.nodes.ApplicationServer.kubernetes.Node
+    relationships:
+    - target: kubeinstance
+      type: cloudify.relationships.contained_in
+
+  kubernetes_master_node:
+    type: cloudify.nodes.ApplicationServer.kubernetes.Node
+    relationships:
+    - target: kubemanager
+      type: cloudify.relationships.contained_in
 
   docker:
     type: docker_type

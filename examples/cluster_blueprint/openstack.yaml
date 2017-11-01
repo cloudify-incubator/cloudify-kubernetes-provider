@@ -272,6 +272,7 @@ groups:
     - kubeinstance
     - kubeinstance_port
     - kubeinstance_port_elastic_ip
+    - kubernetes_slave_node
 
 policies:
 

@@ -270,6 +270,7 @@ groups:
   k8s_node_scale_group:
     members:
       - kubeinstance
+      - kubernetes_slave_node
 
 policies:
 

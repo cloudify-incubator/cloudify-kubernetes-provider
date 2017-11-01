@@ -490,6 +490,7 @@ groups:
       - kubernetes_node_host_nic_ip_cfg
       - kubernetes_node_host_nic
       - kubeinstance
+      - kubernetes_slave_node
 
 policies:
 
