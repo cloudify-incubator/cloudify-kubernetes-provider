@@ -21,6 +21,9 @@ if [[ $? == 0 ]] && [[ -e "$AUTOSCALER_BINARY" ]]; then
     ctx logger info "Downloaded provided cluster-autoscaler"
     cp $AUTOSCALER_BINARY /opt/cloudify-kubernetes-provider/src/k8s.io/autoscaler/cluster-autoscaler/
 else
+    ctx logger info "Build cluster-autoscaler from parent"
+    cd /opt/cloudify-kubernetes-provider/
+    go install src/k8s.io/autoscaler/cluster-autoscaler/main.go src/k8s.io/autoscaler/cluster-autoscaler/version.go
     ctx logger info "Build cluster-autoscaler"
     cd /opt/cloudify-kubernetes-provider/src/k8s.io/autoscaler/cluster-autoscaler/
     make
