@@ -16,7 +16,9 @@ reformat:
 	gofmt -w src/${PACKAGEPATH}/cloudify/*.go
 	gofmt -w src/${PACKAGEPATH}/cfy-go/*.go
 	gofmt -w src/${PACKAGEPATH}/kubernetes/*.go
+	# kubernetes parts
 	gofmt -w src/cloudifyprovider/*.go
+	gofmt -w src/k8s.io/autoscaler/cluster-autoscaler/cloudprovider/cloudifyprovider/*.go
 	gofmt -w src/*.go
 
 define colorecho
@@ -38,7 +40,7 @@ pkg/linux_amd64/${PACKAGEPATH}/cloudify/rest.a: ${CLOUDIFYREST}
 
 # cloudify kubernetes support
 CLOUDIFYKUBERNETES := \
-	src/${PACKAGEPATH}/kubernetes/kubernetes.go \
+	src/${PACKAGEPATH}/kubernetes/mount.go \
 	src/${PACKAGEPATH}/kubernetes/types.go
 
 pkg/linux_amd64/${PACKAGEPATH}/kubernetes.a: ${CLOUDIFYKUBERNETES}
@@ -102,7 +104,7 @@ CLUSTERAUTOSCALER := \
 bin/cluster-autoscaler: pkg/linux_amd64/${PACKAGEPATH}/cloudify.a ${CLUSTERAUTOSCALER}
 	$(call colorecho,"Install: ", $@)
 	# delete -s -w if you want to debug
-	go install -v -ldflags "-s -w -X main.ClusterAutoscalerVersion=${VERSION}" ${CLUSTERAUTOSCALER}
+	go build -v -ldflags "-s -w -X main.ClusterAutoscalerVersion=${VERSION}" -o bin/cluster-autoscaler ${CLUSTERAUTOSCALER}
 
 upload:
 	cfy blueprints upload -b kubernetes_cluster examples/cluster_blueprint/${CLOUDPROVIDER}.yaml

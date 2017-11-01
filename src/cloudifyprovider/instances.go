@@ -31,52 +31,16 @@ type CloudifyInstances struct {
 }
 
 func (r *CloudifyInstances) getInstances(params map[string]string) []cloudify.CloudifyNodeInstance {
-	instances := []cloudify.CloudifyNodeInstance{}
-
 	// Add filter by deployment
 	params["deployment_id"] = r.deployment
 
-	nodeInstances, err := r.client.GetNodeInstances(params)
+	nodeInstances, err := r.client.GetStartedNodeInstances(
+		params, "cloudify.nodes.ApplicationServer.kubernetes.Node")
 	if err != nil {
 		glog.Infof("Not found instances: %+v", err)
-		return instances
+		return []cloudify.CloudifyNodeInstance{}
 	}
-
-	for _, nodeInstance := range nodeInstances.Items {
-		var node_params = map[string]string{}
-		node_params["id"] = nodeInstance.NodeId
-		nodes, err := r.client.GetNodes(node_params)
-		if err != nil {
-			glog.Infof("Not found instances: %+v", err)
-			continue
-		}
-		if len(nodes.Items) != 1 {
-			glog.Infof("Found more than one node by nodeId: %+v", nodeInstance.NodeId)
-			continue
-		}
-
-		var not_kubernetes_host bool = true
-		for _, type_name := range nodes.Items[0].TypeHierarchy {
-			if type_name == "kubernetes_host" {
-				not_kubernetes_host = false
-				break
-			}
-		}
-
-		if not_kubernetes_host {
-			continue
-		}
-
-		if nodeInstance.State != "started" {
-			continue
-		}
-
-		// check runtime properties
-		if nodeInstance.RuntimeProperties != nil {
-			instances = append(instances, nodeInstance)
-		}
-	}
-	return instances
+	return nodeInstances.Items
 }
 
 // NodeAddresses returns the addresses of the specified instance.
@@ -95,7 +59,7 @@ func (r *CloudifyInstances) NodeAddresses(nodeName types.NodeName) ([]api.NodeAd
 	for _, nodeInstance := range nodeInstances {
 		// check runtime properties
 		if nodeInstance.RuntimeProperties != nil {
-			if v, ok := nodeInstance.RuntimeProperties["name"]; ok == true {
+			if v, ok := nodeInstance.RuntimeProperties["hostname"]; ok == true {
 				switch v.(type) {
 				case string:
 					{
@@ -222,7 +186,7 @@ func (r *CloudifyInstances) InstanceID(nodeName types.NodeName) (string, error) 
 	for _, nodeInstance := range nodeInstances {
 		// check runtime properties
 		if nodeInstance.RuntimeProperties != nil {
-			if v, ok := nodeInstance.RuntimeProperties["name"]; ok == true {
+			if v, ok := nodeInstance.RuntimeProperties["hostname"]; ok == true {
 				switch v.(type) {
 				case string:
 					{
