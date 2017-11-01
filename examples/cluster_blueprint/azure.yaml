@@ -116,6 +116,8 @@ node_templates:
 
   kubeinstance:
     type: kubernetes_host
+    properties:
+      kubetag: k8s_node_scale_group
     relationships:
     - type: cloudify.azure.relationships.contained_in_resource_group
       target: resource_group
@@ -494,5 +496,8 @@ policies:
   kubernetes_node_vms_scaling_policy:
     type: cloudify.policies.scaling
     properties:
-      default_instances: 1
+    properties:
+      min_instances: 1
+      max_instances: 20
+      default_instances:  1
     targets: [k8s_node_scale_group]

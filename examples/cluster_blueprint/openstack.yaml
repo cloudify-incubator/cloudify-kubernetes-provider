@@ -122,6 +122,7 @@ node_templates:
     type: kubernetes_host
     properties:
       management_network_name: { get_property: [ public_network, resource_id ] }
+      kubetag: k8s_node_scale_group
     relationships:
     - type: cloudify.relationships.contained_in
       target: k8s_node_scaling_tier
@@ -265,7 +266,7 @@ node_templates:
 
 groups:
 
-  kubeinstance_group:
+  k8s_node_scale_group:
     members:
     - k8s_node_scaling_tier
     - kubeinstance
@@ -274,8 +275,8 @@ groups:
 
 policies:
 
-  kubeinstance_group_scaling_policy:
+  kubernetes_node_vms_scaling_policy:
     type: cloudify.policies.scaling
     properties:
       default_instances:  1
-    targets: [kubeinstance_group]
+    targets: [k8s_node_scale_group]

@@ -115,6 +115,8 @@ node_templates:
 
   kubeinstance:
     type: kubernetes_host
+    properties:
+      kubetag: k8s_node_scale_group
     capabilities:
       scalable:
         properties:
@@ -259,7 +261,7 @@ node_templates:
 
 groups:
 
-  kubeinstance_group:
+  k8s_node_scale_group:
     members:
       - kubeinstance
       - kubeinstance_port
@@ -267,8 +269,11 @@ groups:
 
 policies:
 
-  kubeinstance_group_scaling_policy:
+  kubernetes_node_vms_scaling_policy:
     type: cloudify.policies.scaling
     properties:
+    properties:
+      min_instances: 1
+      max_instances: 20
       default_instances:  1
-    targets: [kubeinstance_group]
+    targets: [k8s_node_scale_group]

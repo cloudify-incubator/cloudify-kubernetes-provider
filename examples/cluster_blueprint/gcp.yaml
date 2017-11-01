@@ -130,6 +130,7 @@ node_templates:
     type: kubernetes_host
     properties:
       gcp_config: *gcp_config
+      kubetag: k8s_node_scale_group
     relationships:
       - type: cloudify.relationships.depends_on
         target: subnetwork
