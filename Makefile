@@ -1,6 +1,7 @@
 .PHONY: all
 all: bin/cfy-go bin/cfy-kubernetes bin/cluster-autoscaler
 
+AUTOSCALEPACKAGE := k8s.io/autoscaler/cluster-autoscaler/cloudprovider
 PACKAGEPATH := github.com/cloudify-incubator/cloudify-rest-go-client
 
 VERSION := `cd src/${PACKAGEPATH} && git rev-parse --short HEAD`
@@ -18,7 +19,7 @@ reformat:
 	gofmt -w src/${PACKAGEPATH}/kubernetes/*.go
 	# kubernetes parts
 	gofmt -w src/cloudifyprovider/*.go
-	gofmt -w src/k8s.io/autoscaler/cluster-autoscaler/cloudprovider/cloudifyprovider/*.go
+	gofmt -w src/${AUTOSCALEPACKAGE}/cloudifyprovider/*.go
 	gofmt -w src/*.go
 
 define colorecho
@@ -98,15 +99,19 @@ bin/cfy-kubernetes: pkg/linux_amd64/cloudifyprovider.a pkg/linux_amd64/${PACKAGE
 	go install -v -ldflags "-s -w -X main.versionString=${VERSION}" src/cfy-kubernetes.go
 
 CLUSTERAUTOSCALERPROVIDER := \
-	src/k8s.io/autoscaler/cluster-autoscaler/cloudprovider/cloudifyprovider/init.go \
-	src/k8s.io/autoscaler/cluster-autoscaler/cloudprovider/cloudifyprovider/node_group.go \
-	src/k8s.io/autoscaler/cluster-autoscaler/cloudprovider/cloudifyprovider/scale_provider.go
+	src/${AUTOSCALEPACKAGE}/cloudifyprovider/init.go \
+	src/${AUTOSCALEPACKAGE}/cloudifyprovider/node_group.go \
+	src/${AUTOSCALEPACKAGE}/cloudifyprovider/scale_provider.go
+
+pkg/linux_amd64/${AUTOSCALEPACKAGE}/cloudifyprovider.a: ${CLUSTERAUTOSCALERPROVIDER} pkg/linux_amd64/${PACKAGEPATH}/cloudify.a
+	$(call colorecho,"Build: ",$@)
+	go build -v -i -o pkg/linux_amd64/${AUTOSCALEPACKAGE}/cloudifyprovider.a ${CLUSTERAUTOSCALERPROVIDER}
 
 CLUSTERAUTOSCALER := \
 	src/k8s.io/autoscaler/cluster-autoscaler/main.go \
 	src/k8s.io/autoscaler/cluster-autoscaler/version.go
 
-bin/cluster-autoscaler: pkg/linux_amd64/${PACKAGEPATH}/cloudify.a ${CLUSTERAUTOSCALER} ${CLUSTERAUTOSCALERPROVIDER}
+bin/cluster-autoscaler: pkg/linux_amd64/${PACKAGEPATH}/cloudify.a ${CLUSTERAUTOSCALER} pkg/linux_amd64/${AUTOSCALEPACKAGE}/cloudifyprovider.a
 	$(call colorecho,"Install: ", $@)
 	# delete -s -w if you want to debug
 	go build -v -ldflags "-s -w -X main.ClusterAutoscalerVersion=${VERSION}" -o bin/cluster-autoscaler ${CLUSTERAUTOSCALER}

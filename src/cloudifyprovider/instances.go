@@ -34,7 +34,7 @@ func (r *CloudifyInstances) getInstances(params map[string]string) []cloudify.Cl
 	// Add filter by deployment
 	params["deployment_id"] = r.deployment
 
-	nodeInstances, err := r.client.GetStartedNodeInstances(
+	nodeInstances, err := r.client.GetStartedNodeInstancesWithType(
 		params, "cloudify.nodes.ApplicationServer.kubernetes.Node")
 	if err != nil {
 		glog.Infof("Not found instances: %+v", err)
