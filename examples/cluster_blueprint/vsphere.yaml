@@ -226,9 +226,6 @@ node_types:
         # by default: amount of memory on vm avaible for kubepods,
         # in most cases it must be same as full count of memory on vm
         default: { get_input: memory }
-      kubetag:
-        # by default: initial node group
-        default: initial
       connection_config:
         default: *connection_config
       server:
@@ -254,8 +251,6 @@ node_templates:
 ###############################################################################
   kubeinstance:
     type: kubernetes_host
-    properties:
-      kubetag: k8s_node_scale_group
 
   kubemanager:
     type: kubernetes_host
@@ -269,7 +264,6 @@ groups:
 
   k8s_node_scale_group:
     members:
-      - kubeinstance
       - kubernetes_slave_node
 
 policies:

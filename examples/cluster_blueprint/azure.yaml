@@ -56,9 +56,6 @@ node_types:
         # by default: amount of memory on vm avaible for kubepods,
         # in most cases it must be same as full count of memory on vm
         default: 1024
-      kubetag:
-        # by default: initial node group
-        default: initial
       agent_config:
         default:
           install_method: remote
@@ -116,8 +113,6 @@ node_templates:
 
   kubeinstance:
     type: kubernetes_host
-    properties:
-      kubetag: k8s_node_scale_group
     relationships:
     - type: cloudify.azure.relationships.contained_in_resource_group
       target: resource_group
@@ -489,7 +484,6 @@ groups:
       - kubernetes_node_ip
       - kubernetes_node_host_nic_ip_cfg
       - kubernetes_node_host_nic
-      - kubeinstance
       - kubernetes_slave_node
 
 policies:

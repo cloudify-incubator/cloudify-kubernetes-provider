@@ -41,9 +41,6 @@ node_types:
         # by default: amount of memory on vm avaible for kubepods,
         # in most cases it must be same as full count of memory on vm
         default: 1024
-      kubetag:
-        # by default: initial node group
-        default: initial
       openstack_config:
         default: *openstack_config
       agent_config:
@@ -122,7 +119,6 @@ node_templates:
     type: kubernetes_host
     properties:
       management_network_name: { get_property: [ public_network, resource_id ] }
-      kubetag: k8s_node_scale_group
     relationships:
     - type: cloudify.relationships.contained_in
       target: k8s_node_scaling_tier
@@ -269,7 +265,6 @@ groups:
   k8s_node_scale_group:
     members:
     - k8s_node_scaling_tier
-    - kubeinstance
     - kubeinstance_port
     - kubeinstance_port_elastic_ip
     - kubernetes_slave_node

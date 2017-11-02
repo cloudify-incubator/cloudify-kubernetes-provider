@@ -97,11 +97,16 @@ bin/cfy-kubernetes: pkg/linux_amd64/cloudifyprovider.a pkg/linux_amd64/${PACKAGE
 	# delete -s -w if you want to debug
 	go install -v -ldflags "-s -w -X main.versionString=${VERSION}" src/cfy-kubernetes.go
 
+CLUSTERAUTOSCALERPROVIDER := \
+	src/k8s.io/autoscaler/cluster-autoscaler/cloudprovider/cloudifyprovider/init.go \
+	src/k8s.io/autoscaler/cluster-autoscaler/cloudprovider/cloudifyprovider/node_group.go \
+	src/k8s.io/autoscaler/cluster-autoscaler/cloudprovider/cloudifyprovider/scale_provider.go
+
 CLUSTERAUTOSCALER := \
 	src/k8s.io/autoscaler/cluster-autoscaler/main.go \
 	src/k8s.io/autoscaler/cluster-autoscaler/version.go
 
-bin/cluster-autoscaler: pkg/linux_amd64/${PACKAGEPATH}/cloudify.a ${CLUSTERAUTOSCALER}
+bin/cluster-autoscaler: pkg/linux_amd64/${PACKAGEPATH}/cloudify.a ${CLUSTERAUTOSCALER} ${CLUSTERAUTOSCALERPROVIDER}
 	$(call colorecho,"Install: ", $@)
 	# delete -s -w if you want to debug
 	go build -v -ldflags "-s -w -X main.ClusterAutoscalerVersion=${VERSION}" -o bin/cluster-autoscaler ${CLUSTERAUTOSCALER}
