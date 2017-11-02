@@ -16,7 +16,7 @@ rm -rf cloudify-rest-go-client || true
 set +e
 
 ctx logger info "Attempting to download cluster-autoscaler from CFY Manager"
-AUTOSCALER_BINARY=$(ctx download-resource resources/cluster-autoscaler)
+AUTOSCALER_BINARY=$(ctx download-resource resources/cfy-autoscale)
 ctx logger info "Attempting to download cfy-kubernetes from CFY Manager"
 KUBERNETES_BINARY=$(ctx download-resource resources/cfy-kubernetes)
 if [[ $? == 0 ]] && [[ -e "$KUBERNETES_BINARY" ]] && [[ -e "$AUTOSCALER_BINARY" ]]; then

@@ -18,4 +18,4 @@
 
 # Ignore cfy-kubernetes cluster-autoscaler
 examples/cluster_blueprint/resources/cfy-kubernetes
-examples/cluster_blueprint/resources/cluster-autoscaler
+examples/cluster_blueprint/resources/cfy-autoscale
