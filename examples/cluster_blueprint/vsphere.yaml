@@ -79,11 +79,10 @@ inputs:
       vcenter datastore
     default: datastore1
 
-  servers_user:
-    default: root
-    type: string
+  agent_user:
     description: >
-      Default admin user in os template
+      The username of the agent running on the instance created from the image.
+    default: root
 
   user_public_key:
     type: string
@@ -237,7 +236,7 @@ node_types:
       agent_config:
         default:
           install_method: remote
-          user: { get_input: servers_user }
+          user: { get_input: agent_user }
           key: { get_input: user_private_key }
       networking:
         default:

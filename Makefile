@@ -120,6 +120,11 @@ bin/cluster-autoscaler: pkg/linux_amd64/${PACKAGEPATH}/cloudify.a ${CLUSTERAUTOS
 upload:
 	cfy blueprints upload -b kubernetes_cluster examples/cluster_blueprint/${CLOUDPROVIDER}.yaml
 
+create-for-upload: all
+	cp -v bin/cfy-kubernetes examples/cluster_blueprint/resources/cfy-kubernetes
+	cp -v bin/cluster-autoscaler examples/cluster_blueprint/resources/cfy-autoscale
+	cp -v bin/cfy-go examples/cluster_blueprint/resources/cfy-go
+
 .PHONY: test
 test:
 	go test ./src/${PACKAGEPATH}/...
