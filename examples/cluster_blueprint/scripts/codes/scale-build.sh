@@ -13,7 +13,7 @@ export GOPATH=`pwd`
 PACKAGEPATH=github.com/cloudify-incubator/cloudify-kubernetes-provider
 
 ctx logger info "Attempting to download cluster-autoscaler from CFY Manager"
-AUTOSCALER_BINARY=$(ctx download-resource resources/resources/cfy-autoscale)
+AUTOSCALER_BINARY=$(ctx download-resource resources/cfy-autoscale)
 
 mkdir -p /opt/cloudify-kubernetes-provider/src/k8s.io/autoscaler/cluster-autoscaler
 

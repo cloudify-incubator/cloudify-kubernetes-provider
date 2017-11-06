@@ -481,10 +481,11 @@ groups:
 
   k8s_node_scale_group:
     members:
-      - kubernetes_node_ip
-      - kubernetes_node_host_nic_ip_cfg
-      - kubernetes_node_host_nic
-      - kubernetes_slave_node
+    - kubernetes_node_ip
+    - kubernetes_node_host_nic_ip_cfg
+    - kubernetes_node_host_nic
+    - kubeinstance
+    - kubernetes_slave_node
 
 policies:
 
