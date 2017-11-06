@@ -20,6 +20,9 @@ inputs:
       User for connecting to agent VMs
     default: centos
 
+  agent_group:
+    default: wheel
+
 dsl_definitions:
 
   openstack_config: &openstack_config
@@ -66,10 +69,10 @@ node_templates:
         manage_etc_hosts: True
         groups:
         - docker
-        - wheel
+        - { get_input: agent_group }
         users:
         - name: { get_input: agent_user }
-          primary-group: wheel
+          primary-group: { get_input: agent_group }
           groups: docker
           shell: /bin/bash
           sudo: ['ALL=(ALL) NOPASSWD:ALL']
@@ -267,8 +270,13 @@ groups:
     - k8s_node_scaling_tier
     - kubeinstance_port
     - kubeinstance_port_elastic_ip
-    - kubernetes_slave_node
     - kubeinstance
+    - kubernetes_slave_node
+    - kubernetes_slave_kubernetes
+    - kubernetes_slave_kubelet_volume
+    - kubernetes_slave_docker
+    - kubernetes_slave_cfy_go
+    - kubernetes_slave_buildtools
 
 policies:
 

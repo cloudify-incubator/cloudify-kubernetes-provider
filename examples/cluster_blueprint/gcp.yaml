@@ -52,6 +52,9 @@ inputs:
     description: The user name of the agent on the instance created from the image.
     default: docker
 
+  agent_group:
+    default: docker
+
   resource_prefix:
     default: cfyk8s
 
