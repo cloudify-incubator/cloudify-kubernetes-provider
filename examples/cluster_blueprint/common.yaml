@@ -219,16 +219,20 @@ node_templates:
         delete:
           implementation: scripts/codes/delete.sh
     relationships:
-    - target: kubemanager_docker
+    - target: kubemanager
       type: cloudify.relationships.contained_in
+    - target: kubemanager_docker
+      type: cloudify.relationships.depends_on
     - target: kubernetes_master_buildtools
       type: cloudify.relationships.depends_on
 
   manager_kubenetes:
     type: kubernetes_type
     relationships:
-    - target: tools_build
+    - target: kubemanager
       type: cloudify.relationships.contained_in
+    - target: tools_build
+      type: cloudify.relationships.depends_on
 
   config_export:
     type: cloudify.nodes.ApplicationServer
@@ -244,8 +248,10 @@ node_templates:
         start:
           implementation: scripts/export_config.py
     relationships:
-    - target: manager_kubenetes
+    - target: kubemanager
       type: cloudify.relationships.contained_in
+    - target: manager_kubenetes
+      type: cloudify.relationships.depends_on
     - target: tools_build
       type: cloudify.relationships.depends_on
 
@@ -260,8 +266,10 @@ node_templates:
         stop:
           implementation: scripts/delete_secrets.py
     relationships:
-    - target: config_export
+    - target: kubemanager
       type: cloudify.relationships.contained_in
+    - target: config_export
+      type: cloudify.relationships.depends_on
     - target: kubenetes_slave
       type: cloudify.relationships.depends_on
 
@@ -274,8 +282,10 @@ node_templates:
         start:
           implementation: scripts/codes/scale-run.sh
     relationships:
-    - target: tools_build
+    - target: kubemanager
       type: cloudify.relationships.contained_in
+    - target: tools_build
+      type: cloudify.relationships.depends_on
 
   kubenetes_autoscale_run:
     type: cloudify.nodes.ApplicationServer
@@ -283,7 +293,9 @@ node_templates:
         start:
           implementation: scripts/codes/scale-run.sh
     relationships:
+    - target: kubemanager
+      type: cloudify.relationships.contained_in
     - target: kubenetes_autoscale_build
       type: cloudify.relationships.depends_on
     - target: config_export
-      type: cloudify.relationships.contained_in
+      type: cloudify.relationships.depends_on
