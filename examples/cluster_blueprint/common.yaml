@@ -114,40 +114,24 @@ node_types:
 ###############################################################################
 node_templates:
 
+### KUBERNETES_SLAVE
+
   kubernetes_slave_node:
     type: cloudify.nodes.ApplicationServer.kubernetes.Node
     relationships:
     - target: kubeinstance
       type: cloudify.relationships.contained_in
 
-  kubeinstance_buildtools:
+  kubernetes_slave_buildtools:
     type: cloudify.nodes.SoftwareComponent.BuildTools
     relationships:
     - target: kubeinstance
-      type: cloudify.relationships.contained_in
-
-  kubernetes_master_node:
-    type: cloudify.nodes.ApplicationServer.kubernetes.Node
-    relationships:
-    - target: kubemanager
-      type: cloudify.relationships.contained_in
-
-  kubemanager_buildtools:
-    type: cloudify.nodes.SoftwareComponent.BuildTools
-    relationships:
-    - target: kubemanager
       type: cloudify.relationships.contained_in
 
   docker:
     type: cloudify.nodes.ApplicationServer.Docker
     relationships:
     - target: kubeinstance
-      type: cloudify.relationships.contained_in
-
-  kubemanager_docker:
-    type: cloudify.nodes.ApplicationServer.Docker
-    relationships:
-    - target: kubemanager
       type: cloudify.relationships.contained_in
 
   clienttools_build:
@@ -170,15 +154,58 @@ node_templates:
         mount: scripts/mount.py
         unmount: scripts/unmount.py
     relationships:
-    - target: docker
+    - target: kubeinstance
       type: cloudify.relationships.contained_in
-    - target: kubeinstance_buildtools
+    - target: docker
+      type: cloudify.relationships.depends_on
+    - target: kubernetes_slave_buildtools
       type: cloudify.relationships.depends_on
 
   kubenetes:
     type: kubernetes_type
     relationships:
+    - target: kubeinstance
+      type: cloudify.relationships.contained_in
     - target: docker
+      type: cloudify.relationships.depends_on
+
+  kubenetes_slave:
+    type: cloudify.nodes.ApplicationServer
+    interfaces:
+      cloudify.interfaces.lifecycle:
+        configure:
+          implementation: scripts/kubernetes/join.sh
+          inputs:
+            TOKEN: { get_attribute: [config_export, token] }
+            IP: { get_attribute: [kubemanager, ip] }
+    relationships:
+    - target: kubeinstance
+      type: cloudify.relationships.contained_in
+    - target: kubenetes
+      type: cloudify.relationships.depends_on
+    - target: clienttools_build
+      type: cloudify.relationships.depends_on
+    - target: config_export
+      type: cloudify.relationships.depends_on
+
+### KUBERNETES MASTER
+
+  kubernetes_master_node:
+    type: cloudify.nodes.ApplicationServer.kubernetes.Node
+    relationships:
+    - target: kubemanager
+      type: cloudify.relationships.contained_in
+
+  kubernetes_master_buildtools:
+    type: cloudify.nodes.SoftwareComponent.BuildTools
+    relationships:
+    - target: kubemanager
+      type: cloudify.relationships.contained_in
+
+  kubemanager_docker:
+    type: cloudify.nodes.ApplicationServer.Docker
+    relationships:
+    - target: kubemanager
       type: cloudify.relationships.contained_in
 
   tools_build:
@@ -194,7 +221,7 @@ node_templates:
     relationships:
     - target: kubemanager_docker
       type: cloudify.relationships.contained_in
-    - target: kubemanager_buildtools
+    - target: kubernetes_master_buildtools
       type: cloudify.relationships.depends_on
 
   manager_kubenetes:
@@ -220,23 +247,6 @@ node_templates:
     - target: manager_kubenetes
       type: cloudify.relationships.contained_in
     - target: tools_build
-      type: cloudify.relationships.depends_on
-
-  kubenetes_slave:
-    type: cloudify.nodes.ApplicationServer
-    interfaces:
-      cloudify.interfaces.lifecycle:
-        configure:
-          implementation: scripts/kubernetes/join.sh
-          inputs:
-            TOKEN: { get_attribute: [config_export, token] }
-            IP: { get_attribute: [kubemanager, ip] }
-    relationships:
-    - target: kubenetes
-      type: cloudify.relationships.contained_in
-    - target: clienttools_build
-      type: cloudify.relationships.depends_on
-    - target: config_export
       type: cloudify.relationships.depends_on
 
   kubenetes_final_state:
