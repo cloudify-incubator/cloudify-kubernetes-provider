@@ -15,13 +15,17 @@ set -e
 rm -rf cloudify-rest-go-client || true
 set +e
 
-ctx logger info "Attempting to download cluster-autoscaler from CFY Manager"
-AUTOSCALER_BINARY=$(ctx download-resource resources/cfy-autoscale)
-ctx logger info "Attempting to download cfy-kubernetes from CFY Manager"
-KUBERNETES_BINARY=$(ctx download-resource resources/cfy-kubernetes)
-if [[ $? == 0 ]] && [[ -e "$KUBERNETES_BINARY" ]] && [[ -e "$AUTOSCALER_BINARY" ]]; then
+ctx logger info "Attempting to download cfy-go from CFY Manager"
+CFY_GO_BINARY=$(ctx download-resource resources/cfy-go)
+if [[ $? == 0 ]] && [[ -e "$CFY_GO_BINARY" ]]; then
 	ctx logger info "Kubernetes Provider: Onlu create directories"
+	sudo mkdir -p /opt/bin
+	mkdir -p /opt/cloudify-kubernetes-provider/bin
 	mkdir -p /opt/cloudify-kubernetes-provider/src/k8s.io/autoscaler/cluster-autoscaler
+	sudo chmod -R 755 /opt/
+	ctx logger info "cfy-go already built/downloaded."
+	sudo cp $CFY_GO_BINARY /opt/bin/cfy-go
+	sudo cp $CFY_GO_BINARY /usr/bin/cfy-go
 else
 	git clone https://github.com/cloudify-incubator/cloudify-kubernetes-provider.git --depth 1 -b master
 	sed -i "s|git@github.com:|https://github.com/|g" cloudify-kubernetes-provider/.gitmodules
