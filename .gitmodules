@@ -114,3 +114,6 @@
 	path = src/github.com/pborman/uuid
 	url = git@github.com:pborman/uuid.git
 	branch = master
+[submodule "src/github.com/golang/protobuf"]
+	path = src/github.com/golang/protobuf
+	url = git@github.com:golang/protobuf.git

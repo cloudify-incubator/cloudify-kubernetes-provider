@@ -44,6 +44,7 @@ rm -rfv src/k8s.io/kubernetes/vendor/github.com/docker/spdystream
 rm -rfv src/k8s.io/kubernetes/vendor/k8s.io/apimachinery
 rm -rfv src/k8s.io/kubernetes/vendor/k8s.io/api
 rm -rfv src/k8s.io/kubernetes/staging/src/k8s.io/apimachinery
+rm -rfv src/k8s.io/kubernetes/vendor/github.com/golang/protobuf
 ```
 
 # Preparation to use new version of autoscaler
@@ -57,6 +58,7 @@ rm -rfv src/k8s.io/autoscaler/cluster-autoscaler/vendor/github.com/pborman/uuid
 rm -rfv src/k8s.io/autoscaler/cluster-autoscaler/vendor/github.com/docker/spdystream
 rm -rfv src/k8s.io/autoscaler/cluster-autoscaler/vendor/k8s.io/apimachinery
 rm -rfv src/k8s.io/autoscaler/cluster-autoscaler/vendor/k8s.io/api
+rm -rfv src/k8s.io/autoscaler/cluster-autoscaler/vendor/github.com/golang/protobuf
 ```
 and cleanup Godeps/Godeps.json.
 
