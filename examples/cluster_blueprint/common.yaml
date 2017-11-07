@@ -271,19 +271,19 @@ node_templates:
   #   # - target: kubernetes_slave_node
   #   #   type: cloudify.relationships.depends_on
 
-  # kubernetes_autoscale_build:
-  #   type: cloudify.nodes.ApplicationServer
-  #   interfaces:
-  #     cloudify.interfaces.lifecycle:
-  #       configure:
-  #         implementation: scripts/codes/scale-build.sh
-  #       # start:
-  #       #   implementation: scripts/codes/scale-run.sh
-  #   relationships:
-  #   - target: kubemanager
-  #     type: cloudify.relationships.contained_in
-  #   - target: tools_build
-  #     type: cloudify.relationships.depends_on
+  kubernetes_autoscale_build:
+    type: cloudify.nodes.ApplicationServer
+    interfaces:
+      cloudify.interfaces.lifecycle:
+        configure:
+          implementation: scripts/codes/scale-build.sh
+        start:
+          implementation: scripts/codes/scale-run.sh
+    relationships:
+    - target: kubemanager
+      type: cloudify.relationships.contained_in
+    - target: tools_build
+      type: cloudify.relationships.depends_on
 
   # kubernetes_autoscale_run:
   #   type: cloudify.nodes.ApplicationServer
