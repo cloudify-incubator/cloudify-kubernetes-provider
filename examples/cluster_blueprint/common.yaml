@@ -2,7 +2,7 @@ tosca_definitions_version: cloudify_dsl_1_3
 
 imports:
   - http://www.getcloudify.org/spec/cloudify/4.1/types.yaml
-  - monitoring.yaml
+  # - monitoring.yaml
 
 plugins:
 
@@ -165,65 +165,6 @@ node_types:
 ###############################################################################
 node_templates:
 
-### KUBERNETES_SLAVE
-
-  kubernetes_slave_buildtools:
-    type: cloudify.nodes.SoftwareComponent.BuildTools
-    relationships:
-    - target: kubeinstance
-      type: cloudify.relationships.contained_in
-
-  kubernetes_slave_cfy_go:
-    type: cloudify.nodes.SoftwareComponent.CfyGo
-    relationships:
-    - target: kubeinstance
-      type: cloudify.relationships.contained_in
-    - target: kubernetes_slave_buildtools
-      type: cloudify.relationships.depends_on
-
-  kubernetes_slave_docker:
-    type: cloudify.nodes.ApplicationServer.Docker
-    relationships:
-    - target: kubeinstance
-      type: cloudify.relationships.contained_in
-
-  kubernetes_slave_kubelet_volume:
-    type: cloudify.nodes.Kubernetes.Kubelet.Volume
-    relationships:
-    - target: kubeinstance
-      type: cloudify.relationships.contained_in
-    - target: kubernetes_slave_cfy_go
-      type: cloudify.relationships.depends_on
-    - target: kubernetes_slave_docker
-      type: cloudify.relationships.depends_on
-
-  kubernetes_slave_kubernetes:
-    type: cloudify.nodes.SoftwareComponent.Kubernetes
-    relationships:
-    - target: kubeinstance
-      type: cloudify.relationships.contained_in
-    - target: kubernetes_slave_docker
-      type: cloudify.relationships.depends_on
-
-  kubernetes_slave_node:
-    type: cloudify.nodes.ApplicationServer.kubernetes.Node
-    interfaces:
-      cloudify.interfaces.lifecycle:
-        configure:
-          implementation: scripts/kubernetes/join.py
-          inputs:
-            token: { get_attribute: [config_export, token] }
-            ip: { get_attribute: [kubemanager, ip] }
-    relationships:
-    - target: kubeinstance
-      type: cloudify.relationships.contained_in
-    - target: kubernetes_slave_kubernetes
-      type: cloudify.relationships.depends_on
-    - target: kubernetes_slave_kubelet_volume
-      type: cloudify.relationships.depends_on
-    - target: config_export
-      type: cloudify.relationships.depends_on
-
 ### KUBERNETES MASTER
 
   kubernetes_master_node:
@@ -292,15 +233,17 @@ node_templates:
     type: cloudify.nodes.ApplicationServer
     interfaces:
       cloudify.interfaces.lifecycle:
-        configure:
+        create:
           implementation: scripts/kubernetes/master-config.sh
           inputs:
             CFY_USER: { get_input: cfy_user }
             CFY_PASSWORD: { get_input: cfy_password }
             CFY_TENANT: { get_input: cfy_tenant }
             CFY_HOST: { get_input: cfy_host }
-        start:
+        configure:
           implementation: scripts/export_config.py
+        start:
+          implementation: scripts/create_secrets.py
     relationships:
     - target: kubemanager
       type: cloudify.relationships.contained_in
@@ -309,38 +252,38 @@ node_templates:
     - target: tools_build
       type: cloudify.relationships.depends_on
 
-  kubenetes_final_state:
-    type: cloudify.nodes.ApplicationServer
-    interfaces:
-      cloudify.interfaces.lifecycle:
-        configure:
-          implementation: scripts/kubernetes/master-status.sh
-        start:
-          implementation: scripts/create_secrets.py
-        # This is not helpful during testing.
-        # stop:
-        #   implementation: scripts/delete_secrets.py
-    relationships:
-    - target: kubemanager
-      type: cloudify.relationships.contained_in
-    - target: config_export
-      type: cloudify.relationships.depends_on
-    - target: kubernetes_slave_node
-      type: cloudify.relationships.depends_on
+  # kubenetes_final_state:
+  #   type: cloudify.nodes.ApplicationServer
+  #   interfaces:
+  #     cloudify.interfaces.lifecycle:
+  #       configure:
+  #         implementation: scripts/kubernetes/master-status.sh
+  #       start:
+  #         implementation: scripts/create_secrets.py
+  #       # This is not helpful during testing.
+  #       # stop:
+  #       #   implementation: scripts/delete_secrets.py
+  #   relationships:
+  #   - target: kubemanager
+  #     type: cloudify.relationships.contained_in
+  #   - target: config_export
+  #     type: cloudify.relationships.depends_on
+  #   # - target: kubernetes_slave_node
+  #   #   type: cloudify.relationships.depends_on
 
-  kubernetes_autoscale_build:
-    type: cloudify.nodes.ApplicationServer
-    interfaces:
-      cloudify.interfaces.lifecycle:
-        configure:
-          implementation: scripts/codes/scale-build.sh
-        # start:
-        #   implementation: scripts/codes/scale-run.sh
-    relationships:
-    - target: kubemanager
-      type: cloudify.relationships.contained_in
-    - target: tools_build
-      type: cloudify.relationships.depends_on
+  # kubernetes_autoscale_build:
+  #   type: cloudify.nodes.ApplicationServer
+  #   interfaces:
+  #     cloudify.interfaces.lifecycle:
+  #       configure:
+  #         implementation: scripts/codes/scale-build.sh
+  #       # start:
+  #       #   implementation: scripts/codes/scale-run.sh
+  #   relationships:
+  #   - target: kubemanager
+  #     type: cloudify.relationships.contained_in
+  #   - target: tools_build
+  #     type: cloudify.relationships.depends_on
 
   # kubernetes_autoscale_run:
   #   type: cloudify.nodes.ApplicationServer
@@ -354,3 +297,65 @@ node_templates:
   #     type: cloudify.relationships.depends_on
   #   - target: config_export
   #     type: cloudify.relationships.depends_on
+
+
+### KUBERNETES_SLAVE
+
+  kubernetes_slave_buildtools:
+    type: cloudify.nodes.SoftwareComponent.BuildTools
+    relationships:
+    - target: kubeinstance
+      type: cloudify.relationships.contained_in
+
+  kubernetes_slave_cfy_go:
+    type: cloudify.nodes.SoftwareComponent.CfyGo
+    relationships:
+    - target: kubeinstance
+      type: cloudify.relationships.contained_in
+    - target: kubernetes_slave_buildtools
+      type: cloudify.relationships.depends_on
+
+  kubernetes_slave_docker:
+    type: cloudify.nodes.ApplicationServer.Docker
+    relationships:
+    - target: kubeinstance
+      type: cloudify.relationships.contained_in
+
+  kubernetes_slave_kubelet_volume:
+    type: cloudify.nodes.Kubernetes.Kubelet.Volume
+    relationships:
+    - target: kubeinstance
+      type: cloudify.relationships.contained_in
+    - target: kubernetes_slave_cfy_go
+      type: cloudify.relationships.depends_on
+    - target: kubernetes_slave_docker
+      type: cloudify.relationships.depends_on
+
+  kubernetes_slave_kubernetes:
+    type: cloudify.nodes.SoftwareComponent.Kubernetes
+    relationships:
+    - target: kubeinstance
+      type: cloudify.relationships.contained_in
+    - target: kubernetes_slave_docker
+      type: cloudify.relationships.depends_on
+    - target: config_export
+      type: cloudify.relationships.depends_on
+
+  kubernetes_slave_node:
+    type: cloudify.nodes.ApplicationServer.kubernetes.Node
+    interfaces:
+      cloudify.interfaces.lifecycle:
+        configure:
+          implementation: scripts/kubernetes/join.py
+          inputs:
+            token: { get_attribute: [config_export, token] }
+            ip: { get_attribute: [kubemanager, ip] }
+        start:
+          implementation: scripts/kubernetes/node/start.py
+    relationships:
+    - target: kubeinstance
+      type: cloudify.relationships.contained_in
+    - target: kubernetes_slave_kubernetes
+      type: cloudify.relationships.depends_on
+    - target: kubernetes_slave_kubelet_volume
+      type: cloudify.relationships.depends_on
