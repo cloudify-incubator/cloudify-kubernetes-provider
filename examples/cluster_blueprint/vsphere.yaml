@@ -264,6 +264,7 @@ groups:
   k8s_node_scale_group:
     members:
       - kubernetes_slave_node
+      - kubeinstance
 
 policies:
 

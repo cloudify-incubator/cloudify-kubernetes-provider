@@ -117,3 +117,9 @@
 [submodule "src/github.com/golang/protobuf"]
 	path = src/github.com/golang/protobuf
 	url = git@github.com:golang/protobuf.git
+[submodule "src/github.com/golang/lint"]
+	path = src/github.com/golang/lint
+	url = git@github.com:golang/lint
+[submodule "src/golang.org/x/tools"]
+	path = src/golang.org/x/tools
+	url = https://go.googlesource.com/tools
