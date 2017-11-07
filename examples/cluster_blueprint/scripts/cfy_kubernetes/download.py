@@ -48,6 +48,7 @@ if __name__ == '__main__':
     group = \
         inputs.get('group', 'wheel')
 
+    execute_command('sudo CGO_ENABLED=0 go install -a -installsuffix cgo std')
     execute_command('sudo mkdir -p /opt/cloudify-kubernetes-provider')
     execute_command('sudo chmod -R 755 /opt/')
     _extra_args = {
@@ -67,21 +68,24 @@ if __name__ == '__main__':
         _cwd = '/opt/'
         _extra_args = {'cwd': _cwd}
         _command = \
-            'https://github.com/cloudify-incubator/' \
+            'git clone https://github.com/cloudify-incubator/' \
             'cloudify-kubernetes-provider.git --depth 1 -b master'
         execute_command(_command, extra_args=_extra_args)
-        git_modules_file = \
-            os.path.join(
-                _cwd,
-                'cloudify-kubernetes-provider/.gitmodules')
+        _cwd = \
+            os.path.join(_cwd, 'cloudify-kubernetes-provider/')
+
+        git_modules_file = os.path.join(_cwd, '.gitmodules')
         _, temp_git_file = tempfile.mkstemp()
         with open(git_modules_file, 'r') as infile:
             with open(temp_git_file, 'w') as outfile:
-                file_contents = infile.read()
-                file_contents.replace('git@github.com:', 'https://github.com/')
-                outfile.write(file_contents)
+                for line in infile.readlines():
+                    outfile.write(
+                        line.replace(
+                            'git@github.com:', 'https://github.com/'))
+
         ctx.logger.debug('Download submodules sources.')
         execute_command(
-            'cp {0} {1}'.format(temp_git_file, git_modules_file))
+            'sudo cp {0} {1}'.format(temp_git_file, git_modules_file))
+        _extra_args = {'cwd': _cwd}
         execute_command('git submodule init', extra_args=_extra_args)
         execute_command('git submodule update', extra_args=_extra_args)

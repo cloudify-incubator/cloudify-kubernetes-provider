@@ -62,7 +62,7 @@ if __name__ == '__main__':
             }
         }
         _command = \
-            'sudo go install src/cfy-kubernetes.go'
+            'go install src/cfy-kubernetes.go'
         execute_command(_command, extra_args=_extra_args)
     else:
         ctx.logger.debug('cfy-kubernetes already built/downloaded.')

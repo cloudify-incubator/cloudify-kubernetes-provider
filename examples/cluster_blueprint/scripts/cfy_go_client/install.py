@@ -43,34 +43,51 @@ if __name__ == '__main__':
     cfy_go_binary_path = \
         inputs.get('cfy_go_binary_path', '/usr/bin/cfy-go')
 
+    execute_command('sudo chmod -R 777 /opt')
+
     try:
         cfy_go_binary = ctx.download_resource('resources/cfy-go')
     except HttpException:
         ctx.logger.debug('Build cfy-go.')
-        _cwd = '/opt/'
-        _extra_args = {
-            'cwd': _cwd,
-            'env': {
-                'GOBIN': os.path.join(_cwd, 'bin'),
-                'GOPATH': _cwd,
-                'PATH': ':'.join(
-                    [os.getenv('PATH'), os.path.join(_cwd, 'bin')])
+        if 'kubernetes_master_cfy_go' in ctx.node.id:
+            _cwd = '/opt/cloudify-kubernetes-provider/'
+            _extra_args = {
+                'cwd': _cwd,
+                'env': {
+                    'GOBIN': os.path.join(_cwd, 'bin'),
+                    'GOPATH': _cwd,
+                    'PATH': ':'.join(
+                        [os.getenv('PATH'), os.path.join(_cwd, 'bin')])
+                }
             }
-        }
-        _command = \
-            'sudo go get github.com/cloudify-incubator/' \
-            'cloudify-rest-go-client/cfy-go'
-        execute_command(_command, extra_args=_extra_args)
-    else:
-        ctx.logger.debug('cfy-go already built/downloaded.')
-
-        execute_command('sudo chmod -R 755 /opt/')
-        execute_command('sudo mkdir -p /opt/bin')
-
-        # TODO: Understand how to make sure we don't need this.
+            _command = \
+                'go install src/github.com/cloudify-incubator/' \
+                'cloudify-rest-go-client/cfy-go/cfy-go.go'
+            execute_command(_command, extra_args=_extra_args)
+            current_path = '/opt/cloudify-kubernetes-provider/bin/cfy-go'
+        else:
+            _cwd = '/opt/'
+            _extra_args = {
+                'cwd': _cwd,
+                'env': {
+                    'GOBIN': os.path.join(_cwd, 'bin'),
+                    'GOPATH': _cwd,
+                    'PATH': ':'.join(
+                        [os.getenv('PATH'), os.path.join(_cwd, 'bin')])
+                }
+            }
+            _command = \
+                'go get github.com/cloudify-incubator/' \
+                'cloudify-rest-go-client/cfy-go'
+            execute_command(_command, extra_args=_extra_args)
+            current_path = '/opt/bin/cfy-go'
         execute_command(
             'sudo cp {0} {1}'.format(
-                cfy_go_binary, '/opt/bin/cfy-go'))
+                current_path, cfy_go_binary_path))
+    else:
+        ctx.logger.debug('cfy-go already built/downloaded.')
+        execute_command('sudo chmod -R 755 /opt/')
+        execute_command('sudo mkdir -p /opt/bin')
         execute_command(
             'sudo cp {0} {1}'.format(
                 cfy_go_binary, cfy_go_binary_path))
