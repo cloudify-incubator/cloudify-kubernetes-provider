@@ -24,7 +24,7 @@ import (
 )
 
 type CloudifyBalancer struct {
-	client *cloudify.CloudifyClient
+	client *cloudify.Client
 }
 
 // UpdateLoadBalancer is an implementation of LoadBalancer.UpdateLoadBalancer.
@@ -68,7 +68,7 @@ func (r *CloudifyBalancer) EnsureLoadBalancer(clusterName string, service *api.S
 	return status, nil
 }
 
-func NewCloudifyBalancer(client *cloudify.CloudifyClient) *CloudifyBalancer {
+func NewCloudifyBalancer(client *cloudify.Client) *CloudifyBalancer {
 	return &CloudifyBalancer{
 		client: client,
 	}
