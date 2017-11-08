@@ -126,13 +126,6 @@ node_types:
         configure:
           implementation: scripts/cfy_kubernetes/install.py
 
-  # cloudify.nodes.SoftwareComponent.CfyAutoscale:
-  #   derived_from: cloudify.nodes.SoftwareComponent
-  #   interfaces:
-  #     cloudify.interfaces.lifecycle:
-  #       create:
-  #         implementation: scripts/cfy_autoscale/install.py
-
   cloudify.nodes.Kubernetes.Kubelet.Volume:
     derived_from: cloudify.nodes.SoftwareComponent
     interfaces:
