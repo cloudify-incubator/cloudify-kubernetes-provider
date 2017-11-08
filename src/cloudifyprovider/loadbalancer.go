@@ -33,8 +33,8 @@ func (r *CloudifyBalancer) UpdateLoadBalancer(clusterName string, service *api.S
 	return fmt.Errorf("Not implemented:UpdateLoadBalancer")
 }
 
-func (r *CloudifyBalancer) toLBStatus(service_id string) (*api.LoadBalancerStatus, bool, error) {
-	glog.Infof("?toLBStatus [%s]", service_id)
+func (r *CloudifyBalancer) toLBStatus(serviceID string) (*api.LoadBalancerStatus, bool, error) {
+	glog.Infof("?toLBStatus [%s]", serviceID)
 	ingress := []api.LoadBalancerIngress{}
 
 	// TODO: show real id

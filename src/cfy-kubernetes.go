@@ -32,8 +32,12 @@ import (
 
 var versionShow bool
 
-//super super ugly way!!!! look to src/k8s.io/kubernetes/cmd/cloud-controller-manager/app/options/options.go
-func AddNativeFlags(s *options.CloudControllerManagerServer, fs *flag.FlagSet) *flag.FlagSet {
+/*
+addNativeFlags - add supported flags.
+Note: super super ugly way!!!!
+look to src/k8s.io/kubernetes/cmd/cloud-controller-manager/app/options/options.go
+*/
+func addNativeFlags(s *options.CloudControllerManagerServer, fs *flag.FlagSet) *flag.FlagSet {
 	fs.StringVar(&s.Master, "master", s.Master, "The address of the Kubernetes API server (overrides any value in kubeconfig)")
 	fs.StringVar(&s.Kubeconfig, "kubeconfig", s.Kubeconfig, "Path to kubeconfig file with authorization and master location information.")
 	fs.StringVar(&s.CloudConfigFile, "cloud-config", s.CloudConfigFile, "The path to the cloud provider configuration file.  Empty string for no configuration file.")
@@ -45,7 +49,7 @@ var versionString = "0.1"
 
 func main() {
 	s := options.NewCloudControllerManagerServer()
-	fs := AddNativeFlags(s, flag.CommandLine)
+	fs := addNativeFlags(s, flag.CommandLine)
 
 	logs.InitLogs()
 	defer logs.FlushLogs()

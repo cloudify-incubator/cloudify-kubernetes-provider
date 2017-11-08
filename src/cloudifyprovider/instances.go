@@ -103,9 +103,9 @@ func (r *Instances) NodeAddresses(nodeName types.NodeName) ([]api.NodeAddress, e
 	if len(addresses) == 0 {
 		glog.Infof("InstanceNotFound: %+v", name)
 		return nil, cloudprovider.InstanceNotFound
-	} else {
-		glog.Infof("Addresses: %+v", addresses)
 	}
+
+	glog.Infof("Addresses: %+v", addresses)
 	return addresses, nil
 }
 
