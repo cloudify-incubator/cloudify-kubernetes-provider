@@ -158,6 +158,9 @@ node_templates:
       openstack_config: *openstack_config
       floatingip:
         floating_network_name: { get_property: [ external_network, resource_id ] }
+    relationships:
+    - type: cloudify.relationships.contained_in
+      target: k8s_node_scaling_tier
 
   kubernetes_security_group:
     type: cloudify.openstack.nodes.SecurityGroup
@@ -267,16 +270,15 @@ groups:
 
   k8s_node_scale_group:
     members:
-    - k8s_node_scaling_tier
-    - kubeinstance_port
-    - kubeinstance_port_elastic_ip
-    - kubeinstance
     - kubernetes_slave_node
     - kubernetes_slave_kubernetes
     - kubernetes_slave_kubelet_volume
     - kubernetes_slave_docker
     - kubernetes_slave_cfy_go
     - kubernetes_slave_buildtools
+    - kubeinstance
+    - kubeinstance_port
+    - kubeinstance_port_elastic_ip
 
 policies:
 

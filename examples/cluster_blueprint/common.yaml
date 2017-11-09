@@ -160,12 +160,6 @@ node_templates:
 
 ### KUBERNETES MASTER
 
-  kubernetes_master_node:
-    type: cloudify.nodes.ApplicationServer.kubernetes.Node
-    relationships:
-    - target: kubemanager
-      type: cloudify.relationships.contained_in
-
   kubernetes_master_buildtools:
     type: cloudify.nodes.SoftwareComponent.BuildTools
     relationships:
@@ -202,6 +196,14 @@ node_templates:
     - target: kubernetes_master_cfy_kubernetes
       type: cloudify.relationships.depends_on
 
+  kubernetes_master_node:
+    type: cloudify.nodes.ApplicationServer.kubernetes.Node
+    relationships:
+    - target: kubemanager
+      type: cloudify.relationships.contained_in
+    - target: manager_kubenetes
+      type: cloudify.relationships.depends_on
+
   config_export:
     type: cloudify.nodes.ApplicationServer
     interfaces:
@@ -213,8 +215,6 @@ node_templates:
             CFY_PASSWORD: { get_input: cfy_password }
             CFY_TENANT: { get_input: cfy_tenant }
             CFY_HOST: { get_input: cfy_host }
-        configure:
-          implementation: scripts/export_config.py
         start:
           implementation: scripts/create_secrets.py
     relationships:
