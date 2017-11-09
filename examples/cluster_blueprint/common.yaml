@@ -126,6 +126,15 @@ node_types:
         configure:
           implementation: scripts/cfy_kubernetes/install.py
 
+  cloudify.nodes.SoftwareComponent.CfyAutoscale:
+    derived_from: cloudify.nodes.SoftwareComponent
+    interfaces:
+      cloudify.interfaces.lifecycle:
+        configure:
+          implementation: scripts/codes/scale-build.sh
+        start:
+          implementation: scripts/codes/scale-run.sh
+
   cloudify.nodes.Kubernetes.Kubelet.Volume:
     derived_from: cloudify.nodes.SoftwareComponent
     interfaces:
@@ -223,14 +232,8 @@ node_templates:
     - target: manager_kubenetes
       type: cloudify.relationships.depends_on
 
-  kubernetes_autoscale_build:
-    type: cloudify.nodes.ApplicationServer
-    interfaces:
-      cloudify.interfaces.lifecycle:
-        configure:
-          implementation: scripts/codes/scale-build.sh
-        start:
-          implementation: scripts/codes/scale-run.sh
+  kubernetes_autoscale:
+    type: cloudify.nodes.SoftwareComponent.CfyAutoscale
     relationships:
     - target: kubemanager
       type: cloudify.relationships.contained_in
