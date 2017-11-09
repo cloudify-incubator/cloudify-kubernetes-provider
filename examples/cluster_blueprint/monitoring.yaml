@@ -31,7 +31,7 @@ node_templates:
               client-key-data:  { get_secret: kubernetes-admin_client_key_data }
     relationships:
     - type: cloudify.relationships.depends_on
-      target: kubenetes_final_state
+      target: config_export
 
   influx_deployment:
     type: cloudify.kubernetes.resources.Deployment

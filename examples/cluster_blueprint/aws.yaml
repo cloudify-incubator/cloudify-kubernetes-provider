@@ -22,6 +22,9 @@ inputs:
       The username of the agent running on the instance created from the image.
     default: ec2-user
 
+  agent_group:
+    default: wheel
+
 dsl_definitions:
 
     aws_config: &aws_config
@@ -65,7 +68,7 @@ node_templates:
           - docker
         users:
           - name: { get_input: agent_user }
-            primary-group: wheel
+            primary-group: { get_input: agent_group }
             groups: docker
             shell: /bin/bash
             sudo: ['ALL=(ALL) NOPASSWD:ALL']
@@ -112,11 +115,9 @@ node_templates:
 
   kubeinstance:
     type: kubernetes_host
-    capabilities:
-      scalable:
-        properties:
-          default_instances: 1
     relationships:
+      - type: cloudify.relationships.contained_in
+        target: vpc
       - type: cloudify.aws.relationships.instance_connected_to_eni
         target: kubeinstance_port
       - type: cloudify.relationships.depends_on
@@ -135,6 +136,8 @@ node_templates:
     properties:
       aws_config: *aws_config
     relationships:
+      - type: cloudify.relationships.contained_in
+        target: vpc
       - type: cloudify.aws.relationships.connected_to_subnet
         target: public_subnet
       - type: cloudify.aws.relationships.connected_to_security_group
@@ -147,6 +150,9 @@ node_templates:
     properties:
       aws_config: *aws_config
       domain: vpc
+    relationships:
+      - type: cloudify.relationships.contained_in
+        target: vpc
 
   security_group:
     type: cloudify.aws.nodes.SecurityGroup
@@ -259,6 +265,11 @@ groups:
   k8s_node_scale_group:
     members:
       - kubernetes_slave_node
+      - kubernetes_slave_kubernetes
+      - kubernetes_slave_kubelet_volume
+      - kubernetes_slave_docker
+      - kubernetes_slave_cfy_go
+      - kubernetes_slave_buildtools
       - kubeinstance
       - kubeinstance_port
       - kubeinstance_port_elastic_ip
