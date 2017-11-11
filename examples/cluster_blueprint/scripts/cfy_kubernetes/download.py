@@ -69,7 +69,7 @@ if __name__ == '__main__':
         _extra_args = {'cwd': _cwd}
         _command = \
             'git clone https://github.com/cloudify-incubator/' \
-            'cloudify-kubernetes-provider.git --depth 1 -b master'
+            'cloudify-kubernetes-provider.git --depth 1 -b stable-0.2'
         execute_command(_command, extra_args=_extra_args)
         _cwd = \
             os.path.join(_cwd, 'cloudify-kubernetes-provider/')

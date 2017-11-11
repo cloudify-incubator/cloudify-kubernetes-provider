@@ -27,7 +27,7 @@ if [[ $? == 0 ]] && [[ -e "$CFY_GO_BINARY" ]]; then
 	sudo cp $CFY_GO_BINARY /opt/bin/cfy-go
 	sudo cp $CFY_GO_BINARY /usr/bin/cfy-go
 else
-	git clone https://github.com/cloudify-incubator/cloudify-kubernetes-provider.git --depth 1 -b stable-0.1
+	git clone https://github.com/cloudify-incubator/cloudify-kubernetes-provider.git --depth 1 -b stable-0.2
 	sed -i "s|git@github.com:|https://github.com/|g" cloudify-kubernetes-provider/.gitmodules
 
 	cd cloudify-kubernetes-provider
