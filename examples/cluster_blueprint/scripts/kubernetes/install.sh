@@ -20,7 +20,7 @@ if [[ "$VM_VERSION" == 'NAME="CentOS Linux"' ]]; then
 
 	ctx logger info "Install kubernetes"
 
-	sudo yum install -y kubelet-1.8.1-0.x86_64 kubeadm-1.8.1-0.x86_64
+	sudo yum install -y kubeadm-1.8.3-0.x86_64 kubelet-1.8.3-0.x86_64
 elif [[ "$VM_VERSION" == 'NAME="Ubuntu"' ]]; then
 	apt-get update && apt-get install -y apt-transport-https curl
 	curl -s https://packages.cloud.google.com/apt/doc/apt-key.gpg | apt-key add -
