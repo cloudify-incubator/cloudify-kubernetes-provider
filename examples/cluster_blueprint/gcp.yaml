@@ -52,6 +52,9 @@ inputs:
     description: The user name of the agent on the instance created from the image.
     default: docker
 
+  agent_group:
+    default: docker
+
   resource_prefix:
     default: cfyk8s
 
@@ -85,12 +88,6 @@ node_types:
         # by default: amount of memory on vm avaible for kubepods,
         # in most cases it must be same as full count of memory on vm
         default: 1024
-      kubetag:
-        # by default: initial node group
-        default: initial
-      kubescale:
-        # by default: not scalled by kubernetes
-        default: false
       agent_config:
         default:
           install_method: remote
@@ -133,7 +130,6 @@ node_templates:
     type: kubernetes_host
     properties:
       gcp_config: *gcp_config
-      kubescale: true
     relationships:
       - type: cloudify.relationships.depends_on
         target: subnetwork

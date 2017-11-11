@@ -5,11 +5,13 @@ imports:
   - monitoring.yaml
 
 plugins:
+
   cloudify_node_drop:
     executor: central_deployment_agent
     source: cloudify_node_drop
 
 workflows:
+
   delete:
     mapping: cloudify_node_drop.cloudify_drop.workflow.delete
     parameters:
@@ -70,7 +72,7 @@ inputs:
 node_types:
 
   # type represent node with installed kubernetes code
-  kubernetes_type:
+  cloudify.nodes.SoftwareComponent.Kubernetes:
     derived_from: cloudify.nodes.ApplicationServer
     interfaces:
       cloudify.interfaces.lifecycle:
@@ -82,96 +84,140 @@ node_types:
           implementation: scripts/kubernetes/uninstall.sh
 
   # type represent node with installed docker code
-  docker_type:
+  cloudify.nodes.ApplicationServer.Docker:
     derived_from: cloudify.nodes.ApplicationServer
     interfaces:
       cloudify.interfaces.lifecycle:
         create:
-          implementation: scripts/tools-install.sh
-        configure:
-          implementation: scripts/docker/uninstall.sh
-        start:
-          implementation: scripts/docker/install.sh
+          implementation: scripts/docker/install.py
           inputs:
-            process:
-              default:
-                process:
-                  args:
-                    - { get_input: update_package_manager } # $1 in script will represent to update package manager or not.
+            agent_user:
+              default: { get_input: agent_user }
+            update_package_manager:
+              default: { get_input: update_package_manager }
         delete:
-          implementation: scripts/docker/uninstall.sh
+          implementation: scripts/docker/uninstall.py
+
+  cloudify.nodes.SoftwareComponent.BuildTools:
+    derived_from: cloudify.nodes.SoftwareComponent
+    interfaces:
+      cloudify.interfaces.lifecycle:
+        create:
+          implementation: scripts/buildtools/install.py
+
+  cloudify.nodes.SoftwareComponent.CfyGo:
+    derived_from: cloudify.nodes.SoftwareComponent
+    interfaces:
+      cloudify.interfaces.lifecycle:
+        create:
+          implementation: scripts/cfy_kubernetes/download.py
+          inputs:
+            agent_user:
+              default: { get_input: agent_user }
+            group:
+              default: { get_input: agent_group }
+        configure:
+          implementation: scripts/cfy_go_client/install.py
+
+  cloudify.nodes.SoftwareComponent.CfyKubernetes:
+    derived_from: cloudify.nodes.SoftwareComponent
+    interfaces:
+      cloudify.interfaces.lifecycle:
+        configure:
+          implementation: scripts/cfy_kubernetes/install.py
+
+  cloudify.nodes.SoftwareComponent.CfyAutoscale:
+    derived_from: cloudify.nodes.SoftwareComponent
+    interfaces:
+      cloudify.interfaces.lifecycle:
+        configure:
+          implementation: scripts/codes/scale-build.sh
+        start:
+          implementation: scripts/codes/scale-run.sh
+
+  cloudify.nodes.Kubernetes.Kubelet.Volume:
+    derived_from: cloudify.nodes.SoftwareComponent
+    interfaces:
+      cloudify.interfaces.lifecycle:
+        create:
+          implementation: scripts/kubelet_volume/install.py
+          inputs:
+            cfy_user:
+              default: { get_input: cfy_user }
+            cfy_password:
+              default: { get_input: cfy_password }
+            cfy_tenant:
+              default: { get_input: cfy_tenant }
+            cfy_host:
+              default: { get_input: cfy_host }
+        delete: scripts/codes/delete.sh
+      maintenance:
+        mount: scripts/mount.py
+        unmount: scripts/unmount.py
+
+  cloudify.nodes.ApplicationServer.kubernetes.Node:
+    derived_from: cloudify.nodes.ApplicationServer
+    interfaces:
+      cloudify.interfaces.lifecycle:
+        create:
+          implementation: scripts/kubernetes/node/create.py
 
 ###############################################################################
 # Node templates section
 ###############################################################################
 node_templates:
 
-  docker:
-    type: docker_type
-    relationships:
-    - target: kubeinstance
-      type: cloudify.relationships.contained_in
+### KUBERNETES MASTER
 
-  clienttools_build:
-    type: cloudify.nodes.ApplicationServer
-    interfaces:
-      cloudify.interfaces.lifecycle:
-        create:
-          implementation: scripts/client-build.sh
-        configure:
-          implementation: scripts/prepare-mount.sh
-          inputs:
-            # mount params
-            CFY_USER: { get_input: cfy_user }
-            CFY_PASSWORD: { get_input: cfy_password }
-            CFY_TENANT: { get_input: cfy_tenant }
-            CFY_HOST: { get_input: cfy_host }
-        delete:
-          implementation: scripts/codes/delete.sh
-      maintenance:
-        mount: scripts/mount.py
-        unmount: scripts/unmount.py
-    relationships:
-    - target: docker
-      type: cloudify.relationships.contained_in
-
-  kubenetes:
-    type: kubernetes_type
-    relationships:
-    - target: docker
-      type: cloudify.relationships.contained_in
-
-  kubemanager_docker:
-    type: docker_type
+  kubernetes_master_buildtools:
+    type: cloudify.nodes.SoftwareComponent.BuildTools
     relationships:
     - target: kubemanager
       type: cloudify.relationships.contained_in
 
-  tools_build:
-    type: cloudify.nodes.ApplicationServer
-    interfaces:
-      cloudify.interfaces.lifecycle:
-        create:
-          implementation: scripts/codes/download.sh
-        configure:
-          implementation: scripts/codes/build.sh
-        delete:
-          implementation: scripts/codes/delete.sh
+  kubernetes_master_cfy_go:
+    type: cloudify.nodes.SoftwareComponent.CfyGo
     relationships:
-    - target: kubemanager_docker
+    - target: kubemanager
+      type: cloudify.relationships.contained_in
+    - target: kubernetes_master_buildtools
+      type: cloudify.relationships.depends_on
+
+  kubernetes_master_cfy_kubernetes:
+    type: cloudify.nodes.SoftwareComponent.CfyKubernetes
+    relationships:
+    - target: kubemanager
+      type: cloudify.relationships.contained_in
+    - target: kubernetes_master_cfy_go
+      type: cloudify.relationships.depends_on
+
+  kubemanager_docker:
+    type: cloudify.nodes.ApplicationServer.Docker
+    relationships:
+    - target: kubemanager
       type: cloudify.relationships.contained_in
 
   manager_kubenetes:
-    type: kubernetes_type
+    type: cloudify.nodes.SoftwareComponent.Kubernetes
     relationships:
-    - target: tools_build
+    - target: kubemanager
       type: cloudify.relationships.contained_in
+    - target: kubernetes_master_cfy_kubernetes
+      type: cloudify.relationships.depends_on
+
+  kubernetes_master_node:
+    type: cloudify.nodes.ApplicationServer.kubernetes.Node
+    relationships:
+    - target: kubemanager
+      type: cloudify.relationships.contained_in
+    - target: manager_kubenetes
+      type: cloudify.relationships.depends_on
 
   config_export:
     type: cloudify.nodes.ApplicationServer
     interfaces:
       cloudify.interfaces.lifecycle:
-        configure:
+        create:
           implementation: scripts/kubernetes/master-config.sh
           inputs:
             CFY_USER: { get_input: cfy_user }
@@ -179,65 +225,78 @@ node_templates:
             CFY_TENANT: { get_input: cfy_tenant }
             CFY_HOST: { get_input: cfy_host }
         start:
-          implementation: scripts/export_config.py
-    relationships:
-    - target: manager_kubenetes
-      type: cloudify.relationships.contained_in
-    - target: tools_build
-      type: cloudify.relationships.depends_on
-
-  kubenetes_slave:
-    type: cloudify.nodes.ApplicationServer
-    interfaces:
-      cloudify.interfaces.lifecycle:
-        configure:
-          implementation: scripts/kubernetes/join.sh
-          inputs:
-            TOKEN: { get_attribute: [config_export, token] }
-            IP: { get_attribute: [kubemanager, ip] }
-    relationships:
-    - target: kubenetes
-      type: cloudify.relationships.contained_in
-    - target: clienttools_build
-      type: cloudify.relationships.depends_on
-    - target: config_export
-      type: cloudify.relationships.depends_on
-
-  kubenetes_final_state:
-    type: cloudify.nodes.ApplicationServer
-    interfaces:
-      cloudify.interfaces.lifecycle:
-        configure:
-          implementation: scripts/kubernetes/master-status.sh
-        start:
           implementation: scripts/create_secrets.py
-        stop:
-          implementation: scripts/delete_secrets.py
     relationships:
-    - target: config_export
+    - target: kubemanager
       type: cloudify.relationships.contained_in
-    - target: kubenetes_slave
+    - target: manager_kubenetes
       type: cloudify.relationships.depends_on
 
-  kubenetes_autoscale_build:
-    type: cloudify.nodes.ApplicationServer
+  kubernetes_autoscale:
+    type: cloudify.nodes.SoftwareComponent.CfyAutoscale
+    relationships:
+    - target: kubemanager
+      type: cloudify.relationships.contained_in
+    - target: config_export
+      type: cloudify.relationships.depends_on
+
+### KUBERNETES_SLAVE
+
+  kubernetes_slave_buildtools:
+    type: cloudify.nodes.SoftwareComponent.BuildTools
+    relationships:
+    - target: kubeinstance
+      type: cloudify.relationships.contained_in
+
+  kubernetes_slave_cfy_go:
+    type: cloudify.nodes.SoftwareComponent.CfyGo
+    relationships:
+    - target: kubeinstance
+      type: cloudify.relationships.contained_in
+    - target: kubernetes_slave_buildtools
+      type: cloudify.relationships.depends_on
+
+  kubernetes_slave_docker:
+    type: cloudify.nodes.ApplicationServer.Docker
+    relationships:
+    - target: kubeinstance
+      type: cloudify.relationships.contained_in
+
+  kubernetes_slave_kubelet_volume:
+    type: cloudify.nodes.Kubernetes.Kubelet.Volume
+    relationships:
+    - target: kubeinstance
+      type: cloudify.relationships.contained_in
+    - target: kubernetes_slave_cfy_go
+      type: cloudify.relationships.depends_on
+    - target: kubernetes_slave_docker
+      type: cloudify.relationships.depends_on
+
+  kubernetes_slave_kubernetes:
+    type: cloudify.nodes.SoftwareComponent.Kubernetes
+    relationships:
+    - target: kubeinstance
+      type: cloudify.relationships.contained_in
+    - target: kubernetes_slave_docker
+      type: cloudify.relationships.depends_on
+    - target: config_export
+      type: cloudify.relationships.depends_on
+
+  kubernetes_slave_node:
+    type: cloudify.nodes.ApplicationServer.kubernetes.Node
     interfaces:
       cloudify.interfaces.lifecycle:
         configure:
-          implementation: scripts/codes/scale-build.sh
+          implementation: scripts/kubernetes/join.py
+          inputs:
+            token: { get_attribute: [config_export, token] }
+            ip: { get_attribute: [kubemanager, ip] }
         start:
-          implementation: scripts/codes/scale-run.sh
+          implementation: scripts/kubernetes/node/start.py
     relationships:
-    - target: tools_build
+    - target: kubeinstance
       type: cloudify.relationships.contained_in
-
-  kubenetes_autoscale_run:
-    type: cloudify.nodes.ApplicationServer
-    interfaces:
-        start:
-          implementation: scripts/codes/scale-run.sh
-    relationships:
-    - target: kubenetes_autoscale_build
+    - target: kubernetes_slave_kubernetes
       type: cloudify.relationships.depends_on
-    - target: config_export
-      type: cloudify.relationships.contained_in
+    - target: kubernetes_slave_kubelet_volume
+      type: cloudify.relationships.depends_on

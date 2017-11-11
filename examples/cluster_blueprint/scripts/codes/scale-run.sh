@@ -1,5 +1,5 @@
 ctx logger info "Install cfy-autoscale provider"
-sudo cp /opt/cloudify-kubernetes-provider/src/k8s.io/autoscaler/cluster-autoscaler/cluster-autoscaler /usr/bin/cfy-autoscale
+sudo cp /opt/cloudify-kubernetes-provider/bin/cluster-autoscaler /usr/bin/cfy-autoscale
 sudo chmod 555 /usr/bin/cfy-autoscale
 sudo chown root:root /usr/bin/cfy-autoscale
 
@@ -9,7 +9,7 @@ sudo tee /etc/systemd/system/cfy-autoscale.service <<EOF
 Description=cfy autoscale
 
 [Service]
-ExecStart=/usr/bin/cfy-autoscale --kubeconfig $HOME/.kube/config --cloud-config $HOME/cfy.json --cloud-provider cloudify
+ExecStart=/usr/bin/cfy-autoscale --kubeconfig $HOME/.kube/config --cloud-config $HOME/cfy.json --cloud-provider cloudify --alsologtostderr
 KillMode=process
 Restart=on-failure
 RestartSec=60s

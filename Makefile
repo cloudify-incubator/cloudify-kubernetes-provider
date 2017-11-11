@@ -1,6 +1,7 @@
 .PHONY: all
-all: bin/cfy-go bin/cfy-kubernetes
+all: bin/cfy-go bin/cfy-kubernetes bin/cluster-autoscaler
 
+AUTOSCALEPACKAGE := k8s.io/autoscaler/cluster-autoscaler/cloudprovider
 PACKAGEPATH := github.com/cloudify-incubator/cloudify-rest-go-client
 
 VERSION := `cd src/${PACKAGEPATH} && git rev-parse --short HEAD`
@@ -16,7 +17,9 @@ reformat:
 	gofmt -w src/${PACKAGEPATH}/cloudify/*.go
 	gofmt -w src/${PACKAGEPATH}/cfy-go/*.go
 	gofmt -w src/${PACKAGEPATH}/kubernetes/*.go
+	# kubernetes parts
 	gofmt -w src/cloudifyprovider/*.go
+	gofmt -w src/${AUTOSCALEPACKAGE}/cloudifyprovider/*.go
 	gofmt -w src/*.go
 
 define colorecho
@@ -38,7 +41,7 @@ pkg/linux_amd64/${PACKAGEPATH}/cloudify/rest.a: ${CLOUDIFYREST}
 
 # cloudify kubernetes support
 CLOUDIFYKUBERNETES := \
-	src/${PACKAGEPATH}/kubernetes/kubernetes.go \
+	src/${PACKAGEPATH}/kubernetes/mount.go \
 	src/${PACKAGEPATH}/kubernetes/types.go
 
 pkg/linux_amd64/${PACKAGEPATH}/kubernetes.a: ${CLOUDIFYKUBERNETES}
@@ -55,6 +58,7 @@ pkg/linux_amd64/${PACKAGEPATH}/cloudify/utils.a: ${CLOUDIFYUTILS}
 
 # cloudify
 CLOUDIFYCOMMON := \
+	src/${PACKAGEPATH}/cloudify/scalegroup.go \
 	src/${PACKAGEPATH}/cloudify/client.go \
 	src/${PACKAGEPATH}/cloudify/nodes.go \
 	src/${PACKAGEPATH}/cloudify/plugins.go \
@@ -95,9 +99,37 @@ bin/cfy-kubernetes: pkg/linux_amd64/cloudifyprovider.a pkg/linux_amd64/${PACKAGE
 	# delete -s -w if you want to debug
 	go install -v -ldflags "-s -w -X main.versionString=${VERSION}" src/cfy-kubernetes.go
 
+CLUSTERAUTOSCALERPROVIDER := \
+	src/${AUTOSCALEPACKAGE}/cloudifyprovider/init.go \
+	src/${AUTOSCALEPACKAGE}/cloudifyprovider/node_group.go \
+	src/${AUTOSCALEPACKAGE}/cloudifyprovider/scale_provider.go
+
+pkg/linux_amd64/${AUTOSCALEPACKAGE}/cloudifyprovider.a: ${CLUSTERAUTOSCALERPROVIDER} pkg/linux_amd64/${PACKAGEPATH}/cloudify.a
+	$(call colorecho,"Build: ",$@)
+	go build -v -i -o pkg/linux_amd64/${AUTOSCALEPACKAGE}/cloudifyprovider.a ${CLUSTERAUTOSCALERPROVIDER}
+
+CLUSTERAUTOSCALER := \
+	src/k8s.io/autoscaler/cluster-autoscaler/main.go \
+	src/k8s.io/autoscaler/cluster-autoscaler/version.go
+
+bin/cluster-autoscaler: pkg/linux_amd64/${PACKAGEPATH}/cloudify.a ${CLUSTERAUTOSCALER} pkg/linux_amd64/${AUTOSCALEPACKAGE}/cloudifyprovider.a
+	$(call colorecho,"Install: ", $@)
+	# delete -s -w if you want to debug
+	go build -v -ldflags "-s -w -X main.ClusterAutoscalerVersion=${VERSION}" -o bin/cluster-autoscaler ${CLUSTERAUTOSCALER}
+
 upload:
 	cfy blueprints upload -b kubernetes_cluster examples/cluster_blueprint/${CLOUDPROVIDER}.yaml
+
+create-for-upload: all
+	cp -v bin/cfy-kubernetes examples/cluster_blueprint/resources/cfy-kubernetes
+	cp -v bin/cluster-autoscaler examples/cluster_blueprint/resources/cfy-autoscale
+	cp -v bin/cfy-go examples/cluster_blueprint/resources/cfy-go
 
 .PHONY: test
 test:
 	go test ./src/${PACKAGEPATH}/...
+	go get github.com/golang/lint/golint
+	golint ./src/${PACKAGEPATH}/...
+	golint ./src/cloudifyprovider/...
+	golint ./src/cfy-kubernetes.go
+	golint ./src/${AUTOSCALEPACKAGE}/cloudifyprovider/...

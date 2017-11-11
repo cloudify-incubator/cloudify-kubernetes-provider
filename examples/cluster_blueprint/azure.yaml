@@ -30,6 +30,9 @@ inputs:
     description: The user name of the agent on the instance created from the image.
     default: docker # currently this is required
 
+  agent_group:
+    default: docker
+
   ssh_public_keys:
     description: the public key
     default:
@@ -56,12 +59,6 @@ node_types:
         # by default: amount of memory on vm avaible for kubepods,
         # in most cases it must be same as full count of memory on vm
         default: 1024
-      kubetag:
-        # by default: initial node group
-        default: initial
-      kubescale:
-        # by default: not scalled by kubernetes
-        default: false
       agent_config:
         default:
           install_method: remote
@@ -119,8 +116,6 @@ node_templates:
 
   kubeinstance:
     type: kubernetes_host
-    properties:
-      kubescale: true
     relationships:
     - type: cloudify.azure.relationships.contained_in_resource_group
       target: resource_group
@@ -489,15 +484,24 @@ groups:
 
   k8s_node_scale_group:
     members:
-      - kubernetes_node_ip
-      - kubernetes_node_host_nic_ip_cfg
-      - kubernetes_node_host_nic
-      - kubeinstance
+    - kubernetes_node_ip
+    - kubernetes_node_host_nic_ip_cfg
+    - kubernetes_node_host_nic
+    - kubeinstance
+    - kubernetes_slave_node
+    - kubernetes_slave_kubernetes
+    - kubernetes_slave_kubelet_volume
+    - kubernetes_slave_docker
+    - kubernetes_slave_cfy_go
+    - kubernetes_slave_buildtools
 
 policies:
 
   kubernetes_node_vms_scaling_policy:
     type: cloudify.policies.scaling
     properties:
-      default_instances: 1
+    properties:
+      min_instances: 1
+      max_instances: 20
+      default_instances:  1
     targets: [k8s_node_scale_group]

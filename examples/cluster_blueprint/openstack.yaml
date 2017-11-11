@@ -20,6 +20,9 @@ inputs:
       User for connecting to agent VMs
     default: centos
 
+  agent_group:
+    default: wheel
+
 dsl_definitions:
 
   openstack_config: &openstack_config
@@ -41,12 +44,6 @@ node_types:
         # by default: amount of memory on vm avaible for kubepods,
         # in most cases it must be same as full count of memory on vm
         default: 1024
-      kubetag:
-        # by default: initial node group
-        default: initial
-      kubescale:
-        # by default: not scalled by kubernetes
-        default: false
       openstack_config:
         default: *openstack_config
       agent_config:
@@ -72,10 +69,10 @@ node_templates:
         manage_etc_hosts: True
         groups:
         - docker
-        - wheel
+        - { get_input: agent_group }
         users:
         - name: { get_input: agent_user }
-          primary-group: wheel
+          primary-group: { get_input: agent_group }
           groups: docker
           shell: /bin/bash
           sudo: ['ALL=(ALL) NOPASSWD:ALL']
@@ -124,7 +121,6 @@ node_templates:
   kubeinstance:
     type: kubernetes_host
     properties:
-      kubescale: true
       management_network_name: { get_property: [ public_network, resource_id ] }
     relationships:
     - type: cloudify.relationships.contained_in
@@ -162,6 +158,9 @@ node_templates:
       openstack_config: *openstack_config
       floatingip:
         floating_network_name: { get_property: [ external_network, resource_id ] }
+    relationships:
+    - type: cloudify.relationships.contained_in
+      target: k8s_node_scaling_tier
 
   kubernetes_security_group:
     type: cloudify.openstack.nodes.SecurityGroup
@@ -269,17 +268,22 @@ node_templates:
 
 groups:
 
-  kubeinstance_group:
+  k8s_node_scale_group:
     members:
-    - k8s_node_scaling_tier
+    - kubernetes_slave_node
+    - kubernetes_slave_kubernetes
+    - kubernetes_slave_kubelet_volume
+    - kubernetes_slave_docker
+    - kubernetes_slave_cfy_go
+    - kubernetes_slave_buildtools
     - kubeinstance
     - kubeinstance_port
     - kubeinstance_port_elastic_ip
 
 policies:
 
-  kubeinstance_group_scaling_policy:
+  kubernetes_node_vms_scaling_policy:
     type: cloudify.policies.scaling
     properties:
       default_instances:  1
-    targets: [kubeinstance_group]
+    targets: [k8s_node_scale_group]

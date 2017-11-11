@@ -25,7 +25,7 @@ import (
 )
 
 type CloudifyZones struct {
-	client *cloudify.CloudifyClient
+	client *cloudify.Client
 }
 
 // GetZone is an implementation of Zones.GetZone
@@ -51,7 +51,7 @@ func (r *CloudifyZones) GetZoneByNodeName(nodeName types.NodeName) (cloudprovide
 	return cloudprovider.Zone{}, fmt.Errorf("GetZoneByNodeName not imeplemented")
 }
 
-func NewCloudifyZones(client *cloudify.CloudifyClient) *CloudifyZones {
+func NewCloudifyZones(client *cloudify.Client) *CloudifyZones {
 	return &CloudifyZones{
 		client: client,
 	}

@@ -1,7 +1,7 @@
 [submodule "src/k8s.io/kubernetes"]
 	path = src/k8s.io/kubernetes
 	url = git@github.com:cloudify-incubator/kubernetes.git
-	branch = stable-0.1
+	branch = release-1.8
 [submodule "src/k8s.io/apimachinery"]
 	path = src/k8s.io/apimachinery
 	url = git@github.com:kubernetes/apimachinery.git
@@ -13,26 +13,26 @@
 [submodule "src/github.com/cloudify-incubator/cloudify-rest-go-client"]
 	path = src/github.com/cloudify-incubator/cloudify-rest-go-client
 	url = git@github.com:cloudify-incubator/cloudify-rest-go-client.git
-	branch = stable-0.1
+	branch = master
 [submodule "src/github.com/google/gofuzz"]
 	path = src/github.com/google/gofuzz
 	url = git@github.com:google/gofuzz.git
 	branch = master
 [submodule "src/github.com/PuerkitoBio/purell"]
 	path = src/github.com/PuerkitoBio/purell
-	url = https://github.com/PuerkitoBio/purell
+	url = git@github.com:PuerkitoBio/purell.git
 	branch = master
 [submodule "src/github.com/PuerkitoBio/urlesc"]
 	path = src/github.com/PuerkitoBio/urlesc
-	url = https://github.com/PuerkitoBio/urlesc
+	url = git@github.com:PuerkitoBio/urlesc.git
 	branch = master
 [submodule "src/k8s.io/kube-openapi"]
 	path = src/k8s.io/kube-openapi
-	url = https://github.com/kubernetes/kube-openapi
+	url = git@github.com:kubernetes/kube-openapi.git
 	branch = master
 [submodule "src/k8s.io/api"]
 	path = src/k8s.io/api
-	url = https://github.com/kubernetes/api
+	url = git@github.com:kubernetes/api.git
 	branch = master
 [submodule "src/gopkg.in/yaml.v2"]
 	path = src/gopkg.in/yaml.v2
@@ -101,4 +101,25 @@
 [submodule "src/k8s.io/autoscaler"]
 	path = src/k8s.io/autoscaler
 	url = git@github.com:cloudify-incubator/kubernetes-autoscaler.git
-	branch = stable-0.1
+	branch = master
+[submodule "src/github.com/tools/godep"]
+	path = src/github.com/tools/godep
+	url = git@github.com:tools/godep.git
+	branch = master
+[submodule "src/github.com/docker/spdystream"]
+	path = src/github.com/docker/spdystream
+	url = git@github.com:docker/spdystream.git
+	branch = master
+[submodule "src/github.com/pborman/uuid"]
+	path = src/github.com/pborman/uuid
+	url = git@github.com:pborman/uuid.git
+	branch = master
+[submodule "src/github.com/golang/protobuf"]
+	path = src/github.com/golang/protobuf
+	url = git@github.com:golang/protobuf.git
+[submodule "src/github.com/golang/lint"]
+	path = src/github.com/golang/lint
+	url = git@github.com:golang/lint
+[submodule "src/golang.org/x/tools"]
+	path = src/golang.org/x/tools
+	url = https://go.googlesource.com/tools

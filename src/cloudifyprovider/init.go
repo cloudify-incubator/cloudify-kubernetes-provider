@@ -34,8 +34,8 @@ const (
 // CloudProvider implents Instances, Zones, and LoadBalancer
 type CloudProvider struct {
 	deployment string
-	client     *cloudify.CloudifyClient
-	instances  *CloudifyInstances
+	client     *cloudify.Client
+	instances  *Instances
 	balancers  *CloudifyBalancer
 	zones      *CloudifyZones
 }
@@ -56,10 +56,10 @@ func (r *CloudProvider) LoadBalancer() (cloudprovider.LoadBalancer, bool) {
 	if r.client != nil {
 		if r.balancers != nil {
 			return r.balancers, true
-		} else {
-			r.balancers = NewCloudifyBalancer(r.client)
-			return r.balancers, true
 		}
+
+		r.balancers = NewCloudifyBalancer(r.client)
+		return r.balancers, true
 	}
 	return nil, false
 }
@@ -70,10 +70,10 @@ func (r *CloudProvider) Zones() (cloudprovider.Zones, bool) {
 	if r.client != nil {
 		if r.zones != nil {
 			return r.zones, true
-		} else {
-			r.zones = NewCloudifyZones(r.client)
-			return r.zones, true
 		}
+
+		r.zones = NewCloudifyZones(r.client)
+		return r.zones, true
 	}
 	return nil, false
 }
@@ -84,10 +84,10 @@ func (r *CloudProvider) Instances() (cloudprovider.Instances, bool) {
 	if r.client != nil {
 		if r.instances != nil {
 			return r.instances, true
-		} else {
-			r.instances = NewCloudifyInstances(r.client, r.deployment)
-			return r.instances, true
 		}
+
+		r.instances = NewInstances(r.client, r.deployment)
+		return r.instances, true
 	}
 	return nil, false
 }
@@ -114,7 +114,7 @@ func (r *CloudProvider) ScrubDNS(nameservers, searches []string) (nsOut, srchOut
 	return nameservers, searches
 }
 
-type CloudifyProviderConfig struct {
+type Config struct {
 	Host       string `json:"host,omitempty"`
 	User       string `json:"user,omitempty"`
 	Password   string `json:"password,omitempty"`
@@ -125,7 +125,7 @@ type CloudifyProviderConfig struct {
 func newCloudifyCloud(config io.Reader) (cloudprovider.Interface, error) {
 	glog.Warning("New Cloudify client")
 
-	var cloudConfig CloudifyProviderConfig
+	var cloudConfig Config
 	cloudConfig.Host = os.Getenv("CFY_HOST")
 	cloudConfig.User = os.Getenv("CFY_USER")
 	cloudConfig.Password = os.Getenv("CFY_PASSWORD")

@@ -24,7 +24,7 @@ import (
 )
 
 type CloudifyBalancer struct {
-	client *cloudify.CloudifyClient
+	client *cloudify.Client
 }
 
 // UpdateLoadBalancer is an implementation of LoadBalancer.UpdateLoadBalancer.
@@ -33,8 +33,8 @@ func (r *CloudifyBalancer) UpdateLoadBalancer(clusterName string, service *api.S
 	return fmt.Errorf("Not implemented:UpdateLoadBalancer")
 }
 
-func (r *CloudifyBalancer) toLBStatus(service_id string) (*api.LoadBalancerStatus, bool, error) {
-	glog.Infof("?toLBStatus [%s]", service_id)
+func (r *CloudifyBalancer) toLBStatus(serviceID string) (*api.LoadBalancerStatus, bool, error) {
+	glog.Infof("?toLBStatus [%s]", serviceID)
 	ingress := []api.LoadBalancerIngress{}
 
 	// TODO: show real id
@@ -68,7 +68,7 @@ func (r *CloudifyBalancer) EnsureLoadBalancer(clusterName string, service *api.S
 	return status, nil
 }
 
-func NewCloudifyBalancer(client *cloudify.CloudifyClient) *CloudifyBalancer {
+func NewCloudifyBalancer(client *cloudify.Client) *CloudifyBalancer {
 	return &CloudifyBalancer{
 		client: client,
 	}
