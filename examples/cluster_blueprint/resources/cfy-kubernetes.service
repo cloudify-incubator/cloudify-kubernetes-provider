@@ -1,0 +1,11 @@
+[Unit]
+Description=cfy kubernetes
+
+[Service]
+ExecStart=/usr/bin/cfy-kubernetes --kubeconfig $HOME/.kube/config --cloud-config $HOME/cfy.json
+KillMode=process
+Restart=on-failure
+RestartSec=60s
+
+[Install]
+WantedBy=multi-user.target

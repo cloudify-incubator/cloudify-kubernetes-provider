@@ -76,6 +76,7 @@ if __name__ == '__main__':
                         [os.getenv('PATH'), os.path.join(_cwd, 'bin')])
                 }
             }
+            execute_command('mkdir -p /opt/bin/')
             _command = \
                 'go get github.com/cloudify-incubator/' \
                 'cloudify-rest-go-client/cfy-go'

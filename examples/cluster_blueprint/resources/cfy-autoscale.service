@@ -1,0 +1,11 @@
+[Unit]
+Description=cfy autoscale
+
+[Service]
+ExecStart=/usr/bin/cfy-autoscale --kubeconfig {{ home_dir }}/.kube/config --cloud-config {{ home_dir }}/cfy.json --cloud-provider cloudify --alsologtostderr
+KillMode=process
+Restart=on-failure
+RestartSec=60s
+
+[Install]
+WantedBy=multi-user.target

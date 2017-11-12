@@ -131,9 +131,7 @@ node_types:
     interfaces:
       cloudify.interfaces.lifecycle:
         configure:
-          implementation: scripts/codes/scale-build.sh
-        start:
-          implementation: scripts/codes/scale-run.sh
+          implementation: scripts/cfy_autoscale/install.py
 
   cloudify.nodes.Kubernetes.Kubelet.Volume:
     derived_from: cloudify.nodes.SoftwareComponent
@@ -150,10 +148,9 @@ node_types:
               default: { get_input: cfy_tenant }
             cfy_host:
               default: { get_input: cfy_host }
-        delete: scripts/codes/delete.sh
       maintenance:
-        mount: scripts/mount.py
-        unmount: scripts/unmount.py
+        mount: scripts/kubelet_volume/mount.py
+        unmount: scripts/kubelet_volume/unmount.py
 
   cloudify.nodes.ApplicationServer.kubernetes.Node:
     derived_from: cloudify.nodes.ApplicationServer
@@ -224,8 +221,10 @@ node_templates:
             CFY_PASSWORD: { get_input: cfy_password }
             CFY_TENANT: { get_input: cfy_tenant }
             CFY_HOST: { get_input: cfy_host }
+        configure:
+          implementation: scripts/kubernetes/create_secrets.py
         start:
-          implementation: scripts/create_secrets.py
+          implementation: scripts/kubernetes/node/start.py
     relationships:
     - target: kubemanager
       type: cloudify.relationships.contained_in
