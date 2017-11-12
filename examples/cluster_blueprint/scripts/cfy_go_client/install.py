@@ -77,7 +77,7 @@ if __name__ == '__main__':
                 }
             }
             _command = \
-                'go get github.com/cloudify-incubator/' \
+                'sudo go get github.com/cloudify-incubator/' \
                 'cloudify-rest-go-client/cfy-go'
             execute_command(_command, extra_args=_extra_args)
             current_path = '/opt/bin/cfy-go'
