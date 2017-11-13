@@ -91,18 +91,18 @@ EOF
 sudo cp /etc/systemd/system/cfy-kubernetes.service /etc/systemd/system/multi-user.target.wants/
 
 ctx logger info "Start service"
-#sudo systemctl daemon-reload
-#sudo systemctl enable cfy-kubernetes.service
-#sudo systemctl start cfy-kubernetes.service
+sudo systemctl daemon-reload
+sudo systemctl enable cfy-kubernetes.service
+sudo systemctl start cfy-kubernetes.service
 
-#for retry_count in {1..10}
-#do
-#	status=`sudo systemctl status cfy-kubernetes.service | grep "Active:"| awk '{print $2}'`
-#	ctx logger info "#${retry_count}: CFY Kubernetes state: ${status}"
-#	if [ "z$status" == 'zactive' ]; then
-#		break
-#	else
-#		ctx logger info "Wait little more."
-#		sleep 10
-#	fi
-#done
+for retry_count in {1..10}
+do
+	status=`sudo systemctl status cfy-kubernetes.service | grep "Active:"| awk '{print $2}'`
+	ctx logger info "#${retry_count}: CFY Kubernetes state: ${status}"
+	if [ "z$status" == 'zactive' ]; then
+		break
+	else
+		ctx logger info "Wait little more."
+		sleep 10
+	fi
+done

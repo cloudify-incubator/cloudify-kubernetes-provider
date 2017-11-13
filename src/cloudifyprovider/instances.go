@@ -33,8 +33,9 @@ type Instances struct {
 func (r *Instances) getInstances(params map[string]string) []cloudify.NodeInstance {
 	// Add filter by deployment
 	params["deployment_id"] = r.deployment
+	params["state"] = "started"
 
-	nodeInstances, err := r.client.GetStartedNodeInstancesWithType(
+	nodeInstances, err := r.client.GetNodeInstancesWithType(
 		params, "cloudify.nodes.ApplicationServer.kubernetes.Node")
 	if err != nil {
 		glog.Infof("Not found instances: %+v", err)
@@ -66,6 +67,11 @@ func (r *Instances) NodeAddresses(nodeName types.NodeName) ([]api.NodeAddress, e
 						if v.(string) != name {
 							// node with different name
 							continue
+						} else {
+							addresses = append(addresses, api.NodeAddress{
+								Type:    api.NodeHostName,
+								Address: v.(string),
+							})
 						}
 					}
 				}
@@ -101,11 +107,11 @@ func (r *Instances) NodeAddresses(nodeName types.NodeName) ([]api.NodeAddress, e
 	}
 
 	if len(addresses) == 0 {
-		glog.Infof("InstanceNotFound: %+v", name)
+		glog.Infof("NodeAddresses: InstanceNotFound: %+v", name)
 		return nil, cloudprovider.InstanceNotFound
 	}
 
-	glog.Infof("Addresses: %+v", addresses)
+	glog.Infof("NodeAddresses: %+v", addresses)
 	return addresses, nil
 }
 
@@ -123,6 +129,18 @@ func (r *Instances) NodeAddressesByProviderID(providerID string) ([]api.NodeAddr
 	for _, nodeInstance := range nodeInstances {
 		// check runtime properties
 		if nodeInstance.RuntimeProperties != nil {
+			if v, ok := nodeInstance.RuntimeProperties["hostname"]; ok == true {
+				switch v.(type) {
+				case string:
+					{
+						addresses = append(addresses, api.NodeAddress{
+							Type:    api.NodeHostName,
+							Address: v.(string),
+						})
+					}
+				}
+			}
+
 			if v, ok := nodeInstance.RuntimeProperties["ip"]; ok == true {
 				switch v.(type) {
 				case string:
@@ -149,7 +167,7 @@ func (r *Instances) NodeAddressesByProviderID(providerID string) ([]api.NodeAddr
 		}
 	}
 
-	glog.Infof("Addresses: %+v", addresses)
+	glog.Infof("NodeAddressesByProviderID: %+v", addresses)
 	return addresses, nil
 }
 
