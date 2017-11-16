@@ -24,12 +24,13 @@ import (
 	"k8s.io/kubernetes/pkg/cloudprovider"
 )
 
-type CloudifyZones struct {
+// Zones - struct with connection settings
+type Zones struct {
 	client *cloudify.Client
 }
 
 // GetZone is an implementation of Zones.GetZone
-func (r *CloudifyZones) GetZone() (cloudprovider.Zone, error) {
+func (r *Zones) GetZone() (cloudprovider.Zone, error) {
 	glog.Infof("GetZone")
 	return cloudprovider.Zone{
 		FailureDomain: "FailureDomain",
@@ -40,19 +41,20 @@ func (r *CloudifyZones) GetZone() (cloudprovider.Zone, error) {
 // GetZoneByProviderID implements Zones.GetZoneByProviderID
 // This is particularly useful in external cloud providers where the kubelet
 // does not initialize node data.
-func (r *CloudifyZones) GetZoneByProviderID(providerID string) (cloudprovider.Zone, error) {
+func (r *Zones) GetZoneByProviderID(providerID string) (cloudprovider.Zone, error) {
 	return cloudprovider.Zone{}, fmt.Errorf("GetZoneByProviderID not implemented")
 }
 
 // GetZoneByNodeName implements Zones.GetZoneByNodeName
 // This is particularly useful in external cloud providers where the kubelet
 // does not initialize node data.
-func (r *CloudifyZones) GetZoneByNodeName(nodeName types.NodeName) (cloudprovider.Zone, error) {
+func (r *Zones) GetZoneByNodeName(nodeName types.NodeName) (cloudprovider.Zone, error) {
 	return cloudprovider.Zone{}, fmt.Errorf("GetZoneByNodeName not imeplemented")
 }
 
-func NewCloudifyZones(client *cloudify.Client) *CloudifyZones {
-	return &CloudifyZones{
+// NewZones - create instance with support kubernetes zones interface.
+func NewZones(client *cloudify.Client) *Zones {
+	return &Zones{
 		client: client,
 	}
 }
