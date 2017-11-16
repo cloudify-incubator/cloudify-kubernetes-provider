@@ -36,8 +36,8 @@ type CloudProvider struct {
 	deployment string
 	client     *cloudify.Client
 	instances  *Instances
-	balancers  *CloudifyBalancer
-	zones      *CloudifyZones
+	balancers  *Balancer
+	zones      *Zones
 }
 
 // Initialize passes a Kubernetes clientBuilder interface to the cloud provider
@@ -58,7 +58,7 @@ func (r *CloudProvider) LoadBalancer() (cloudprovider.LoadBalancer, bool) {
 			return r.balancers, true
 		}
 
-		r.balancers = NewCloudifyBalancer(r.client)
+		r.balancers = NewBalancer(r.client)
 		return r.balancers, true
 	}
 	return nil, false
@@ -72,7 +72,7 @@ func (r *CloudProvider) Zones() (cloudprovider.Zones, bool) {
 			return r.zones, true
 		}
 
-		r.zones = NewCloudifyZones(r.client)
+		r.zones = NewZones(r.client)
 		return r.zones, true
 	}
 	return nil, false
@@ -114,6 +114,7 @@ func (r *CloudProvider) ScrubDNS(nameservers, searches []string) (nsOut, srchOut
 	return nameservers, searches
 }
 
+// Config - settings for connect to cloudify
 type Config struct {
 	Host       string `json:"host,omitempty"`
 	User       string `json:"user,omitempty"`
@@ -122,6 +123,7 @@ type Config struct {
 	Deployment string `json:"deployment,omitempty"`
 }
 
+// newCloudifyCloud - load connection configuration from file
 func newCloudifyCloud(config io.Reader) (cloudprovider.Interface, error) {
 	glog.Warning("New Cloudify client")
 
@@ -166,6 +168,7 @@ func newCloudifyCloud(config io.Reader) (cloudprovider.Interface, error) {
 	}, nil
 }
 
+// init - code for register cloudify as provider
 func init() {
 	glog.Warning("Cloudify init")
 	cloudprovider.RegisterCloudProvider(providerName, func(config io.Reader) (cloudprovider.Interface, error) {

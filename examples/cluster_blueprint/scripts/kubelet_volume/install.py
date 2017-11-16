@@ -6,12 +6,10 @@ import tempfile
 from cloudify import ctx
 from cloudify.state import ctx_parameters as inputs
 
-MOUNT = '#!/bin/bash' \
-        'echo \$@ >> /var/log/mount-calls.log' \
-        '/usr/bin/{0} kubernetes \$1 \$2 \$3 -deployment "{1}" '\
-        ' -instance "{2}" -tenant "{3}" '\
-        '-password "{4}" -user "{5}" -host "{6}'
-
+MOUNT = ('#!/bin/bash\n' +
+         'echo $@ >> /var/log/mount-calls.log\n' +
+         '{0} kubernetes $1 $2 $3 -deployment "{1}" -instance "{2}" ' +
+         '-tenant "{3}" -password "{4}" -user "{5}" -host "{6}"')
 
 def execute_command(_command, extra_args=None):
 

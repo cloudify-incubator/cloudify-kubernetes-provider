@@ -1,5 +1,5 @@
 .PHONY: all
-all: bin/cfy-go bin/cfy-kubernetes bin/cluster-autoscaler
+all: bin/cfy-go bin/cfy-kubernetes bin/cfy-autoscale
 
 AUTOSCALEPACKAGE := k8s.io/autoscaler/cluster-autoscaler/cloudprovider
 PACKAGEPATH := github.com/cloudify-incubator/cloudify-rest-go-client
@@ -14,6 +14,7 @@ reformat:
 	rm -rfv bin/*
 	gofmt -w src/${PACKAGEPATH}/cloudify/rest/*.go
 	gofmt -w src/${PACKAGEPATH}/cloudify/utils/*.go
+	gofmt -w src/${PACKAGEPATH}/cloudify/tests/*.go
 	gofmt -w src/${PACKAGEPATH}/cloudify/*.go
 	gofmt -w src/${PACKAGEPATH}/cfy-go/*.go
 	gofmt -w src/${PACKAGEPATH}/kubernetes/*.go
@@ -112,22 +113,22 @@ CLUSTERAUTOSCALER := \
 	src/k8s.io/autoscaler/cluster-autoscaler/main.go \
 	src/k8s.io/autoscaler/cluster-autoscaler/version.go
 
-bin/cluster-autoscaler: pkg/linux_amd64/${PACKAGEPATH}/cloudify.a ${CLUSTERAUTOSCALER} pkg/linux_amd64/${AUTOSCALEPACKAGE}/cloudifyprovider.a
+bin/cfy-autoscale: pkg/linux_amd64/${PACKAGEPATH}/cloudify.a ${CLUSTERAUTOSCALER} pkg/linux_amd64/${AUTOSCALEPACKAGE}/cloudifyprovider.a
 	$(call colorecho,"Install: ", $@)
 	# delete -s -w if you want to debug
-	go build -v -ldflags "-s -w -X main.ClusterAutoscalerVersion=${VERSION}" -o bin/cluster-autoscaler ${CLUSTERAUTOSCALER}
+	go build -v -ldflags "-s -w -X main.ClusterAutoscalerVersion=${VERSION}" -o bin/cfy-autoscale ${CLUSTERAUTOSCALER}
 
 upload:
 	cfy blueprints upload -b kubernetes_cluster examples/cluster_blueprint/${CLOUDPROVIDER}.yaml
 
 create-for-upload: all
 	cp -v bin/cfy-kubernetes examples/cluster_blueprint/resources/cfy-kubernetes
-	cp -v bin/cluster-autoscaler examples/cluster_blueprint/resources/cfy-autoscale
+	cp -v bin/cfy-autoscale examples/cluster_blueprint/resources/cfy-autoscale
 	cp -v bin/cfy-go examples/cluster_blueprint/resources/cfy-go
 
 .PHONY: test
 test:
-	go test ./src/${PACKAGEPATH}/...
+	go test -cover ./src/${PACKAGEPATH}/...
 	go get github.com/golang/lint/golint
 	golint ./src/${PACKAGEPATH}/...
 	golint ./src/cloudifyprovider/...

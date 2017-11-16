@@ -23,17 +23,18 @@ import (
 	api "k8s.io/api/core/v1"
 )
 
-type CloudifyBalancer struct {
+// Balancer - struct with connection settings
+type Balancer struct {
 	client *cloudify.Client
 }
 
 // UpdateLoadBalancer is an implementation of LoadBalancer.UpdateLoadBalancer.
-func (r *CloudifyBalancer) UpdateLoadBalancer(clusterName string, service *api.Service, nodes []*api.Node) error {
+func (r *Balancer) UpdateLoadBalancer(clusterName string, service *api.Service, nodes []*api.Node) error {
 	glog.Infof("?UpdateLoadBalancer [%s]", clusterName)
 	return fmt.Errorf("Not implemented:UpdateLoadBalancer")
 }
 
-func (r *CloudifyBalancer) toLBStatus(serviceID string) (*api.LoadBalancerStatus, bool, error) {
+func (r *Balancer) toLBStatus(serviceID string) (*api.LoadBalancerStatus, bool, error) {
 	glog.Infof("?toLBStatus [%s]", serviceID)
 	ingress := []api.LoadBalancerIngress{}
 
@@ -44,13 +45,13 @@ func (r *CloudifyBalancer) toLBStatus(serviceID string) (*api.LoadBalancerStatus
 }
 
 // GetLoadBalancer is an implementation of LoadBalancer.GetLoadBalancer
-func (r *CloudifyBalancer) GetLoadBalancer(clusterName string, service *api.Service) (status *api.LoadBalancerStatus, exists bool, retErr error) {
+func (r *Balancer) GetLoadBalancer(clusterName string, service *api.Service) (status *api.LoadBalancerStatus, exists bool, retErr error) {
 	glog.Infof("?GetLoadBalancer [%s]", clusterName)
 	return r.toLBStatus(clusterName)
 }
 
 // EnsureLoadBalancerDeleted is an implementation of LoadBalancer.EnsureLoadBalancerDeleted.
-func (r *CloudifyBalancer) EnsureLoadBalancerDeleted(clusterName string, service *api.Service) error {
+func (r *Balancer) EnsureLoadBalancerDeleted(clusterName string, service *api.Service) error {
 	glog.Infof("?EnsureLoadBalancerDeleted [%s]", clusterName)
 
 	// TODO: We can delete anything from unexisted services :-)
@@ -58,7 +59,7 @@ func (r *CloudifyBalancer) EnsureLoadBalancerDeleted(clusterName string, service
 }
 
 // EnsureLoadBalancer is an implementation of LoadBalancer.EnsureLoadBalancer.
-func (r *CloudifyBalancer) EnsureLoadBalancer(clusterName string, service *api.Service, nodes []*api.Node) (*api.LoadBalancerStatus, error) {
+func (r *Balancer) EnsureLoadBalancer(clusterName string, service *api.Service, nodes []*api.Node) (*api.LoadBalancerStatus, error) {
 	glog.Infof("?EnsureLoadBalancer [%s]", clusterName)
 	status, _, err := r.toLBStatus(clusterName)
 	if err != nil {
@@ -68,8 +69,9 @@ func (r *CloudifyBalancer) EnsureLoadBalancer(clusterName string, service *api.S
 	return status, nil
 }
 
-func NewCloudifyBalancer(client *cloudify.Client) *CloudifyBalancer {
-	return &CloudifyBalancer{
+// NewBalancer - create instance with support kubernetes balancer interface.
+func NewBalancer(client *cloudify.Client) *Balancer {
+	return &Balancer{
 		client: client,
 	}
 }

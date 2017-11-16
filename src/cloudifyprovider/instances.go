@@ -25,6 +25,7 @@ import (
 	"k8s.io/kubernetes/pkg/cloudprovider"
 )
 
+// Instances - struct with connection settings
 type Instances struct {
 	deployment string
 	client     *cloudify.Client
@@ -253,6 +254,7 @@ func (r *Instances) InstanceExistsByProviderID(providerID string) (bool, error) 
 	return false, fmt.Errorf("Not implemented:InstanceExistsByProviderID")
 }
 
+// NewInstances - create instance with support kubernetes intances interface.
 func NewInstances(client *cloudify.Client, deployment string) *Instances {
 	return &Instances{
 		client:     client,
