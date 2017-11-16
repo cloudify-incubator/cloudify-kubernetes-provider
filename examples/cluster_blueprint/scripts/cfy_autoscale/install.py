@@ -100,9 +100,6 @@ if __name__ == '__main__':
                 'sudo cp {0} {1}'.format(
                     cfy_autoscale_service,
                     '/etc/systemd/system/cfy-autoscale.service'))
-            execute_command(
-                'sudo cp /etc/systemd/system/cfy-autoscale.service '
-                '/etc/systemd/system/multi-user.target.wants/')
             execute_command('sudo systemctl daemon-reload')
             execute_command('sudo systemctl enable cfy-autoscale.service')
             execute_command('sudo systemctl start cfy-autoscale.service')

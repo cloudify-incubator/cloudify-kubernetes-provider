@@ -88,7 +88,6 @@ RestartSec=60s
 [Install]
 WantedBy=multi-user.target
 EOF
-sudo cp /etc/systemd/system/cfy-kubernetes.service /etc/systemd/system/multi-user.target.wants/
 
 ctx logger info "Start service"
 sudo systemctl daemon-reload
