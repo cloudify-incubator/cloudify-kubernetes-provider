@@ -19,6 +19,7 @@ package cloudifyprovider
 import (
 	"fmt"
 	cloudify "github.com/cloudify-incubator/cloudify-rest-go-client/cloudify"
+	utils "github.com/cloudify-incubator/cloudify-rest-go-client/cloudify/utils"
 	"github.com/golang/glog"
 	api "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/types"
@@ -34,7 +35,6 @@ type Instances struct {
 func (r *Instances) getInstances(params map[string]string) []cloudify.NodeInstance {
 	// Add filter by deployment
 	params["deployment_id"] = r.deployment
-	params["state"] = "started"
 
 	nodeInstances, err := r.client.GetNodeInstancesWithType(
 		params, "cloudify.nodes.ApplicationServer.kubernetes.Node")
@@ -42,7 +42,21 @@ func (r *Instances) getInstances(params map[string]string) []cloudify.NodeInstan
 		glog.Infof("Not found instances: %+v", err)
 		return []cloudify.NodeInstance{}
 	}
-	return nodeInstances.Items
+
+	// starting only because we restart kubelet after join
+	aliveStates := []string{
+		// "initializing", "creating", // workflow started for instance
+		// "created", "configuring", // create action, had ip
+		"configured", "starting", // configure action, joined to cluster
+		"started", // everything done
+	}
+	instances := []cloudify.NodeInstance{}
+	for _, instance := range nodeInstances.Items {
+		if utils.InList(aliveStates, instance.State) {
+			instances = append(instances, instance)
+		}
+	}
+	return instances
 }
 
 // NodeAddresses returns the addresses of the specified instance.
@@ -127,6 +141,7 @@ func (r *Instances) NodeAddressesByProviderID(providerID string) ([]api.NodeAddr
 
 	addresses := []api.NodeAddress{}
 
+	// hostname
 	for _, nodeInstance := range nodeInstances {
 		// check runtime properties
 		if nodeInstance.RuntimeProperties != nil {
@@ -141,7 +156,13 @@ func (r *Instances) NodeAddressesByProviderID(providerID string) ([]api.NodeAddr
 					}
 				}
 			}
+		}
+	}
 
+	// internal ip
+	for _, nodeInstance := range nodeInstances {
+		// check runtime properties
+		if nodeInstance.RuntimeProperties != nil {
 			if v, ok := nodeInstance.RuntimeProperties["ip"]; ok == true {
 				switch v.(type) {
 				case string:
@@ -153,7 +174,13 @@ func (r *Instances) NodeAddressesByProviderID(providerID string) ([]api.NodeAddr
 					}
 				}
 			}
+		}
+	}
 
+	// external ip
+	for _, nodeInstance := range nodeInstances {
+		// check runtime properties
+		if nodeInstance.RuntimeProperties != nil {
 			if v, ok := nodeInstance.RuntimeProperties["public_ip"]; ok == true {
 				switch v.(type) {
 				case string:

@@ -31,7 +31,7 @@ type Zones struct {
 
 // GetZone is an implementation of Zones.GetZone
 func (r *Zones) GetZone() (cloudprovider.Zone, error) {
-	glog.Infof("GetZone")
+	glog.V(4).Info("GetZone")
 	return cloudprovider.Zone{
 		FailureDomain: "FailureDomain",
 		Region:        "Region",
@@ -42,6 +42,7 @@ func (r *Zones) GetZone() (cloudprovider.Zone, error) {
 // This is particularly useful in external cloud providers where the kubelet
 // does not initialize node data.
 func (r *Zones) GetZoneByProviderID(providerID string) (cloudprovider.Zone, error) {
+	glog.Errorf("?GetZone: [%+v]", providerID)
 	return cloudprovider.Zone{}, fmt.Errorf("GetZoneByProviderID not implemented")
 }
 
@@ -49,6 +50,7 @@ func (r *Zones) GetZoneByProviderID(providerID string) (cloudprovider.Zone, erro
 // This is particularly useful in external cloud providers where the kubelet
 // does not initialize node data.
 func (r *Zones) GetZoneByNodeName(nodeName types.NodeName) (cloudprovider.Zone, error) {
+	glog.Errorf("?GetZoneByNodeName: [%+v]", nodeName)
 	return cloudprovider.Zone{}, fmt.Errorf("GetZoneByNodeName not imeplemented")
 }
 
