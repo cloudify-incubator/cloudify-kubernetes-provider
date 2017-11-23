@@ -42,7 +42,7 @@ type CloudProvider struct {
 
 // Initialize passes a Kubernetes clientBuilder interface to the cloud provider
 func (r *CloudProvider) Initialize(clientBuilder controller.ControllerClientBuilder) {
-	glog.Warning("Initialize")
+	glog.V(4).Info("Initialize")
 }
 
 // ProviderName returns the cloud provider ID.
@@ -52,7 +52,7 @@ func (r *CloudProvider) ProviderName() string {
 
 // LoadBalancer returns a balancer interface. Also returns true if the interface is supported, false otherwise.
 func (r *CloudProvider) LoadBalancer() (cloudprovider.LoadBalancer, bool) {
-	glog.Warning("LoadBalancer")
+	glog.V(4).Info("LoadBalancer")
 	if r.client != nil {
 		if r.balancers != nil {
 			return r.balancers, true
@@ -66,7 +66,7 @@ func (r *CloudProvider) LoadBalancer() (cloudprovider.LoadBalancer, bool) {
 
 // Zones returns a zones interface. Also returns true if the interface is supported, false otherwise.
 func (r *CloudProvider) Zones() (cloudprovider.Zones, bool) {
-	glog.Warning("Zones")
+	glog.V(4).Info("Zones")
 	if r.client != nil {
 		if r.zones != nil {
 			return r.zones, true
@@ -80,7 +80,7 @@ func (r *CloudProvider) Zones() (cloudprovider.Zones, bool) {
 
 // Instances returns an instances interface. Also returns true if the interface is supported, false otherwise.
 func (r *CloudProvider) Instances() (cloudprovider.Instances, bool) {
-	glog.Warning("Instances")
+	glog.V(4).Info("Instances")
 	if r.client != nil {
 		if r.instances != nil {
 			return r.instances, true
@@ -94,13 +94,13 @@ func (r *CloudProvider) Instances() (cloudprovider.Instances, bool) {
 
 // Clusters returns a clusters interface.  Also returns true if the interface is supported, false otherwise.
 func (r *CloudProvider) Clusters() (cloudprovider.Clusters, bool) {
-	glog.Warning("Clusters")
+	glog.Error("?Clusters")
 	return nil, false
 }
 
 // Routes returns a routes interface along with whether the interface is supported.
 func (r *CloudProvider) Routes() (cloudprovider.Routes, bool) {
-	glog.Warning("Routers")
+	glog.Error("?Routers")
 	return nil, false
 }
 
@@ -111,6 +111,8 @@ func (r *CloudProvider) HasClusterID() bool {
 
 // ScrubDNS provides an opportunity for cloud-provider-specific code to process DNS settings for pods.
 func (r *CloudProvider) ScrubDNS(nameservers, searches []string) (nsOut, srchOut []string) {
+	glog.Errorf("?ScrubDNS: Name Servers: %+v ", nameservers)
+	glog.Errorf("?ScrubDNS: Searches: %+v ", searches)
 	return nameservers, searches
 }
 
@@ -125,7 +127,7 @@ type Config struct {
 
 // newCloudifyCloud - load connection configuration from file
 func newCloudifyCloud(config io.Reader) (cloudprovider.Interface, error) {
-	glog.Warning("New Cloudify client")
+	glog.V(4).Info("New Cloudify client")
 
 	var cloudConfig Config
 	cloudConfig.Host = os.Getenv("CFY_HOST")
@@ -159,7 +161,7 @@ func newCloudifyCloud(config io.Reader) (cloudprovider.Interface, error) {
 		return nil, fmt.Errorf("You have empty deployment")
 	}
 
-	glog.Warningf("Config %+v", cloudConfig)
+	glog.V(4).Info("Config %+v", cloudConfig)
 	return &CloudProvider{
 		deployment: cloudConfig.Deployment,
 		client: cloudify.NewClient(
@@ -170,7 +172,7 @@ func newCloudifyCloud(config io.Reader) (cloudprovider.Interface, error) {
 
 // init - code for register cloudify as provider
 func init() {
-	glog.Warning("Cloudify init")
+	glog.V(4).Info("Cloudify init")
 	cloudprovider.RegisterCloudProvider(providerName, func(config io.Reader) (cloudprovider.Interface, error) {
 		return newCloudifyCloud(config)
 	})
