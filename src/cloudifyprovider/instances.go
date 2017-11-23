@@ -219,8 +219,6 @@ func (r *Instances) ExternalID(nodeName types.NodeName) (string, error) {
 	return r.InstanceID(nodeName)
 }
 
-const fakeuuid = "fakeuuid:"
-
 // InstanceID returns the cloud provider ID of the specified instance.
 func (r *Instances) InstanceID(nodeName types.NodeName) (string, error) {
 	name := string(nodeName)
@@ -247,8 +245,8 @@ func (r *Instances) InstanceID(nodeName types.NodeName) (string, error) {
 				continue
 			}
 
-			glog.Infof("Node is alive %+v", nodeInstance)
-			return fakeuuid + name, nil
+			glog.Infof("Node is alive: %+v", name)
+			return name, nil
 		}
 	}
 

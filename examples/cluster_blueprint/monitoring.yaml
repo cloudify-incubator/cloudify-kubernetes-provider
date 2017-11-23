@@ -280,3 +280,16 @@ node_templates:
       target: kube
     - type: cloudify.relationships.depends_on
       target: heapster_deployment
+
+  heapster_rbac:
+    type: cloudify.nodes.ApplicationServer
+    interfaces:
+    interfaces:
+      cloudify.interfaces.lifecycle:
+        create:
+          implementation: scripts/cfy_autoscale/heapster_rbac.sh
+    relationships:
+    - target: kubemanager
+      type: cloudify.relationships.contained_in
+    - type: cloudify.relationships.depends_on
+      target: heapster_service
