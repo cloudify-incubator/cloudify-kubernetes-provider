@@ -1,7 +1,7 @@
 tosca_definitions_version: cloudify_dsl_1_3
 
 imports:
-  - https://raw.githubusercontent.com/cloudify-incubator/cloudify-kubernetes-plugin/1.2.2/plugin.yaml
+  - https://raw.githubusercontent.com/cloudify-incubator/cloudify-kubernetes-plugin/1.3.0/plugin.yaml
 
 node_templates:
 
@@ -280,3 +280,16 @@ node_templates:
       target: kube
     - type: cloudify.relationships.depends_on
       target: heapster_deployment
+
+  heapster_rbac:
+    type: cloudify.nodes.ApplicationServer
+    interfaces:
+    interfaces:
+      cloudify.interfaces.lifecycle:
+        create:
+          implementation: scripts/cfy_autoscale/heapster_rbac.py
+    relationships:
+    - target: kubemanager
+      type: cloudify.relationships.contained_in
+    - type: cloudify.relationships.depends_on
+      target: heapster_service

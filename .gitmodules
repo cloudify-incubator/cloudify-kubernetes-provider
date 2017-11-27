@@ -101,7 +101,7 @@
 [submodule "src/k8s.io/autoscaler"]
 	path = src/k8s.io/autoscaler
 	url = git@github.com:cloudify-incubator/kubernetes-autoscaler.git
-	branch = master
+	branch = cluster-autoscaler-stable
 [submodule "src/github.com/tools/godep"]
 	path = src/github.com/tools/godep
 	url = git@github.com:tools/godep.git
