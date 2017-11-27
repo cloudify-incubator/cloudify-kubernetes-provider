@@ -130,6 +130,13 @@ cfy-go node-instances host-grouped
 `CLOUDPROVIDER` can be `aws` or `vsphere`.
 
 ```shell
+# set empty secrets
+cfy secret create kubernetes_certificate_authority_data -s "#"
+cfy secret create kubernetes-admin_client_key_data -s "#"
+cfy secret create kubernetes_master_port -s "#"
+cfy secret create kubernetes-admin_client_certificate_data -s "#"
+cfy secret create kubernetes_master_ip -s "#"
+
 # upload
 git clone https://github.com/cloudify-incubator/cloudify-kubernetes-provider.git -b master --depth 1
 cd cloudify-rest-go-client
