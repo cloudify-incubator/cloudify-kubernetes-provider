@@ -64,7 +64,7 @@ if __name__ == '__main__':
                 'Failed to disable selinux')
 
         kubernetes_install = execute_command(
-            'sudo yum -y install kubeadm-1.8.3-0.x86_64 kubelet-1.8.3-0.x86_64'
+            'sudo yum -y install kubeadm-1.8.4-0.x86_64 kubelet-1.8.4-0.x86_64'
         )
         if kubernetes_install is False:
             raise OperationRetry(
