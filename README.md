@@ -145,7 +145,7 @@ cfy deployments create kubernetes_cluster -b kubernetes_cluster -i ../kubenetes.
 cfy executions start install -d kubernetes_cluster
 
 #delete
-cfy executions start uninstall  -p ignore_failure=true --allow-custom-parameters -d kubernetes_cluster
+cfy executions start uninstall -p ignore_failure=true --allow-custom-parameters -d kubernetes_cluster
 cfy deployments delete kubernetes_cluster
 cfy blueprints delete kubernetes_cluster
 ```
