@@ -17,7 +17,6 @@ limitations under the License.
 package main
 
 import (
-	_ "cloudifyprovider" // only init from package
 	"flag"
 	"fmt"
 	"github.com/golang/glog"
@@ -25,6 +24,7 @@ import (
 	"k8s.io/kubernetes/cmd/cloud-controller-manager/app/options"
 	"k8s.io/kubernetes/pkg/cloudprovider"
 	_ "k8s.io/kubernetes/pkg/cloudprovider/providers"
+	_ "k8s.io/kubernetes/pkg/cloudprovider/providers/cloudifyprovider" // only init from package
 	"k8s.io/kubernetes/pkg/kubectl/util/logs"
 	"k8s.io/kubernetes/pkg/version"
 	"os"

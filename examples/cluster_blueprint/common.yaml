@@ -107,12 +107,26 @@ node_types:
         create:
           implementation: scripts/buildtools/install.py
 
-  cloudify.nodes.SoftwareComponent.CfyGo:
+  cloudify.nodes.SoftwareComponent.CfyGoMaster:
     derived_from: cloudify.nodes.SoftwareComponent
     interfaces:
       cloudify.interfaces.lifecycle:
         create:
           implementation: scripts/cfy_kubernetes/download.py
+          inputs:
+            agent_user:
+              default: { get_input: agent_user }
+            group:
+              default: { get_input: agent_group }
+        configure:
+          implementation: scripts/cfy_go_client/install.py
+
+  cloudify.nodes.SoftwareComponent.CfyGoSlave:
+    derived_from: cloudify.nodes.SoftwareComponent
+    interfaces:
+      cloudify.interfaces.lifecycle:
+        create:
+          implementation: scripts/cfy_go_client/download.py
           inputs:
             agent_user:
               default: { get_input: agent_user }
@@ -175,7 +189,7 @@ node_templates:
       type: cloudify.relationships.contained_in
 
   kubernetes_master_cfy_go:
-    type: cloudify.nodes.SoftwareComponent.CfyGo
+    type: cloudify.nodes.SoftwareComponent.CfyGoMaster
     relationships:
     - target: kubemanager
       type: cloudify.relationships.contained_in
@@ -250,7 +264,7 @@ node_templates:
       type: cloudify.relationships.contained_in
 
   kubernetes_slave_cfy_go:
-    type: cloudify.nodes.SoftwareComponent.CfyGo
+    type: cloudify.nodes.SoftwareComponent.CfyGoSlave
     relationships:
     - target: kubeinstance
       type: cloudify.relationships.contained_in

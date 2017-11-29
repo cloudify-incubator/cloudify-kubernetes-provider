@@ -41,9 +41,6 @@ rm -rfv src/k8s.io/kubernetes/vendor/github.com/davecgh/go-spew
 rm -rfv src/k8s.io/kubernetes/vendor/github.com/json-iterator/go
 rm -rfv src/k8s.io/kubernetes/vendor/github.com/pborman/uuid
 rm -rfv src/k8s.io/kubernetes/vendor/github.com/docker/spdystream
-rm -rfv src/k8s.io/kubernetes/vendor/k8s.io/apimachinery
-rm -rfv src/k8s.io/kubernetes/vendor/k8s.io/api
-rm -rfv src/k8s.io/kubernetes/staging/src/k8s.io/apimachinery
 rm -rfv src/k8s.io/kubernetes/vendor/github.com/golang/protobuf
 ```
 
@@ -56,8 +53,6 @@ rm -rfv src/k8s.io/autoscaler/cluster-autoscaler/vendor/github.com/davecgh/go-sp
 rm -rfv src/k8s.io/autoscaler/cluster-autoscaler/vendor/github.com/json-iterator/go
 rm -rfv src/k8s.io/autoscaler/cluster-autoscaler/vendor/github.com/pborman/uuid
 rm -rfv src/k8s.io/autoscaler/cluster-autoscaler/vendor/github.com/docker/spdystream
-rm -rfv src/k8s.io/autoscaler/cluster-autoscaler/vendor/k8s.io/apimachinery
-rm -rfv src/k8s.io/autoscaler/cluster-autoscaler/vendor/k8s.io/api
 rm -rfv src/k8s.io/autoscaler/cluster-autoscaler/vendor/github.com/golang/protobuf
 ```
 and cleanup Godeps/Godeps.json.
@@ -145,7 +140,7 @@ cfy deployments create kubernetes_cluster -b kubernetes_cluster -i ../kubenetes.
 cfy executions start install -d kubernetes_cluster
 
 #delete
-cfy executions start uninstall  -p ignore_failure=true --allow-custom-parameters -d kubernetes_cluster
+cfy executions start uninstall -p ignore_failure=true --allow-custom-parameters -d kubernetes_cluster
 cfy deployments delete kubernetes_cluster
 cfy blueprints delete kubernetes_cluster
 ```

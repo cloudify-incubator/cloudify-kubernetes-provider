@@ -51,10 +51,10 @@ if __name__ == '__main__':
 
         build_output = \
             execute_command(
-                'sudo yum install -q -y git build-essential gcc-c++ make')
+                'sudo yum install -q -y git')
         if build_output is False:
             raise OperationRetry(
-                'Failed to install git build-essential gcc-c++ make')
+                'Failed to install git')
 
         import_gpg_key = execute_command(
             'sudo rpm --import https://mirror.go-repo.io/'
