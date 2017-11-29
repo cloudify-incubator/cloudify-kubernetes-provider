@@ -2,10 +2,6 @@
 	path = src/k8s.io/kubernetes
 	url = git@github.com:cloudify-incubator/kubernetes.git
 	branch = release-1.8
-[submodule "src/k8s.io/apimachinery"]
-	path = src/k8s.io/apimachinery
-	url = git@github.com:kubernetes/apimachinery.git
-	branch = release-1.8
 [submodule "src/github.com/golang/glog"]
 	path = src/github.com/golang/glog
 	url = git@github.com:golang/glog.git
@@ -25,14 +21,6 @@
 [submodule "src/github.com/PuerkitoBio/urlesc"]
 	path = src/github.com/PuerkitoBio/urlesc
 	url = git@github.com:PuerkitoBio/urlesc.git
-	branch = master
-[submodule "src/k8s.io/kube-openapi"]
-	path = src/k8s.io/kube-openapi
-	url = git@github.com:kubernetes/kube-openapi.git
-	branch = master
-[submodule "src/k8s.io/api"]
-	path = src/k8s.io/api
-	url = git@github.com:kubernetes/api.git
 	branch = master
 [submodule "src/gopkg.in/yaml.v2"]
 	path = src/gopkg.in/yaml.v2

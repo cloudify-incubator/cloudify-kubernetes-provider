@@ -2,6 +2,7 @@
 all: bin/cfy-go bin/cfy-kubernetes bin/cfy-autoscale
 
 AUTOSCALEPACKAGE := k8s.io/autoscaler/cluster-autoscaler/cloudprovider
+KUBERNETESPACKAGE := k8s.io/kubernetes/pkg/cloudprovider/providers/cloudifyprovider
 PACKAGEPATH := github.com/cloudify-incubator/cloudify-rest-go-client
 
 VERSION := `cd src/${PACKAGEPATH} && git rev-parse --short HEAD`
@@ -19,7 +20,7 @@ reformat:
 	gofmt -w src/${PACKAGEPATH}/cfy-go/*.go
 	gofmt -w src/${PACKAGEPATH}/kubernetes/*.go
 	# kubernetes parts
-	gofmt -w src/cloudifyprovider/*.go
+	gofmt -w src/${KUBERNETESPACKAGE}/*.go
 	gofmt -w src/${AUTOSCALEPACKAGE}/cloudifyprovider/*.go
 	gofmt -w src/*.go
 
@@ -86,16 +87,16 @@ bin/cfy-go: src/${PACKAGEPATH}/cfy-go/cfy-go.go ${CFYGOLIBS}
 
 # cloudify provider
 CLOUDIFYPROVIDER := \
-	src/cloudifyprovider/init.go \
-	src/cloudifyprovider/instances.go \
-	src/cloudifyprovider/loadbalancer.go \
-	src/cloudifyprovider/zones.go
+	src/${KUBERNETESPACKAGE}/init.go \
+	src/${KUBERNETESPACKAGE}/instances.go \
+	src/${KUBERNETESPACKAGE}/loadbalancer.go \
+	src/${KUBERNETESPACKAGE}/zones.go
 
-pkg/linux_amd64/cloudifyprovider.a: pkg/linux_amd64/${PACKAGEPATH}/cloudify.a ${CLOUDIFYPROVIDER}
+pkg/linux_amd64/${KUBERNETESPACKAGE}.a: pkg/linux_amd64/${PACKAGEPATH}/cloudify.a ${CLOUDIFYPROVIDER}
 	$(call colorecho,"Build: ",$@)
-	go build -v -i -o pkg/linux_amd64/cloudifyprovider.a ${CLOUDIFYPROVIDER}
+	go build -v -i -o pkg/linux_amd64/${KUBERNETESPACKAGE}.a ${CLOUDIFYPROVIDER}
 
-bin/cfy-kubernetes: pkg/linux_amd64/cloudifyprovider.a pkg/linux_amd64/${PACKAGEPATH}/cloudify.a src/cfy-kubernetes.go
+bin/cfy-kubernetes: pkg/linux_amd64/${KUBERNETESPACKAGE}.a pkg/linux_amd64/${PACKAGEPATH}/cloudify.a src/cfy-kubernetes.go
 	$(call colorecho,"Install: ", $@)
 	# delete -s -w if you want to debug
 	go install -v -ldflags "-s -w -X main.versionString=${VERSION}" src/cfy-kubernetes.go
@@ -131,6 +132,6 @@ test:
 	go test -cover ./src/${PACKAGEPATH}/...
 	go get github.com/golang/lint/golint
 	golint ./src/${PACKAGEPATH}/...
-	golint ./src/cloudifyprovider/...
+	golint ./src/${KUBERNETESPACKAGE}/...
 	golint ./src/cfy-kubernetes.go
 	golint ./src/${AUTOSCALEPACKAGE}/cloudifyprovider/...
