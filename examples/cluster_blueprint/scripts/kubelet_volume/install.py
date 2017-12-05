@@ -11,6 +11,7 @@ MOUNT = ('#!/bin/bash\n' +
          '{0} kubernetes $1 $2 $3 -deployment "{1}" -instance "{2}" ' +
          '-tenant "{3}" -password "{4}" -user "{5}" -host "{6}"')
 
+
 def execute_command(_command, extra_args=None):
 
     ctx.logger.debug('_command {0}.'.format(_command))
@@ -71,6 +72,9 @@ if __name__ == '__main__':
     cfy_host = \
         inputs.get('cfy_host', 'localhost')
 
+    cfy_ssl = \
+        inputs.get('cfy_ssl', False)
+
     if os.path.exists('/usr/bin/cfy-go'):
         ctx.logger.debug(
             'Cfy Go Binary already at {0}'.format(cfy_go_binary_path))
@@ -83,6 +87,7 @@ if __name__ == '__main__':
     execute_command('sudo chmod 555 {0}'.format(cfy_go_binary_path))
     execute_command('sudo chown root:root {0}'.format(cfy_go_binary_path))
 
+    ctx.logger.info("Update create cfy-mount")
     _, temp_mount_file = tempfile.mkstemp()
 
     with open(temp_mount_file, 'w') as outfile:
@@ -93,7 +98,7 @@ if __name__ == '__main__':
             cfy_tenant,
             cfy_pass,
             cfy_user,
-            cfy_host))
+            cfy_host if not cfy_ssl else "https://" + cfy_host))
 
     execute_command('sudo mkdir -p {0}'.format(
         plugin_directory))

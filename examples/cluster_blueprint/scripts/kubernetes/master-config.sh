@@ -57,18 +57,6 @@ do
 	sleep 10
 done
 
-ctx logger info "Create cfy config"
-sudo tee $HOME/cfy.json <<EOF
-{
-  "tenant": "${CFY_TENANT}",
-  "password": "${CFY_PASSWORD}",
-  "user": "${CFY_USER}",
-  "host": "${CFY_HOST}",
-  "deployment": "$(ctx deployment id)",
-  "instance": "$(ctx instance id)"
-}
-EOF
-
 ctx logger info "Install cfy-kubernetes provider"
 sudo cp /opt/cloudify-kubernetes-provider/bin/cfy-kubernetes /usr/bin/cfy-kubernetes
 sudo chmod 555 /usr/bin/cfy-kubernetes
