@@ -80,10 +80,24 @@ CFYGOLIBS := \
 	pkg/linux_amd64/${PACKAGEPATH}/kubernetes.a \
 	pkg/linux_amd64/${PACKAGEPATH}/cloudify.a
 
-bin/cfy-go: src/${PACKAGEPATH}/cfy-go/cfy-go.go ${CFYGOLIBS}
+# cfy-go
+CFYGO := \
+	src/${PACKAGEPATH}/cfy-go/blueprints.go \
+	src/${PACKAGEPATH}/cfy-go/deployments.go \
+	src/${PACKAGEPATH}/cfy-go/events.go \
+	src/${PACKAGEPATH}/cfy-go/executions.go \
+	src/${PACKAGEPATH}/cfy-go/info.go \
+	src/${PACKAGEPATH}/cfy-go/instances.go \
+	src/${PACKAGEPATH}/cfy-go/kubernetes.go \
+	src/${PACKAGEPATH}/cfy-go/main.go \
+	src/${PACKAGEPATH}/cfy-go/nodes.go \
+	src/${PACKAGEPATH}/cfy-go/plugins.go \
+	src/${PACKAGEPATH}/cfy-go/scaling.go
+
+bin/cfy-go: ${CFYGO} ${CFYGOLIBS}
 	$(call colorecho,"Install: ", $@)
 	# delete -s -w if you want to debug
-	go install -v -ldflags "-s -w -X main.versionString=${VERSION}" src/${PACKAGEPATH}/cfy-go/cfy-go.go
+	go build -v -ldflags "-s -w -X main.versionString=${VERSION}" -o bin/cfy-go ${CFYGO}
 
 # cloudify provider
 CLOUDIFYPROVIDER := \
@@ -135,3 +149,9 @@ test:
 	golint ./src/${KUBERNETESPACKAGE}/...
 	golint ./src/cfy-kubernetes.go
 	golint ./src/${AUTOSCALEPACKAGE}/cloudifyprovider/...
+
+	cfy blueprint validate examples/cluster_blueprint/aws.yaml
+	cfy blueprint validate examples/cluster_blueprint/azure.yaml
+	cfy blueprint validate examples/cluster_blueprint/gcp.yaml
+	cfy blueprint validate examples/cluster_blueprint/openstack.yaml
+	cfy blueprint validate examples/cluster_blueprint/vsphere.yaml

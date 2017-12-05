@@ -65,6 +65,10 @@ inputs:
     type: string
     default: { get_attribute: [ kubemanager, cloudify_agent, broker_ip ] }
 
+  cfy_ssl:
+    type: boolean
+    default: false
+
   update_package_manager:
     type: boolean
     default: false
@@ -99,6 +103,25 @@ node_types:
               default: { get_input: update_package_manager }
         delete:
           implementation: scripts/docker/uninstall.py
+
+  # share config
+  cloudify.nodes.ApplicationServer.ConfigShare:
+    derived_from: cloudify.nodes.ApplicationServer
+    interfaces:
+      cloudify.interfaces.lifecycle:
+        create:
+          implementation: scripts/kubernetes/config-create.py
+          inputs:
+            cfy_user:
+              default: { get_input: cfy_user }
+            cfy_password:
+              default: { get_input: cfy_password }
+            cfy_tenant:
+              default: { get_input: cfy_tenant }
+            cfy_host:
+              default: { get_input: cfy_host }
+            cfy_ssl:
+              default: { get_input: cfy_ssl }
 
   cloudify.nodes.SoftwareComponent.BuildTools:
     derived_from: cloudify.nodes.SoftwareComponent
@@ -164,6 +187,8 @@ node_types:
               default: { get_input: cfy_tenant }
             cfy_host:
               default: { get_input: cfy_host }
+            cfy_ssl:
+              default: { get_input: cfy_ssl }
       maintenance:
         mount: scripts/kubelet_volume/mount.py
         unmount: scripts/kubelet_volume/unmount.py
@@ -196,12 +221,20 @@ node_templates:
     - target: kubernetes_master_buildtools
       type: cloudify.relationships.depends_on
 
+  kubernetes_master_cfy_config:
+    type: cloudify.nodes.ApplicationServer.ConfigShare
+    relationships:
+    - target: kubemanager
+      type: cloudify.relationships.contained_in
+    - target: kubernetes_master_cfy_go
+      type: cloudify.relationships.depends_on
+
   kubernetes_master_cfy_kubernetes:
     type: cloudify.nodes.SoftwareComponent.CfyKubernetes
     relationships:
     - target: kubemanager
       type: cloudify.relationships.contained_in
-    - target: kubernetes_master_cfy_go
+    - target: kubernetes_master_cfy_config
       type: cloudify.relationships.depends_on
 
   kubemanager_docker:
@@ -232,11 +265,6 @@ node_templates:
       cloudify.interfaces.lifecycle:
         create:
           implementation: scripts/kubernetes/master-config.sh
-          inputs:
-            CFY_USER: { get_input: cfy_user }
-            CFY_PASSWORD: { get_input: cfy_password }
-            CFY_TENANT: { get_input: cfy_tenant }
-            CFY_HOST: { get_input: cfy_host }
         configure:
           implementation: scripts/kubernetes/create_secrets.py
         start:
@@ -271,6 +299,14 @@ node_templates:
     - target: kubernetes_slave_buildtools
       type: cloudify.relationships.depends_on
 
+  kubernetes_slave_cfy_config:
+    type: cloudify.nodes.ApplicationServer.ConfigShare
+    relationships:
+    - target: kubeinstance
+      type: cloudify.relationships.contained_in
+    - target: kubernetes_slave_cfy_go
+      type: cloudify.relationships.depends_on
+
   kubernetes_slave_docker:
     type: cloudify.nodes.ApplicationServer.Docker
     relationships:
@@ -282,7 +318,7 @@ node_templates:
     relationships:
     - target: kubeinstance
       type: cloudify.relationships.contained_in
-    - target: kubernetes_slave_cfy_go
+    - target: kubernetes_slave_cfy_config
       type: cloudify.relationships.depends_on
     - target: kubernetes_slave_docker
       type: cloudify.relationships.depends_on

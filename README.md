@@ -1,7 +1,14 @@
-# cloudify-rest-go-client
+# Cloudify Cloud Controller Manager
 
-* Install [GO on CentOs](examples/blueprint/scripts/tools-install.sh#L8-L12)
-* Install [GO on Ubuntu](examples/blueprint/scripts/tools-install.sh#L14-L17)
+We use `git submodule` instead common practice of vendoring because it has one big advantage
+we can use `git merge` for update code base for support new version of kubernetes.
+We are trying to use only addtional code instead replace and you always can check
+'what is the last merged version' and how we connect to cloudify.
+So theoretically you can build kubernetes binaries from repository, but we have no
+garanties for such usage. And when we will have ability to attach our code as plugin
+to kubernetes product we will drop all kubernetes forks and use only official repositories
+[(near 1.9+?)](https://github.com/kubernetes/community/blob/master/contributors/design-proposals/cloud-provider/cloud-provider-refactoring.md)
+
 
 # git (Disc Usage: 699-872Mb)
 ```shell
@@ -98,26 +105,6 @@ watch -n 10 -d "kubectl get hpa; kubectl get pods; cfy executions list; kubectl 
 kubectl delete hpa php-apache
 kubectl delete deployment php-apache
 
-# check limits for scaling group
-cfy-go deployments scaling-groups -deployment kubernetes_cluster
-
-# check nodes in group - recheck code used in get scaling group by instance(hostname) in autoscale
-cfy-go scaling-groups groups -deployment kubernetes_cluster
-
-# check nodes in group in autoscale, check that we have node in scaling group
-cfy-go scaling-groups nodes -deployment kubernetes_cluster -scalegroup k8s_node_scale_group
-
-# check instances in group in autoscale
-cfy-go scaling-groups instances -deployment kubernetes_cluster -scalegroup k8s_node_scale_group
-
-# check visible instances in deployment (all) in cloudify provider (without filter by scaling group)
-cfy-go node-instances started -deployment kubernetes_cluster
-
-# check visible nodes in deployment (all) in cloudify provider (without filter by scaling group)
-cfy-go nodes started -deployment kubernetes_cluster
-
-# list instances grouped by hostID
-cfy-go node-instances host-grouped
 ```
 
 ## Upload blueprint to manager (without build sources)
