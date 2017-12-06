@@ -2,10 +2,10 @@
 
 We use `git submodule` instead common practice of vendoring because it has one big advantage
 we can use `git merge` for update code base for support new version of kubernetes.
-We are trying to use only addtional code instead replace and you always can check
+We are trying to use only additional code instead replace and you always can check
 'what is the last merged version' and how we connect to cloudify.
 So theoretically you can build kubernetes binaries from repository, but we have no
-garanties for such usage. And when we will have ability to attach our code as plugin
+guarantees for such usage. And when we will have ability to attach our code as plugin
 to kubernetes product we will drop all kubernetes forks and use only official repositories
 [(near 1.9+?)](https://github.com/kubernetes/community/blob/master/contributors/design-proposals/cloud-provider/cloud-provider-refactoring.md)
 
@@ -65,10 +65,9 @@ rm -rfv src/k8s.io/autoscaler/cluster-autoscaler/vendor/github.com/golang/protob
 and cleanup Godeps/Godeps.json.
 
 # Functionality related to kubernetes
-## version
 
 ```shell
-# cfy-kubernetes
+# cfy-kubernetes version
 cfy-kubernetes -version
 cfy-kubernetes --kubeconfig $HOME/.kube/config --cloud-config examples/config.json
 kubectl get nodes
@@ -106,6 +105,10 @@ kubectl delete hpa php-apache
 kubectl delete deployment php-apache
 
 ```
+
+For `cfy-go` documentation look to [godoc](https://godoc.org/github.com/cloudify-incubator/cloudify-rest-go-client/cfy-go).
+
+For additional `cluster-autoscaler` documentation look to [official repository](https://github.com/kubernetes/autoscaler/blob/master/cluster-autoscaler/FAQ.md).
 
 ## Upload blueprint to manager (without build sources)
 
