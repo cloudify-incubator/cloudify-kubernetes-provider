@@ -50,7 +50,7 @@ if __name__ == '__main__':
 
     execute_command('sudo CGO_ENABLED=0 go install -a -installsuffix cgo std')
     execute_command('sudo mkdir -p /opt/cloudify-kubernetes-provider')
-    execute_command('sudo chmod -R 755 /opt/')
+    execute_command('sudo chmod -R 777 /opt/')
     _extra_args = {
         'env': {
             'USER': agent_user

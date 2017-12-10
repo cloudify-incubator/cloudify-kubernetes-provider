@@ -205,11 +205,16 @@ node_templates:
       - remote_ip_prefix: 0.0.0.0/0
         port: 8000
       - remote_ip_prefix: 0.0.0.0/0
+        port: 8001
+      - remote_ip_prefix: 0.0.0.0/0
         port: 8080
       - remote_ip_prefix: 0.0.0.0/0
         port: 9090
       - remote_ip_prefix: 0.0.0.0/0
         port: 10250
+      - remote_ip_prefix: 0.0.0.0/0
+        port_range_min: 30000
+        port_range_max: 39999
 
   private_subnet:
     type: cloudify.openstack.nodes.Subnet

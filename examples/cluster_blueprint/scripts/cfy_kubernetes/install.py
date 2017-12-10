@@ -44,7 +44,7 @@ if __name__ == '__main__':
         inputs.get(
             'cfy_kubernetes_binary_path',
             '/usr/bin/cfy-kubernetes')
-    execute_command('sudo mkdir -p /opt/cloudify-kubernetes-provider')
+    execute_command('sudo mkdir -p /opt/cloudify-kubernetes-provider/bin')
 
     try:
         cfy_kubernetes_binary = \
