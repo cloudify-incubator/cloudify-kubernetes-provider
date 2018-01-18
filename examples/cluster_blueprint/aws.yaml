@@ -2,6 +2,7 @@ tosca_definitions_version: cloudify_dsl_1_3
 
 imports:
   - https://raw.githubusercontent.com/cloudify-cosmo/cloudify-aws-plugin/1.5.1.2/plugin.yaml
+  - http://www.getcloudify.org/spec/awssdk-plugin/1.2.0.1/plugin.yaml
   - common.yaml
 
 inputs:
@@ -9,7 +10,7 @@ inputs:
   ami:
     description: >
       An AWS AMI. Tested with a Centos 7.0 image.
-    default: { get_secret: centos_core_image }
+    default: { get_attribute: [ centos_core_ami, aws_resource_id ] }
 
   instance_type:
     description: >
@@ -24,6 +25,12 @@ inputs:
   agent_group:
     default: wheel
 
+  manager_network:
+    default: default
+
+  install_method:
+    default: remote
+
 dsl_definitions:
 
     aws_config: &aws_config
@@ -31,6 +38,11 @@ dsl_definitions:
       aws_secret_access_key: { get_secret: aws_secret_access_key }
       ec2_region_name: { get_secret: ec2_region_name }
       ec2_region_endpoint: { get_secret: ec2_region_endpoint }
+
+    client_config: &client_config
+      aws_access_key_id: { get_secret: aws_access_key_id }
+      aws_secret_access_key: { get_secret: aws_secret_access_key }
+      region_name: { get_secret: ec2_region_name }
 
 node_types:
   kubernetes_host:
@@ -46,7 +58,8 @@ node_types:
         default: 1024
       agent_config:
         default:
-          install_method: remote
+          network: { get_input: manager_network }
+          install_method: { get_input: install_method }
           user: { get_input: agent_user }
           port: 22
           key: { get_secret: agent_key_private }
@@ -58,6 +71,20 @@ node_types:
         default: { get_input: instance_type }
 
 node_templates:
+
+  centos_core_ami:
+    type: cloudify.nodes.aws.ec2.Image
+    properties:
+      resource_config:
+        kwargs:
+          Filters:
+          - Name: name
+            Values:
+            - 'CentOS 7.3.1611 x86_64 with cloud-init (HVM)'
+          - Name: owner-id
+            Values:
+            - '057448758665'
+      client_config: *client_config
 
   cloudify_host_cloud_config:
     type: cloudify.nodes.CloudInit.CloudConfig
@@ -85,6 +112,8 @@ node_templates:
         target: kubemanager_port
       - type: cloudify.relationships.depends_on
         target: cloudify_host_cloud_config
+      - type: cloudify.relationships.depends_on
+        target: centos_core_ami
     interfaces:
       cloudify.interfaces.lifecycle:
         create:
@@ -121,6 +150,8 @@ node_templates:
         target: kubeinstance_port
       - type: cloudify.relationships.depends_on
         target: cloudify_host_cloud_config
+      - type: cloudify.relationships.depends_on
+        target: centos_core_ami
     interfaces:
       cloudify.interfaces.lifecycle:
         create:
@@ -222,6 +253,10 @@ node_templates:
         - ip_protocol: tcp
           from_port: 10250
           to_port: 10250
+          cidr_ip: 0.0.0.0/0
+        - ip_protocol: tcp
+          from_port: 30000
+          to_port: 40000
           cidr_ip: 0.0.0.0/0
     relationships:
       - type: cloudify.aws.relationships.security_group_contained_in_vpc
