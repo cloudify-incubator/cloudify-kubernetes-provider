@@ -1,7 +1,7 @@
 tosca_definitions_version: cloudify_dsl_1_3
 
 imports:
-  - https://raw.githubusercontent.com/cloudify-cosmo/cloudify-openstack-plugin/2.4.1.1/plugin.yaml
+  - https://raw.githubusercontent.com/cloudify-cosmo/cloudify-openstack-plugin/2.5.2/plugin.yaml
   - common.yaml
 
 inputs:
@@ -21,6 +21,12 @@ inputs:
 
   agent_group:
     default: wheel
+
+  manager_network:
+    default: default
+
+  install_method:
+    default: remote
 
 dsl_definitions:
 
@@ -48,7 +54,8 @@ node_types:
       agent_config:
         default:
           user: { get_input: agent_user }
-          install_method: remote
+          network: { get_input: manager_network }
+          install_method: { get_input: install_method }
           port: 22
           key: { get_secret: agent_key_private }
       server:
