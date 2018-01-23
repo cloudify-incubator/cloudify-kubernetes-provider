@@ -61,8 +61,8 @@ if __name__ == '__main__':
                 }
             }
             _command = \
-                'go install src/github.com/cloudify-incubator/' \
-                'cloudify-rest-go-client/cfy-go/cfy-go.go'
+                'go get github.com/cloudify-incubator/' \
+                'cloudify-rest-go-client/cfy-go'
             execute_command(_command, extra_args=_extra_args)
             current_path = '/opt/cloudify-kubernetes-provider/bin/cfy-go'
         else:
