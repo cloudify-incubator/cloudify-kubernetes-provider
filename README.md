@@ -24,8 +24,6 @@ sudo apt-get install golang-go
 export GOBIN=`pwd`/bin
 export PATH=$PATH:`pwd`/bin
 export GOPATH=`pwd`
-# kubernetes
-sudo CGO_ENABLED=0 go install -a -installsuffix cgo std
 git submodule update
 # cfy part
 make all
@@ -124,7 +122,7 @@ cfy secret create kubernetes_master_ip -s "#"
 
 # upload
 git clone https://github.com/cloudify-incubator/cloudify-kubernetes-provider.git -b master --depth 1
-cd cloudify-rest-go-client
+cd cloudify-kubernetes-provider
 CLOUDPROVIDER=aws make upload
 cfy deployments create kubernetes_cluster -b kubernetes_cluster -i ../kubenetes.yaml --skip-plugins-validation
 cfy executions start install -d kubernetes_cluster
@@ -132,3 +130,7 @@ cfy executions start install -d kubernetes_cluster
 #delete
 cfy uninstall kubernetes_cluster -p ignore_failure=true --allow-custom-parameters
 ```
+
+Known issues:
+* Q: Many messages like 'Not found instances: Wrong content type: text/html' in logs on kubenetes manager host or 'kube-dns not Running' in cloudify logs.
+* A: Check in /root/cfy.json cloudify manager ip and ssl flag.
