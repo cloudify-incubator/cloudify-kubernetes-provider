@@ -45,6 +45,9 @@ inputs:
   install_method:
     default: remote
 
+  public_ip:
+    default: { get_attribute: [ kubemanager, public_ip ] }
+
 dsl_definitions:
 
   azure_config: &azure_config

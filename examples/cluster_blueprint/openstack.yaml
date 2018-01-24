@@ -28,6 +28,9 @@ inputs:
   install_method:
     default: remote
 
+  public_ip:
+    default: { get_attribute: [ kubemanager_port_elastic_ip, floating_ip_address ] }
+
 dsl_definitions:
 
   openstack_config: &openstack_config

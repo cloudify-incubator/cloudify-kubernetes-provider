@@ -264,6 +264,8 @@ node_templates:
       cloudify.interfaces.lifecycle:
         create:
           implementation: scripts/kubernetes/pre-master-config.py
+          inputs:
+            public_ip: { get_input: public_ip }
     relationships:
     - target: kubemanager
       type: cloudify.relationships.contained_in
@@ -286,6 +288,7 @@ node_templates:
     - target: pre_config_export
       type: cloudify.relationships.depends_on
 
+
   # managed instances and loadblancers
   kubernetes_cfy_kubernetes:
     type: cloudify.nodes.SoftwareComponent.CfyKubernetes
@@ -294,6 +297,16 @@ node_templates:
       type: cloudify.relationships.contained_in
     - target: config_export
       type: cloudify.relationships.depends_on
+
+#  kubernetes_ui:
+#    type: cloudify.nodes.ApplicationServer
+#    interfaces:
+#      cloudify.interfaces.lifecycle:
+#        create:
+#          implementation: scripts/kubernetes/create_ui.py
+#    relationships:
+#    - target: manager_kubenetes
+#      type: cloudify.relationships.depends_on
 
   kubernetes_autoscale:
     type: cloudify.nodes.SoftwareComponent.CfyAutoscale

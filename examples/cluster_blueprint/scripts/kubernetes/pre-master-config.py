@@ -17,7 +17,10 @@
 
 import subprocess
 import time
+
+
 from cloudify import ctx
+from cloudify.state import ctx_parameters as inputs
 from cloudify.exceptions import OperationRetry
 
 
@@ -50,85 +53,90 @@ def execute_command(_command, extra_args=None):
     return output
 
 
-ctx.logger.info("Reload kubeadm")
-status = execute_command('sudo systemctl daemon-reload')
-if status is False:
-    raise OperationRetry('Failed daemon-reload')
+if __name__ == '__main__':
+    ctx.logger.info("Reload kubeadm")
+    public_ip = inputs.get('public_ip')
+    status = execute_command('sudo systemctl daemon-reload')
+    if status is False:
+        raise OperationRetry('Failed daemon-reload')
 
+    restart_service = execute_command('sudo systemctl stop kubelet')
+    if restart_service is False:
+        raise OperationRetry('Failed to stop kubelet')
 
-restart_service = execute_command('sudo systemctl stop kubelet')
-if restart_service is False:
-    raise OperationRetry('Failed to stop kubelet')
-
-time.sleep(5)
-
-restart_service = execute_command('sudo systemctl start kubelet')
-
-for retry_count in range(10):
-    proc = subprocess.Popen(
-        ["sudo systemctl status kubelet | grep 'Active:'| awk '{print $2}'"],
-        stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True
-    )
-    (out, err) = proc.communicate()
-    ctx.logger.info("#{}: Kubelet state: {}".format(retry_count, out))
-    if out.strip() in ['active']:
-        break
-    ctx.logger.info("Wait little more.")
     time.sleep(5)
-else:
-    raise OperationRetry("Error: Service kubelet inactive.")
 
-ctx.logger.info("Init kubeadm")
-# echo 1 | sudo tee /proc/sys/net/bridge/bridge-nf-call-iptables
-status = execute_command("sudo sysctl net.bridge.bridge-nf-call-iptables=1")
-if status is False:
-    raise OperationRetry('Failed to set bridge-nf-call-iptables')
+    restart_service = execute_command('sudo systemctl start kubelet')
 
-status = execute_command('sudo kubeadm reset')
-if status is False:
-    raise OperationRetry('sudo kubeadm reset failed')
+    for retry_count in range(10):
+        proc = subprocess.Popen(
+            ["sudo systemctl status kubelet | grep 'Active:'| awk '{print $2}'"],
+            stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True
+        )
+        (out, err) = proc.communicate()
+        ctx.logger.info("#{}: Kubelet state: {}".format(retry_count, out))
+        if out.strip() in ['active']:
+            break
+        ctx.logger.info("Wait little more.")
+        time.sleep(5)
+    else:
+        raise OperationRetry("Error: Service kubelet inactive.")
 
-status = execute_command(
-    'sudo kubeadm init --pod-network-cidr 10.244.0.0/16 --token-ttl 0'
-)
-if status is False:
-    raise OperationRetry('kubeadm init failed')
+    ctx.logger.info("Init kubeadm")
+    # echo 1 | sudo tee /proc/sys/net/bridge/bridge-nf-call-iptables
+    status = execute_command("sudo sysctl net.bridge.bridge-nf-call-iptables=1")
+    if status is False:
+        raise OperationRetry('Failed to set bridge-nf-call-iptables')
 
-ctx.logger.info("Reload kubeadm")
-status = execute_command(
-    'sudo sed -i s|admission-control=Initializers,NamespaceLifecycle,'
-    'LimitRanger,ServiceAccount,PersistentVolumeLabel,DefaultStorageClass,'
-    'DefaultTolerationSeconds,NodeRestriction,ResourceQuota|admission-control='
-    'Initializers,NamespaceLifecycle,LimitRanger,ServiceAccount,'
-    'DefaultStorageClass,DefaultTolerationSeconds,NodeRestriction,'
-    'ResourceQuota|g /etc/kubernetes/manifests/kube-apiserver.yaml'
-)
+    status = execute_command('sudo kubeadm reset')
+    if status is False:
+        raise OperationRetry('sudo kubeadm reset failed')
 
-status = execute_command("sudo systemctl daemon-reload")
-if status is False:
-    raise OperationRetry('daemon-reload failed')
+    kubeadm_init = 'sudo kubeadm init' \
+                   ' --pod-network-cidr {0}' \
+                   ' --token-ttl {1}' \
+                   ' --apiserver-cert-extra-sans {2}' \
+                   ' --apiserver-advertise-address {3}'.format('10.244.0.0/16', '0', public_ip, public_ip)
 
-status = execute_command('sudo systemctl stop kubelet')
-if status is False:
-    raise OperationRetry('kubelet stop failed')
+    status = execute_command(kubeadm_init)
 
-time.sleep(5)
+    if status is False:
+        raise OperationRetry('kubeadm init failed')
 
-status = execute_command('sudo systemctl start kubelet')
-if status is False:
-    raise OperationRetry('kubelet start failed')
-
-
-for retry_count in range(10):
-    proc = subprocess.Popen(
-        ["sudo systemctl status kubelet | grep 'Active:'| awk '{print $2}'"],
-        stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True
+    ctx.logger.info("Reload kubeadm")
+    status = execute_command(
+        'sudo sed -i s|admission-control=Initializers,NamespaceLifecycle,'
+        'LimitRanger,ServiceAccount,PersistentVolumeLabel,DefaultStorageClass,'
+        'DefaultTolerationSeconds,NodeRestriction,ResourceQuota|admission-control='
+        'Initializers,NamespaceLifecycle,LimitRanger,ServiceAccount,'
+        'DefaultStorageClass,DefaultTolerationSeconds,NodeRestriction,'
+        'ResourceQuota|g /etc/kubernetes/manifests/kube-apiserver.yaml'
     )
-    (out, err) = proc.communicate()
-    ctx.logger.info("#{}: Kubelet state: {}".format(retry_count, out))
-    if out.strip() in ['active']:
-        break
-    ctx.logger.info("Wait little more.")
+
+    status = execute_command("sudo systemctl daemon-reload")
+    if status is False:
+        raise OperationRetry('daemon-reload failed')
+
+    status = execute_command('sudo systemctl stop kubelet')
+    if status is False:
+        raise OperationRetry('kubelet stop failed')
+
     time.sleep(5)
-else:
-    raise OperationRetry("Error: Service kubelet inactive.")
+
+    status = execute_command('sudo systemctl start kubelet')
+    if status is False:
+        raise OperationRetry('kubelet start failed')
+
+    for retry_count in range(10):
+        proc = subprocess.Popen(
+            ["sudo systemctl status kubelet | grep 'Active:'| awk '{print $2}'"],
+            stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True
+        )
+        (out, err) = proc.communicate()
+        ctx.logger.info("#{}: Kubelet state: {}".format(retry_count, out))
+        if out.strip() in ['active']:
+            break
+        ctx.logger.info("Wait little more.")
+        time.sleep(5)
+    else:
+        raise OperationRetry("Error: Service kubelet inactive.")

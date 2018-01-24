@@ -1,0 +1,356 @@
+tosca_definitions_version: cloudify_dsl_1_3
+
+imports:
+  - http://www.getcloudify.org/spec/cloudify/4.2/types.yaml
+  - https://raw.githubusercontent.com/cloudify-incubator/cloudify-kubernetes-plugin/2.0.0/plugin.yaml
+
+
+inputs:
+
+  kubernetes_master_ip:
+    type: string
+    default: { get_secret: kubernetes_master_ip }
+
+  kubernetes_master_port:
+    type: string
+    default: { get_secret: kubernetes_master_port }
+
+  kubernetes_certificate_authority_data:
+    default: { get_secret: kubernetes_certificate_authority_data }
+
+  kubernetes-admin_client_certificate_data:
+    default: { get_secret: kubernetes-admin_client_certificate_data }
+
+  kubernetes-admin_client_key_data:
+    default: { get_secret: kubernetes-admin_client_key_data }
+
+  kubernetes_master_configuration:
+    default:
+      apiVersion: v1
+      kind: Config
+      preferences: {}
+      current-context: kubernetes-admin@kubernetes
+      clusters:
+      - name: kubernetes
+        cluster:
+          certificate-authority-data: { get_input: kubernetes_certificate_authority_data }
+          server: { concat: [ 'https://', { get_input: kubernetes_master_ip}, ':', { get_input: kubernetes_master_port } ] }
+      contexts:
+      - name: kubernetes-admin@kubernetes
+        context:
+          cluster: kubernetes
+          user: kubernetes-admin
+      users:
+      - name: kubernetes-admin
+        user:
+          client-certificate-data: { get_input: kubernetes-admin_client_certificate_data }
+          client-key-data:  { get_input: kubernetes-admin_client_key_data }
+
+  kubernetes_configuration_file_content:
+    description: >
+      File content of kubernetes master YAML configuration
+    default: { get_input: kubernetes_master_configuration }
+
+
+node_types:
+
+  cloudify.kubernetes.resources.dashboard.Secret:
+    derived_from: cloudify.kubernetes.resources.CustomBlueprintDefinedResource
+    properties:
+      api_mapping:
+        default:
+          create:
+            api: CoreV1Api
+            method: create_namespaced_secret
+            payload: V1Secret
+          read:
+            api: CoreV1Api
+            method: read_namespaced_secret
+          delete:
+            api: CoreV1Api
+            method: delete_namespaced_secret
+            payload: V1DeleteOptions
+          update:
+            api: CoreV1Api
+            method: patch_namespaced_secret
+
+  cloudify.kubernetes.resources.dashboard.ServiceAccount:
+    derived_from: cloudify.kubernetes.resources.CustomBlueprintDefinedResource
+    properties:
+      api_mapping:
+        default:
+          create:
+            api: CoreV1Api
+            method: create_namespaced_service_account
+            payload: V1ServiceAccount
+          read:
+            api: CoreV1Api
+            method: read_namespaced_service_account
+          delete:
+            api: CoreV1Api
+            method: delete_namespaced_service_account
+            payload: V1DeleteOptions
+          update:
+            api: CoreV1Api
+            method: patch_namespaced_service_account
+
+  cloudify.kubernetes.resources.dashboard.Role:
+    derived_from: cloudify.kubernetes.resources.CustomBlueprintDefinedResource
+    properties:
+      api_mapping:
+        default:
+          create:
+            api: RbacAuthorizationV1Api
+            method: create_namespaced_role
+            payload: V1Role
+          read:
+            api: RbacAuthorizationV1Api
+            method: read_namespaced_role
+          delete:
+            api: RbacAuthorizationV1Api
+            method: delete_namespaced_role
+            payload: V1DeleteOptions
+          update:
+            api: RbacAuthorizationV1Api
+            method: patch_namespaced_role
+
+  cloudify.kubernetes.resources.dashboard.RoleBinding:
+    derived_from: cloudify.kubernetes.resources.CustomBlueprintDefinedResource
+    properties:
+      api_mapping:
+        default:
+          create:
+            api: RbacAuthorizationV1Api
+            method: create_namespaced_role_binding
+            payload: V1RoleBinding
+          read:
+            api: RbacAuthorizationV1Api
+            method: read_namespaced_role_binding
+          delete:
+            api: RbacAuthorizationV1Api
+            method: delete_namespaced_role_binding
+            payload: V1DeleteOptions
+          update:
+            api: RbacAuthorizationV1Api
+            method: patch_namespaced_role_binding
+
+
+node_templates:
+
+  master:
+    type: cloudify.kubernetes.nodes.Master
+    properties:
+      configuration:
+        file_content: { get_input: kubernetes_configuration_file_content }
+
+  dashboard_secret:
+    type: loudify.kubernetes.resources.dashboard.Secret
+    properties:
+      definition:
+        apiVersion: v1
+        kind: Secret
+        metadata:
+          labels:
+            k8s-app: kubernetes-dashboard
+          name: kubernetes-dashboard-certs
+          namespace: kube-system
+        type: Opaque
+    relationships:
+      - type: cloudify.kubernetes.relationships.managed_by_master
+        target: master
+
+  dashboard_service_account:
+    type: cloudify.kubernetes.resources.dashboard.ServiceAccount
+    properties:
+      definition:
+        apiVersion: v1
+        kind: ServiceAccount
+        metadata:
+          labels:
+            k8s-app: kubernetes-dashboard
+          name: kubernetes-dashboard
+          namespace: kube-system
+    relationships:
+      - type: cloudify.kubernetes.relationships.managed_by_master
+        target: kubernetes_master
+      - type: cloudify.relationships.depends_on
+        target: dashboard_secret
+
+  dashboard_role:
+    type: cloudify.kubernetes.resources.dashboard.Role
+    properties:
+      definition:
+        apiVersion: rbac.authorization.k8s.io/v1
+        kind: Role
+        metadata:
+          name: kubernetes-dashboard-minimal
+          namespace: kube-system
+        rules:
+          # Allow Dashboard to create 'kubernetes-dashboard-key-holder' secret.
+        - apiGroups: [""]
+          resources: ["secrets"]
+          verbs: ["create"]
+          # Allow Dashboard to create 'kubernetes-dashboard-settings' config map.
+        - apiGroups: [""]
+          resources: ["configmaps"]
+          verbs: ["create"]
+          # Allow Dashboard to get, update and delete Dashboard exclusive secrets.
+        - apiGroups: [""]
+          resources: ["secrets"]
+          resourceNames: ["kubernetes-dashboard-key-holder", "kubernetes-dashboard-certs"]
+          verbs: ["get", "update", "delete"]
+          # Allow Dashboard to get and update 'kubernetes-dashboard-settings' config map.
+        - apiGroups: [""]
+          resources: ["configmaps"]
+          resourceNames: ["kubernetes-dashboard-settings"]
+          verbs: ["get", "update"]
+          # Allow Dashboard to get metrics from heapster.
+        - apiGroups: [""]
+          resources: ["services"]
+          resourceNames: ["heapster"]
+          verbs: ["proxy"]
+        - apiGroups: [""]
+          resources: ["services/proxy"]
+          resourceNames: ["heapster", "http:heapster:", "https:heapster:"]
+          verbs: ["get"]
+    relationships:
+      - type: cloudify.kubernetes.relationships.managed_by_master
+        target: kubernetes_master
+      - type: cloudify.relationships.depends_on
+        target: dashboard_service_account
+
+  dashboard_role_binding:
+    type: cloudify.kubernetes.resources.dashboard.RoleBinding
+    properties:
+      definition:
+        apiVersion: rbac.authorization.k8s.io/v1
+        kind: RoleBinding
+        metadata:
+          name: kubernetes-dashboard-minimal
+          namespace: kube-system
+        roleRef:
+          apiGroup: rbac.authorization.k8s.io
+          kind: Role
+          name: kubernetes-dashboard-minimal
+        subjects:
+        - kind: ServiceAccount
+          name: kubernetes-dashboard
+          namespace: kube-system
+    relationships:
+      - type: cloudify.kubernetes.relationships.managed_by_master
+        target: kubernetes_master
+      - type: cloudify.relationships.depends_on
+        target: dashboard_role
+
+  dashboard_deploy:
+    type: cloudify.kubernetes.resources.Deployment
+    properties:
+      definition:
+        apiVersion: apps/v1beta2
+        kind: Deployment
+        metadata:
+          labels:
+            k8s-app: kubernetes-dashboard
+          name: kubernetes-dashboard
+          namespace: kube-system
+        spec:
+          replicas: 1
+          revisionHistoryLimit: 10
+          selector:
+            matchLabels:
+              k8s-app: kubernetes-dashboard
+          template:
+            metadata:
+              labels:
+                k8s-app: kubernetes-dashboard
+            spec:
+              containers:
+              - name: kubernetes-dashboard
+                image: k8s.gcr.io/kubernetes-dashboard-amd64:v1.8.2
+                ports:
+                - containerPort: 8443
+                  protocol: TCP
+                args:
+                  - --auto-generate-certificates
+                  # Uncomment the following line to manually specify Kubernetes API server Host
+                  # If not specified, Dashboard will attempt to auto discover the API server and connect
+                  # to it. Uncomment only if the default does not work.
+                  # - --apiserver-host=http://my-address:port
+                volumeMounts:
+                - name: kubernetes-dashboard-certs
+                  mountPath: /certs
+                  # Create on-disk volume to store exec logs
+                - mountPath: /tmp
+                  name: tmp-volume
+                livenessProbe:
+                  httpGet:
+                    scheme: HTTPS
+                    path: /
+                    port: 8443
+                  initialDelaySeconds: 30
+                  timeoutSeconds: 30
+              volumes:
+              - name: kubernetes-dashboard-certs
+                secret:
+                  secretName: kubernetes-dashboard-certs
+              - name: tmp-volume
+                emptyDir: {}
+              serviceAccountName: kubernetes-dashboard
+              # Comment the following tolerations if Dashboard must not be deployed on master
+              tolerations:
+              - key: node-role.kubernetes.io/master
+                effect: NoSchedule
+            relationships:
+              - type: cloudify.kubernetes.relationships.managed_by_master
+                target: kubernetes_master
+              - type: cloudify.relationships.depends_on
+                target: dashboard_role_binding
+
+  dashboard_service:
+    type: cloudify.kubernetes.resources.Service
+    properties:
+      definition:
+        apiVersion: v1
+        kind: Service
+        metadata:
+          labels:
+            k8s-app: kubernetes-dashboard
+          name: kubernetes-dashboard
+          namespace: kube-system
+        spec:
+          ports:
+            - port: 443
+              targetPort: 8443
+          selector:
+            k8s-app: kubernetes-dashboard
+    relationships:
+    - type: cloudify.kubernetes.relationships.managed_by_master
+      target: kubernetes_master
+    - type: cloudify.relationships.depends_on
+      target: dashboard_deploy
+
+  dashboard_admin_service_account:
+    type: cloudify.kubernetes.resources.dashboard.ServiceAccount
+    properties:
+      definition:
+        apiVersion: v1
+        kind: ServiceAccount
+        metadata:
+          name: admin-user
+          namespace: kube-system
+    relationships:
+      - type: cloudify.kubernetes.relationships.managed_by_master
+        target: kubernetes_master
+      - type: cloudify.relationships.depends_on
+        target: dashboard_service
+
+  dashboard_service_account_cluster_role:
+    type: cloudify.kubernetes.resources.FileDefinedResource
+    properties:
+      file:
+        resource_path: ../dashboard/cluster-role-binding.yaml
+    relationships:
+      - type: cloudify.kubernetes.relationships.managed_by_master
+        target: kubernetes_master
+      - type: cloudify.relationships.depends_on
+        target: dashboard_admin_service_account
