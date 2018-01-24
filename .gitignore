@@ -20,3 +20,6 @@
 examples/cluster_blueprint/resources/cfy-kubernetes
 examples/cluster_blueprint/resources/cfy-autoscale
 examples/cluster_blueprint/resources/cfy-go
+
+# IDE
+.idea

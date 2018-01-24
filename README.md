@@ -130,3 +130,16 @@ cfy uninstall kubernetes_cluster -p ignore_failure=true --allow-custom-parameter
 Known issues:
 * Q: Many messages like 'Not found instances: Wrong content type: text/html' in logs on kubenetes manager host or 'kube-dns not Running' in cloudify logs.
 * A: Check in /root/cfy.json cloudify manager ip and ssl flag.
+
+
+## Upload Kubernetes Dashboard UI Blueprint To Manager
+```shell
+
+1. Update dashboard input file ``dashboard_input.yaml``
+2. Install the dashboard: cfy install -b kubernetes-dashboard -n kubernetes-dashboard cloudify-kubernetes-provider/examples/cluster_blueprint/dashboard.yaml -i cloudify-kubernetes-provider/examples/cluster_blueprint/dashboard_input.yaml
+3. Run the following command: cfy deployment outputs kubernetes-dashboard
+4. The output of deployment command should generate ``dashboard_port`` &&  ``bearer_token``
+5. Access the Dashboard using https://MASTER_IP:{{dashboard_port}}
+6. Login To The Dashboard using token authentication using the {{bearer_token}}
+
+```

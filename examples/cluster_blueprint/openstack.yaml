@@ -28,6 +28,7 @@ inputs:
   install_method:
     default: remote
 
+
 dsl_definitions:
 
   openstack_config: &openstack_config
