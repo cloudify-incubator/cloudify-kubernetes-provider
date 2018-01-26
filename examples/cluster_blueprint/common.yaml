@@ -68,7 +68,7 @@ inputs:
 
   cfy_ssl:
     type: boolean
-    default: false
+    default: true
 
   update_package_manager:
     type: boolean
@@ -260,12 +260,24 @@ node_templates:
     - target: manager_kubenetes
       type: cloudify.relationships.depends_on
 
+  pre_config_export:
+    type: cloudify.nodes.ApplicationServer
+    interfaces:
+      cloudify.interfaces.lifecycle:
+        create:
+          implementation: scripts/kubernetes/pre-master-config.py
+    relationships:
+    - target: kubemanager
+      type: cloudify.relationships.contained_in
+    - target: manager_kubenetes
+      type: cloudify.relationships.depends_on
+
   config_export:
     type: cloudify.nodes.ApplicationServer
     interfaces:
       cloudify.interfaces.lifecycle:
         create:
-          implementation: scripts/kubernetes/master-config.sh
+          implementation: scripts/kubernetes/master-config.py
         configure:
           implementation: scripts/kubernetes/create_secrets.py
         start:
@@ -273,7 +285,7 @@ node_templates:
     relationships:
     - target: kubemanager
       type: cloudify.relationships.contained_in
-    - target: manager_kubenetes
+    - target: pre_config_export
       type: cloudify.relationships.depends_on
 
   kubernetes_autoscale:
