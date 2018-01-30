@@ -25,11 +25,7 @@ export GOBIN=`pwd`/bin
 export PATH=$PATH:`pwd`/bin
 export GOPATH=`pwd`
 git submodule update
-# cfy part
 make all
-# build autoscaller
-cd src/k8s.io/autoscaler/cluster-autoscaler/
-make
 ```
 
 # reformat code

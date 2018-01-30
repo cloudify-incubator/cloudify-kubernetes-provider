@@ -230,14 +230,6 @@ node_templates:
     - target: kubernetes_master_cfy_go
       type: cloudify.relationships.depends_on
 
-  kubernetes_master_cfy_kubernetes:
-    type: cloudify.nodes.SoftwareComponent.CfyKubernetes
-    relationships:
-    - target: kubemanager
-      type: cloudify.relationships.contained_in
-    - target: kubernetes_master_cfy_config
-      type: cloudify.relationships.depends_on
-
   kubemanager_docker:
     type: cloudify.nodes.ApplicationServer.Docker
     relationships:
@@ -249,7 +241,7 @@ node_templates:
     relationships:
     - target: kubemanager
       type: cloudify.relationships.contained_in
-    - target: kubernetes_master_cfy_kubernetes
+    - target: kubernetes_master_cfy_config
       type: cloudify.relationships.depends_on
 
   kubernetes_master_node:
@@ -288,12 +280,21 @@ node_templates:
     - target: pre_config_export
       type: cloudify.relationships.depends_on
 
+  # managed instances and loadblancers
+  kubernetes_cfy_kubernetes:
+    type: cloudify.nodes.SoftwareComponent.CfyKubernetes
+    relationships:
+    - target: kubemanager
+      type: cloudify.relationships.contained_in
+    - target: config_export
+      type: cloudify.relationships.depends_on
+
   kubernetes_autoscale:
     type: cloudify.nodes.SoftwareComponent.CfyAutoscale
     relationships:
     - target: kubemanager
       type: cloudify.relationships.contained_in
-    - target: config_export
+    - target: kubernetes_cfy_kubernetes
       type: cloudify.relationships.depends_on
 
 ### KUBERNETES_SLAVE
@@ -343,7 +344,7 @@ node_templates:
       type: cloudify.relationships.contained_in
     - target: kubernetes_slave_docker
       type: cloudify.relationships.depends_on
-    - target: config_export
+    - target: kubernetes_cfy_kubernetes
       type: cloudify.relationships.depends_on
 
   kubernetes_slave_node:
