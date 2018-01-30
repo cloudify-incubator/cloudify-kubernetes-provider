@@ -1,9 +1,28 @@
 #!/usr/bin/env python
+#
+# Copyright (c) 2017 GigaSpaces Technologies Ltd. All rights reserved
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#        http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+#
 
 import os
 import subprocess
 from cloudify import ctx
-from cloudify.exceptions import HttpException
+from cloudify.exceptions import (
+    HttpException,
+    NonRecoverableError,
+    OperationRetry
+)
 from cloudify.state import ctx_parameters as inputs
 
 
@@ -46,36 +65,83 @@ if __name__ == '__main__':
             '/usr/bin/cfy-kubernetes')
     execute_command('sudo mkdir -p /opt/cloudify-kubernetes-provider/bin')
 
-    try:
-        cfy_kubernetes_binary = \
-            ctx.download_resource('resources/cfy-kubernetes')
-    except HttpException:
-        ctx.logger.debug('Build cfy-kubernetes.')
-        execute_command('sudo mkdir -p /opt/cloudify-kubernetes-provider')
-        _cwd = '/opt/cloudify-kubernetes-provider'
-        _extra_args = {
-            'cwd': _cwd,
-            'env': {
-                'GOBIN': os.path.join(_cwd, 'bin'),
-                'GOPATH': _cwd,
-                'PATH': ':'.join(
-                    [os.getenv('PATH'), os.path.join(_cwd, 'bin')])
+    if ctx.operation.retry_number == 1:
+        try:
+            cfy_kubernetes_binary = \
+                ctx.download_resource('resources/cfy-kubernetes')
+        except HttpException:
+            ctx.logger.debug('Build cfy-kubernetes.')
+            execute_command('sudo mkdir -p /opt/cloudify-kubernetes-provider')
+            _cwd = '/opt/cloudify-kubernetes-provider'
+            _extra_args = {
+                'cwd': _cwd,
+                'env': {
+                    'GOBIN': os.path.join(_cwd, 'bin'),
+                    'GOPATH': _cwd,
+                    'PATH': ':'.join(
+                        [os.getenv('PATH'), os.path.join(_cwd, 'bin')])
+                }
             }
-        }
-        _command = \
-            'go install src/cfy-kubernetes.go'
-        execute_command(_command, extra_args=_extra_args)
-    else:
-        ctx.logger.debug('cfy-kubernetes already built/downloaded.')
+            _command = \
+                'go install src/cfy-kubernetes.go'
+            execute_command(_command, extra_args=_extra_args)
+            cfy_kubernetes_binary = \
+                '/opt/cloudify-kubernetes-provider/bin/cfy-kubernetes'
+        else:
+            ctx.logger.debug('cfy-kubernetes already built/downloaded.')
 
-        execute_command('sudo chmod -R 755 /opt/')
-        execute_command('sudo mkdir -p /opt/bin')
+            execute_command('sudo chmod -R 755 /opt/')
+            execute_command('sudo mkdir -p /opt/bin')
 
-        # TODO: Understand how to make sure we don't need this.
-        execute_command(
-            'sudo cp {0} {1}'.format(
-                cfy_kubernetes_binary,
-                '/opt/cloudify-kubernetes-provider/bin/cfy-kubernetes'))
+            # TODO: Understand how to make sure we don't need this.
+            execute_command(
+                'sudo cp {0} {1}'.format(
+                    cfy_kubernetes_binary,
+                    '/opt/cloudify-kubernetes-provider/bin/cfy-kubernetes'))
+            execute_command(
+                'sudo cp {0} {1}'.format(
+                    cfy_kubernetes_binary, cfy_kubernetes_binary_path))
+
+        ctx.logger.debug('cfy-kubernetes built/downloaded.')
         execute_command(
             'sudo cp {0} {1}'.format(
                 cfy_kubernetes_binary, cfy_kubernetes_binary_path))
+        execute_command(
+            'sudo chmod 555 {0}'.format(cfy_kubernetes_binary_path))
+        execute_command(
+            'sudo chown root:root {0}'.format(cfy_kubernetes_binary_path))
+
+        try:
+            _tv = {'home_dir': os.path.expanduser('~')}
+            cfy_autoscale_service = \
+                ctx.download_resource_and_render(
+                    'resources/cfy-kubernetes.service',
+                    template_variables=_tv)
+        except HttpException:
+            raise NonRecoverableError(
+                'cfy-kubernetes.service not in resources.')
+        else:
+            execute_command(
+                'sudo cp {0} {1}'.format(
+                    cfy_autoscale_service,
+                    '/etc/systemd/system/cfy-kubernetes.service'))
+            execute_command(
+                'sudo cp /etc/systemd/system/cfy-kubernetes.service '
+                '/etc/systemd/system/multi-user.target.wants/')
+            execute_command('sudo systemctl daemon-reload')
+            execute_command('sudo systemctl enable cfy-kubernetes.service')
+            execute_command('sudo systemctl start cfy-kubernetes.service')
+
+    status = ''
+    systemctl_status = \
+        execute_command('sudo systemctl status cfy-kubernetes.service')
+    if not isinstance(systemctl_status, basestring):
+        raise OperationRetry(
+            'check sudo systemctl status cfy-kubernetes.service')
+    for line in systemctl_status.split('\n'):
+        if 'Active:' in line:
+            status = line.strip()
+    zstatus = status.split(' ')
+    ctx.logger.info('cfy-kubernetes status: {0}'.format(zstatus))
+    if not len(zstatus) > 1 and 'active' not in zstatus[1]:
+        raise OperationRetry('Wait a little more.')
