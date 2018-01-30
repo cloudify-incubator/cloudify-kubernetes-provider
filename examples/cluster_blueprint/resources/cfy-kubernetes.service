@@ -2,7 +2,7 @@
 Description=cfy kubernetes
 
 [Service]
-ExecStart=/usr/bin/cfy-kubernetes --kubeconfig $HOME/.kube/config --cloud-config $HOME/cfy.json
+ExecStart=/usr/bin/cfy-kubernetes --kubeconfig {{ home_dir }}/.kube/config --cloud-config {{ home_dir }}/cfy.json
 KillMode=process
 Restart=on-failure
 RestartSec=60s
