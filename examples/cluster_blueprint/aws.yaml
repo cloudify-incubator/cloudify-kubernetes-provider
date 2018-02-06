@@ -161,6 +161,26 @@ node_templates:
               placement: { get_secret: availability_zone }
               user_data: { get_attribute: [ cloudify_host_cloud_config, cloud_config ] }
 
+  loadbalancerinstance:
+    type: kubernetes_host
+    relationships:
+      - type: cloudify.relationships.contained_in
+        target: vpc
+      - type: cloudify.aws.relationships.instance_connected_to_eni
+        target: kubeloadbalancer_port
+      - type: cloudify.relationships.depends_on
+        target: cloudify_host_cloud_config
+      - type: cloudify.relationships.depends_on
+        target: centos_core_ami
+    interfaces:
+      cloudify.interfaces.lifecycle:
+        create:
+          implementation: aws.cloudify_aws.ec2.instance.create
+          inputs:
+            args:
+              placement: { get_secret: availability_zone }
+              user_data: { get_attribute: [ cloudify_host_cloud_config, cloud_config ] }
+
   kubeinstance_port:
     type: cloudify.aws.nodes.Interface
     properties:
@@ -175,7 +195,30 @@ node_templates:
       - type: cloudify.aws.relationships.connected_to_elastic_ip
         target: kubeinstance_port_elastic_ip
 
+  kubeloadbalancer_port:
+    type: cloudify.aws.nodes.Interface
+    properties:
+      aws_config: *aws_config
+    relationships:
+      - type: cloudify.relationships.contained_in
+        target: vpc
+      - type: cloudify.aws.relationships.connected_to_subnet
+        target: public_subnet
+      - type: cloudify.aws.relationships.connected_to_security_group
+        target: security_group
+      - type: cloudify.aws.relationships.connected_to_elastic_ip
+        target: kubeloadbalancer_port_elastic_ip
+
   kubeinstance_port_elastic_ip:
+    type: cloudify.aws.nodes.ElasticIP
+    properties:
+      aws_config: *aws_config
+      domain: vpc
+    relationships:
+      - type: cloudify.relationships.contained_in
+        target: vpc
+
+  kubeloadbalancer_port_elastic_ip:
     type: cloudify.aws.nodes.ElasticIP
     properties:
       aws_config: *aws_config
@@ -308,6 +351,11 @@ groups:
       - kubeinstance_port
       - kubeinstance_port_elastic_ip
 
+  k8s_load_scale_group:
+    members:
+      - loadbalancerinstance
+      - loadbalancerinstance_proxy
+
 policies:
 
   kubernetes_node_vms_scaling_policy:
@@ -318,3 +366,11 @@ policies:
       max_instances: 20
       default_instances:  1
     targets: [k8s_node_scale_group]
+
+  kubernetes_load_vms_scaling_policy:
+    type: cloudify.policies.scaling
+    properties:
+      min_instances: 1
+      max_instances: 20
+      default_instances:  1
+    targets: [k8s_load_scale_group]

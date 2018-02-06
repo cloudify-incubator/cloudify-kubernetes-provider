@@ -22,7 +22,6 @@ import (
 	"github.com/golang/glog"
 	"k8s.io/kubernetes/cmd/cloud-controller-manager/app"
 	"k8s.io/kubernetes/cmd/cloud-controller-manager/app/options"
-	"k8s.io/kubernetes/pkg/cloudprovider"
 	_ "k8s.io/kubernetes/pkg/cloudprovider/providers"
 	_ "k8s.io/kubernetes/pkg/cloudprovider/providers/cloudifyprovider" // only init from package
 	"k8s.io/kubernetes/pkg/kubectl/util/logs"
@@ -42,6 +41,9 @@ func addNativeFlags(s *options.CloudControllerManagerServer, fs *flag.FlagSet) *
 	fs.StringVar(&s.Kubeconfig, "kubeconfig", s.Kubeconfig, "Path to kubeconfig file with authorization and master location information.")
 	fs.StringVar(&s.CloudConfigFile, "cloud-config", s.CloudConfigFile, "The path to the cloud provider configuration file.  Empty string for no configuration file.")
 	fs.BoolVar(&versionShow, "version", false, "Path to kubeconfig file with authorization and master location information.")
+
+	// hardcoded use cloudify
+	fs.StringVar(&s.CloudProvider, "cloud-provider", "cloudify", "The provider for cloud services. Empty string for no provider.")
 	return fs
 }
 
@@ -62,12 +64,7 @@ func main() {
 		os.Exit(0)
 	}
 
-	cloud, err := cloudprovider.InitCloudProvider("cloudify", s.CloudConfigFile)
-	if err != nil {
-		glog.Fatal(err)
-	}
-
-	if err := app.Run(s, cloud); err != nil {
+	if err := app.Run(s); err != nil {
 		glog.Fatal(err)
 	}
 }

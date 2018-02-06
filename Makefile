@@ -61,15 +61,18 @@ pkg/linux_amd64/${PACKAGEPATH}/cloudify/utils.a: ${CLOUDIFYUTILS}
 # cloudify
 CLOUDIFYCOMMON := \
 	src/${PACKAGEPATH}/cloudify/scalegroup.go \
+	src/${PACKAGEPATH}/cloudify/scalenodes.go \
 	src/${PACKAGEPATH}/cloudify/client.go \
 	src/${PACKAGEPATH}/cloudify/nodes.go \
 	src/${PACKAGEPATH}/cloudify/plugins.go \
 	src/${PACKAGEPATH}/cloudify/instances.go \
+	src/${PACKAGEPATH}/cloudify/loadbalancer.go \
 	src/${PACKAGEPATH}/cloudify/events.go \
 	src/${PACKAGEPATH}/cloudify/blueprints.go \
 	src/${PACKAGEPATH}/cloudify/status.go \
 	src/${PACKAGEPATH}/cloudify/executions.go \
-	src/${PACKAGEPATH}/cloudify/deployments.go
+	src/${PACKAGEPATH}/cloudify/deployments.go \
+	src/${PACKAGEPATH}/cloudify/tenants.go
 
 pkg/linux_amd64/${PACKAGEPATH}/cloudify.a: ${CLOUDIFYCOMMON} pkg/linux_amd64/${PACKAGEPATH}/cloudify/rest.a
 	$(call colorecho,"Build: ",$@)
@@ -92,7 +95,8 @@ CFYGO := \
 	src/${PACKAGEPATH}/cfy-go/main.go \
 	src/${PACKAGEPATH}/cfy-go/nodes.go \
 	src/${PACKAGEPATH}/cfy-go/plugins.go \
-	src/${PACKAGEPATH}/cfy-go/scaling.go
+	src/${PACKAGEPATH}/cfy-go/scaling.go \
+	src/${PACKAGEPATH}/cfy-go/tenants.go
 
 bin/cfy-go: ${CFYGO} ${CFYGOLIBS}
 	$(call colorecho,"Install: ", $@)
