@@ -1,5 +1,4 @@
 #!/usr/bin/env python
-#
 # Copyright (c) 2017 GigaSpaces Technologies Ltd. All rights reserved
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -15,15 +14,8 @@
 # limitations under the License.
 #
 
-import base64
 import subprocess
-import tempfile
 from cloudify import ctx
-from cloudify.state import ctx_parameters as inputs
-from cloudify.exceptions import OperationRetry
-
-JOIN = 'sudo kubeadm join --token {0} {1}:6443 --skip-preflight-checks'
-IP_TABLES_PATH = '/proc/sys/net/bridge/bridge-nf-call-iptables'
 
 
 def execute_command(_command, extra_args=None):
@@ -56,32 +48,9 @@ def execute_command(_command, extra_args=None):
 
 
 if __name__ == '__main__':
-
-    token = inputs.get('token')
-    ip = inputs.get('ip')
-    ctx.logger.info('Try to join to {0} by {1}'.format(ip, token))
-
-    if ctx.operation.retry_number == 0:
-
-        _, temp_mount_file = tempfile.mkstemp()
-        with open(temp_mount_file, 'w') as outfile:
-            outfile.write('1')
-
-        execute_command(
-            'sudo cp {0} {1}'.format(
-                temp_mount_file, IP_TABLES_PATH))
-
-        token_decoded = base64.b64decode(token)
-        execute_command(JOIN.format(token_decoded, ip))
-
-    status = ''
-    systemctl_status = execute_command('sudo systemctl status kubelet')
-    if not isinstance(systemctl_status, basestring):
-        raise OperationRetry('check sudo systemctl status kubelet')
-    for line in systemctl_status.split('\n'):
-        if 'Active:' in line:
-            status = line.strip()
-    zstatus = status.split(' ')
-    ctx.logger.info('Kublet status: {0}'.format(zstatus))
-    if not len(zstatus) > 1 and 'active' not in zstatus[1]:
-        raise OperationRetry('Wait a little more.')
+    ctx.instance.runtime_properties["proxy_ports"] = {}
+    ctx.instance.runtime_properties["proxy_nodes"] = {}
+    ctx.instance.runtime_properties["proxy_cluster"] = ""
+    ctx.instance.runtime_properties["proxy_name"] = ""
+    ctx.instance.runtime_properties["proxy_namespace"] = ""
+    execute_command("sudo systemctl stop haproxy")

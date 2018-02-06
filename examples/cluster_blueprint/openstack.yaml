@@ -142,6 +142,24 @@ node_templates:
               flavor: { get_input: flavor }
               userdata: { get_attribute: [ cloudify_host_cloud_config, cloud_config ] }
 
+  loadbalancerinstance:
+    type: kubernetes_host
+    properties:
+      management_network_name: { get_property: [ public_network, resource_id ] }
+    relationships:
+    - type: cloudify.relationships.contained_in
+      target: k8s_loadbalancer_scaling_tier
+    - target: kubeloadbalancer_port
+      type: cloudify.openstack.server_connected_to_port
+    interfaces:
+      cloudify.interfaces.lifecycle:
+        create:
+          inputs:
+            args:
+              image: { get_input: image }
+              flavor: { get_input: flavor }
+              userdata: { get_attribute: [ cloudify_host_cloud_config, cloud_config ] }
+
   kubeinstance_port:
     type: cloudify.openstack.nodes.Port
     properties:
@@ -158,6 +176,22 @@ node_templates:
     - type: cloudify.openstack.port_connected_to_floating_ip
       target: kubeinstance_port_elastic_ip
 
+  kubeloadbalancer_port:
+    type: cloudify.openstack.nodes.Port
+    properties:
+      openstack_config: *openstack_config
+    relationships:
+    - type: cloudify.relationships.contained_in
+      target: k8s_loadbalancer_scaling_tier
+    - type: cloudify.relationships.connected_to
+      target: public_network
+    - type: cloudify.relationships.depends_on
+      target: public_subnet
+    - type: cloudify.openstack.port_connected_to_security_group
+      target: kubernetes_security_group
+    - type: cloudify.openstack.port_connected_to_floating_ip
+      target: kubeloadbalancer_port_elastic_ip
+
   kubeinstance_port_elastic_ip:
     type: cloudify.openstack.nodes.FloatingIP
     properties:
@@ -167,6 +201,16 @@ node_templates:
     relationships:
     - type: cloudify.relationships.contained_in
       target: k8s_node_scaling_tier
+
+  kubeloadbalancer_port_elastic_ip:
+    type: cloudify.openstack.nodes.FloatingIP
+    properties:
+      openstack_config: *openstack_config
+      floatingip:
+        floating_network_name: { get_property: [ external_network, resource_id ] }
+    relationships:
+    - type: cloudify.relationships.contained_in
+      target: k8s_loadbalancer_scaling_tier
 
   kubernetes_security_group:
     type: cloudify.openstack.nodes.SecurityGroup
@@ -277,6 +321,9 @@ node_templates:
   k8s_node_scaling_tier:
     type: cloudify.nodes.Root
 
+  k8s_loadbalancer_scaling_tier:
+    type: cloudify.nodes.Root
+
 groups:
 
   k8s_node_scale_group:
@@ -291,6 +338,11 @@ groups:
     - kubeinstance_port
     - kubeinstance_port_elastic_ip
 
+  k8s_load_scale_group:
+    members:
+      - loadbalancerinstance
+      - loadbalancerinstance_proxy
+
 policies:
 
   kubernetes_node_vms_scaling_policy:
@@ -298,3 +350,11 @@ policies:
     properties:
       default_instances:  1
     targets: [k8s_node_scale_group]
+
+  kubernetes_load_vms_scaling_policy:
+    type: cloudify.policies.scaling
+    properties:
+      min_instances: 1
+      max_instances: 20
+      default_instances:  1
+    targets: [k8s_load_scale_group]
