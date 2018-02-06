@@ -128,8 +128,9 @@ def delete(ctx,
                     graph=graph,
                     node_instances=added,
                     related_nodes=related)
-            except:
-                ctx.logger.error('Scale out failed, scaling back in.')
+            except Exception as ex:
+                ctx.logger.error('Scale out failed, scaling back in. {}'
+                                 .format(repr(ex)))
                 for task in graph.tasks_iter():
                     graph.remove_task(task)
                 lifecycle.uninstall_node_instances(
@@ -137,7 +138,7 @@ def delete(ctx,
                     node_instances=added,
                     ignore_failure=ignore_failure,
                     related_nodes=related)
-                raise
+                raise ex
         else:
             removed_and_related = set(modification.removed.node_instances)
             removed = set(i for i in removed_and_related
@@ -148,24 +149,25 @@ def delete(ctx,
                 node_instances=removed,
                 ignore_failure=ignore_failure,
                 related_nodes=related)
-    except:
+    except Exception as ex:
         ctx.logger.warn('Rolling back deployment modification. '
-                        '[modification_id={0}]'.format(modification.id))
+                        '[modification_id={0}]: {}'
+                        .format(modification.id, repr(ex)))
         try:
             modification.rollback()
-        except:
+        except Exception as ex:
             ctx.logger.warn('Deployment modification rollback failed. The '
                             'deployment model is most likely in some corrupted'
-                            ' state.'
-                            '[modification_id={0}]'.format(modification.id))
-            raise
-        raise
+                            ' state. [modification_id={0}]: {}'
+                            .format(modification.id, repr(ex)))
+            raise ex
+        raise ex
     else:
         try:
             modification.finish()
-        except:
+        except Exception as ex:
             ctx.logger.warn('Deployment modification finish failed. The '
                             'deployment model is most likely in some corrupted'
-                            ' state.'
-                            '[modification_id={0}]'.format(modification.id))
-            raise
+                            ' state.[modification_id={0}]: {}'
+                            .format(modification.id, repr(ex)))
+            raise ex

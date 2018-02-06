@@ -18,11 +18,7 @@
 import os
 import subprocess
 from cloudify import ctx
-from cloudify.exceptions import (
-    HttpException,
-    NonRecoverableError,
-    OperationRetry
-)
+from cloudify.exceptions import HttpException
 from cloudify.state import ctx_parameters as inputs
 
 
@@ -65,13 +61,12 @@ if __name__ == '__main__':
             '/usr/bin/cfy-kubernetes')
     execute_command('sudo mkdir -p /opt/cloudify-kubernetes-provider/bin')
 
-    if ctx.operation.retry_number == 1:
+    if not os.path.isfile(cfy_kubernetes_binary_path):
         try:
             cfy_kubernetes_binary = \
                 ctx.download_resource('resources/cfy-kubernetes')
         except HttpException:
             ctx.logger.debug('Build cfy-kubernetes.')
-            execute_command('sudo mkdir -p /opt/cloudify-kubernetes-provider')
             _cwd = '/opt/cloudify-kubernetes-provider'
             _extra_args = {
                 'cwd': _cwd,
@@ -106,42 +101,3 @@ if __name__ == '__main__':
         execute_command(
             'sudo cp {0} {1}'.format(
                 cfy_kubernetes_binary, cfy_kubernetes_binary_path))
-        execute_command(
-            'sudo chmod 555 {0}'.format(cfy_kubernetes_binary_path))
-        execute_command(
-            'sudo chown root:root {0}'.format(cfy_kubernetes_binary_path))
-
-        try:
-            _tv = {'home_dir': os.path.expanduser('~')}
-            cfy_autoscale_service = \
-                ctx.download_resource_and_render(
-                    'resources/cfy-kubernetes.service',
-                    template_variables=_tv)
-        except HttpException:
-            raise NonRecoverableError(
-                'cfy-kubernetes.service not in resources.')
-        else:
-            execute_command(
-                'sudo cp {0} {1}'.format(
-                    cfy_autoscale_service,
-                    '/etc/systemd/system/cfy-kubernetes.service'))
-            execute_command(
-                'sudo cp /etc/systemd/system/cfy-kubernetes.service '
-                '/etc/systemd/system/multi-user.target.wants/')
-            execute_command('sudo systemctl daemon-reload')
-            execute_command('sudo systemctl enable cfy-kubernetes.service')
-            execute_command('sudo systemctl start cfy-kubernetes.service')
-
-    status = ''
-    systemctl_status = \
-        execute_command('sudo systemctl status cfy-kubernetes.service')
-    if not isinstance(systemctl_status, basestring):
-        raise OperationRetry(
-            'check sudo systemctl status cfy-kubernetes.service')
-    for line in systemctl_status.split('\n'):
-        if 'Active:' in line:
-            status = line.strip()
-    zstatus = status.split(' ')
-    ctx.logger.info('cfy-kubernetes status: {0}'.format(zstatus))
-    if not len(zstatus) > 1 and 'active' not in zstatus[1]:
-        raise OperationRetry('Wait a little more.')
