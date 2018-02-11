@@ -2,6 +2,7 @@ tosca_definitions_version: cloudify_dsl_1_3
 
 imports:
   - https://raw.githubusercontent.com/cloudify-cosmo/cloudify-aws-plugin/1.5.1.2/plugin.yaml
+  - http://www.getcloudify.org/spec/awssdk-plugin/1.2.0.1/plugin.yaml
   - common.yaml
 
 inputs:
@@ -9,7 +10,7 @@ inputs:
   ami:
     description: >
       An AWS AMI. Tested with a Centos 7.0 image.
-    default: { get_secret: centos_core_image }
+    default: { get_attribute: [ centos_core_ami, aws_resource_id ] }
 
   instance_type:
     description: >
@@ -24,6 +25,15 @@ inputs:
   agent_group:
     default: wheel
 
+  manager_network:
+    default: default
+
+  install_method:
+    default: remote
+
+  public_ip:
+    default: { get_attribute: [ kubeinstance_port_elastic_ip, aws_resource_id ] }
+
 dsl_definitions:
 
     aws_config: &aws_config
@@ -31,6 +41,11 @@ dsl_definitions:
       aws_secret_access_key: { get_secret: aws_secret_access_key }
       ec2_region_name: { get_secret: ec2_region_name }
       ec2_region_endpoint: { get_secret: ec2_region_endpoint }
+
+    client_config: &client_config
+      aws_access_key_id: { get_secret: aws_access_key_id }
+      aws_secret_access_key: { get_secret: aws_secret_access_key }
+      region_name: { get_secret: ec2_region_name }
 
 node_types:
   kubernetes_host:
@@ -46,7 +61,8 @@ node_types:
         default: 1024
       agent_config:
         default:
-          install_method: remote
+          network: { get_input: manager_network }
+          install_method: { get_input: install_method }
           user: { get_input: agent_user }
           port: 22
           key: { get_secret: agent_key_private }
@@ -58,6 +74,20 @@ node_types:
         default: { get_input: instance_type }
 
 node_templates:
+
+  centos_core_ami:
+    type: cloudify.nodes.aws.ec2.Image
+    properties:
+      resource_config:
+        kwargs:
+          Filters:
+          - Name: name
+            Values:
+            - 'CentOS 7.3.1611 x86_64 with cloud-init (HVM)'
+          - Name: owner-id
+            Values:
+            - '057448758665'
+      client_config: *client_config
 
   cloudify_host_cloud_config:
     type: cloudify.nodes.CloudInit.CloudConfig
@@ -85,6 +115,8 @@ node_templates:
         target: kubemanager_port
       - type: cloudify.relationships.depends_on
         target: cloudify_host_cloud_config
+      - type: cloudify.relationships.depends_on
+        target: centos_core_ami
     interfaces:
       cloudify.interfaces.lifecycle:
         create:
@@ -121,6 +153,28 @@ node_templates:
         target: kubeinstance_port
       - type: cloudify.relationships.depends_on
         target: cloudify_host_cloud_config
+      - type: cloudify.relationships.depends_on
+        target: centos_core_ami
+    interfaces:
+      cloudify.interfaces.lifecycle:
+        create:
+          implementation: aws.cloudify_aws.ec2.instance.create
+          inputs:
+            args:
+              placement: { get_secret: availability_zone }
+              user_data: { get_attribute: [ cloudify_host_cloud_config, cloud_config ] }
+
+  loadbalancerinstance:
+    type: kubernetes_host
+    relationships:
+      - type: cloudify.relationships.contained_in
+        target: vpc
+      - type: cloudify.aws.relationships.instance_connected_to_eni
+        target: kubeloadbalancer_port
+      - type: cloudify.relationships.depends_on
+        target: cloudify_host_cloud_config
+      - type: cloudify.relationships.depends_on
+        target: centos_core_ami
     interfaces:
       cloudify.interfaces.lifecycle:
         create:
@@ -144,7 +198,30 @@ node_templates:
       - type: cloudify.aws.relationships.connected_to_elastic_ip
         target: kubeinstance_port_elastic_ip
 
+  kubeloadbalancer_port:
+    type: cloudify.aws.nodes.Interface
+    properties:
+      aws_config: *aws_config
+    relationships:
+      - type: cloudify.relationships.contained_in
+        target: vpc
+      - type: cloudify.aws.relationships.connected_to_subnet
+        target: public_subnet
+      - type: cloudify.aws.relationships.connected_to_security_group
+        target: security_group
+      - type: cloudify.aws.relationships.connected_to_elastic_ip
+        target: kubeloadbalancer_port_elastic_ip
+
   kubeinstance_port_elastic_ip:
+    type: cloudify.aws.nodes.ElasticIP
+    properties:
+      aws_config: *aws_config
+      domain: vpc
+    relationships:
+      - type: cloudify.relationships.contained_in
+        target: vpc
+
+  kubeloadbalancer_port_elastic_ip:
     type: cloudify.aws.nodes.ElasticIP
     properties:
       aws_config: *aws_config
@@ -223,6 +300,10 @@ node_templates:
           from_port: 10250
           to_port: 10250
           cidr_ip: 0.0.0.0/0
+        - ip_protocol: tcp
+          from_port: 30000
+          to_port: 40000
+          cidr_ip: 0.0.0.0/0
     relationships:
       - type: cloudify.aws.relationships.security_group_contained_in_vpc
         target: vpc
@@ -273,6 +354,11 @@ groups:
       - kubeinstance_port
       - kubeinstance_port_elastic_ip
 
+  k8s_load_scale_group:
+    members:
+      - loadbalancerinstance
+      - loadbalancerinstance_proxy
+
 policies:
 
   kubernetes_node_vms_scaling_policy:
@@ -283,3 +369,11 @@ policies:
       max_instances: 20
       default_instances:  1
     targets: [k8s_node_scale_group]
+
+  kubernetes_load_vms_scaling_policy:
+    type: cloudify.policies.scaling
+    properties:
+      min_instances: 1
+      max_instances: 20
+      default_instances:  1
+    targets: [k8s_load_scale_group]

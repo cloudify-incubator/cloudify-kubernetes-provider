@@ -200,6 +200,15 @@ inputs:
 
       -----END RSA PRIVATE KEY-----
 
+  manager_network:
+    default: default
+
+  install_method:
+    default: remote
+
+  public_ip:
+    default: { get_attribute: [ kubemanager, public_ip ] }
+
 ###############################################################################
 #  DSL section
 ###############################################################################
@@ -237,7 +246,31 @@ node_types:
           memory: { get_input: memory }
       agent_config:
         default:
-          install_method: remote
+          network: { get_input: manager_network }
+          install_method: { get_input: install_method }
+          user: { get_input: agent_user }
+          key: { get_input: user_private_key }
+      networking:
+        default:
+          dns_servers: { get_input: dns_servers }
+          connect_networks:
+            - name: { get_input: vcenter_network }
+
+  kubernetes_loadbalancer:
+    derived_from: cloudify.vsphere.nodes.Server
+    properties:
+      connection_config:
+        default: *connection_config
+      server:
+        default:
+          name: { get_input: vsphere_centos_name }
+          template: { get_input: template_name }
+          cpus: 1
+          memory: 1024
+      agent_config:
+        default:
+          network: { get_input: manager_network }
+          install_method: { get_input: install_method }
           user: { get_input: agent_user }
           key: { get_input: user_private_key }
       networking:
@@ -260,6 +293,12 @@ node_templates:
         properties:
           default_instances: 1
 
+  loadbalancerinstance:
+    type: kubernetes_loadbalancer
+    capabilities:
+      scalable:
+        properties:
+          default_instances: 1
 
 groups:
 
@@ -273,6 +312,11 @@ groups:
       - kubernetes_slave_cfy_go
       - kubernetes_slave_buildtools
 
+  k8s_load_scale_group:
+    members:
+      - loadbalancerinstance
+      - loadbalancerinstance_proxy
+
 policies:
 
   kubernetes_node_vms_scaling_policy:
@@ -282,3 +326,11 @@ policies:
       max_instances: 20
       default_instances:  1
     targets: [k8s_node_scale_group]
+
+  kubernetes_load_vms_scaling_policy:
+    type: cloudify.policies.scaling
+    properties:
+      min_instances: 1
+      max_instances: 20
+      default_instances:  1
+    targets: [k8s_load_scale_group]

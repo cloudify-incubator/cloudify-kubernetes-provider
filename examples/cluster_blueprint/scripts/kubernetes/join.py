@@ -1,11 +1,26 @@
 #!/usr/bin/env python
+#
+# Copyright (c) 2017 GigaSpaces Technologies Ltd. All rights reserved
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#        http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+#
 
 import base64
 import subprocess
 import tempfile
 from cloudify import ctx
 from cloudify.state import ctx_parameters as inputs
-from cloudify.exceptions import OperationRetry, NonRecoverableError
+from cloudify.exceptions import OperationRetry
 
 JOIN = 'sudo kubeadm join --token {0} {1}:6443 --skip-preflight-checks'
 IP_TABLES_PATH = '/proc/sys/net/bridge/bridge-nf-call-iptables'
@@ -46,7 +61,7 @@ if __name__ == '__main__':
     ip = inputs.get('ip')
     ctx.logger.info('Try to join to {0} by {1}'.format(ip, token))
 
-    if ctx.operation.retry_number == 1:
+    if ctx.operation.retry_number == 0:
 
         _, temp_mount_file = tempfile.mkstemp()
         with open(temp_mount_file, 'w') as outfile:

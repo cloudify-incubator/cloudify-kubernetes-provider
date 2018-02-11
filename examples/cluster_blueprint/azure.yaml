@@ -39,6 +39,15 @@ inputs:
     - path: {concat:[ '/home/', { get_input: agent_user }, '/.ssh/authorized_keys' ]}
       keyData: { get_secret: agent_key_public }
 
+  manager_network:
+    default: default
+
+  install_method:
+    default: remote
+
+  public_ip:
+    default: { get_attribute: [ kubemanager, public_ip ] }
+
 dsl_definitions:
 
   azure_config: &azure_config
@@ -61,7 +70,8 @@ node_types:
         default: 1024
       agent_config:
         default:
-          install_method: remote
+          network: { get_input: manager_network }
+          install_method: { get_input: install_method }
           user: { get_input: agent_user }
           port: 22
           key: { get_secret: agent_key_private }
@@ -125,6 +135,36 @@ node_templates:
       target: availability_set
     - type: cloudify.azure.relationships.connected_to_nic
       target: kubernetes_node_host_nic
+    interfaces:
+      cloudify.interfaces.lifecycle:
+        create:
+          implementation: pkg.cloudify_azure.resources.compute.virtualmachine.create
+          inputs:
+            args:
+              hardwareProfile:
+                vmSize: { get_input: size }
+              storageProfile:
+                imageReference: { get_input: image}
+              osProfile:
+                adminUsername: { get_input: agent_user }
+                adminPassword: ''
+#                customData: { get_attribute: [ cloudify_host_cloud_config, cloud_config ] }
+                linuxConfiguration:
+                  ssh:
+                    publicKeys: { get_input: ssh_public_keys }
+                  disablePasswordAuthentication: true
+
+  loadbalancerinstance:
+    type: kubernetes_host
+    relationships:
+    - type: cloudify.azure.relationships.contained_in_resource_group
+      target: resource_group
+    - type: cloudify.azure.relationships.connected_to_storage_account
+      target: storage_account
+    - type: cloudify.azure.relationships.connected_to_availability_set
+      target: availability_set
+    - type: cloudify.azure.relationships.connected_to_nic
+      target: kubernetes_loadbalancer_host_nic
     interfaces:
       cloudify.interfaces.lifecycle:
         create:
@@ -340,6 +380,17 @@ node_templates:
             priority: 113
             access: Allow
             direction: Inbound
+        - name: {concat:[{get_input: resource_prefix},nsg,{get_input: resource_suffix},k8sapps]}
+          properties:
+            description: K8s Apps TCP access
+            protocol: Tcp
+            sourcePortRange: '*'
+            destinationPortRange: 30000-40000
+            sourceAddressPrefix: '*'
+            destinationAddressPrefix: '*'
+            priority: 114
+            access: Allow
+            direction: Inbound
     relationships:
     - type: cloudify.azure.relationships.contained_in_resource_group
       target: resource_group
@@ -368,6 +419,20 @@ node_templates:
       target: network_security_group
     - type: cloudify.azure.relationships.nic_connected_to_ip_configuration
       target: kubernetes_node_host_nic_ip_cfg
+
+  kubernetes_loadbalancer_host_nic:
+    type: cloudify.azure.nodes.network.NetworkInterfaceCard
+    properties:
+      location: { get_secret: location }
+      azure_config: *azure_config
+      retry_after: { get_input: retry_after }
+    relationships:
+    - type: cloudify.azure.relationships.contained_in_resource_group
+      target: resource_group
+    - type: cloudify.azure.relationships.nic_connected_to_network_security_group
+      target: network_security_group
+    - type: cloudify.azure.relationships.nic_connected_to_ip_configuration
+      target: kubernetes_loadbalancer_host_nic_ip_cfg
 
   kubernetes_master_host_nic:
     type: cloudify.azure.nodes.network.NetworkInterfaceCard
@@ -399,6 +464,22 @@ node_templates:
     - type: cloudify.azure.relationships.ip_configuration_connected_to_public_ip
       target: kubernetes_node_ip
 
+  kubernetes_loadbalancer_host_nic_ip_cfg:
+    type: cloudify.azure.nodes.network.IPConfiguration
+    properties:
+      location: { get_secret: location }
+      azure_config: *azure_config
+      retry_after: { get_input: retry_after }
+      resource_config:
+        privateIPAllocationMethod: Dynamic
+    relationships:
+    - type: cloudify.azure.relationships.contained_in_resource_group
+      target: resource_group
+    - type: cloudify.azure.relationships.ip_configuration_connected_to_subnet
+      target: subnet
+    - type: cloudify.azure.relationships.ip_configuration_connected_to_public_ip
+      target: kubernetes_loadbalancer_ip
+
   kubernetes_master_host_nic_ip_cfg:
     type: cloudify.azure.nodes.network.IPConfiguration
     properties:
@@ -414,6 +495,18 @@ node_templates:
       target: kubernetes_master_ip
 
   kubernetes_node_ip:
+    type: cloudify.azure.nodes.network.PublicIPAddress
+    properties:
+      location: { get_secret: location }
+      azure_config: *azure_config
+      retry_after: { get_input: retry_after }
+      resource_config:
+        publicIPAllocationMethod: Static
+    relationships:
+    - type: cloudify.azure.relationships.contained_in_resource_group
+      target: resource_group
+
+  kubernetes_loadbalancer_ip:
     type: cloudify.azure.nodes.network.PublicIPAddress
     properties:
       location: { get_secret: location }
@@ -495,6 +588,11 @@ groups:
     - kubernetes_slave_cfy_go
     - kubernetes_slave_buildtools
 
+  k8s_load_scale_group:
+    members:
+      - loadbalancerinstance
+      - loadbalancerinstance_proxy
+
 policies:
 
   kubernetes_node_vms_scaling_policy:
@@ -505,3 +603,11 @@ policies:
       max_instances: 20
       default_instances:  1
     targets: [k8s_node_scale_group]
+
+  kubernetes_load_vms_scaling_policy:
+    type: cloudify.policies.scaling
+    properties:
+      min_instances: 1
+      max_instances: 20
+      default_instances:  1
+    targets: [k8s_load_scale_group]

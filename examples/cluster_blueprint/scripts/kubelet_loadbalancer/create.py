@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+#
 # Copyright (c) 2017 GigaSpaces Technologies Ltd. All rights reserved
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -16,7 +17,6 @@
 
 import subprocess
 from cloudify import ctx
-from cloudify.exceptions import OperationRetry
 
 
 def execute_command(_command, extra_args=None):
@@ -49,18 +49,7 @@ def execute_command(_command, extra_args=None):
 
 
 if __name__ == '__main__':
-
-    ctx.logger.info(
-        'Verifying that Docker is not installed on the system.')
-
-    existing_install = \
-        ctx.instance.runtime_properties.get('existing_docker_install', False)
-
-    if not existing_install:
-        stopped = execute_command('sudo systemctl stop docker')
-        if not stopped:
-            OperationRetry('Failed to stop docker.service')
-        uninstalled = execute_command('sudo yum remove -y -q docker-engine')
-        if not uninstalled:
-            OperationRetry('Failed to uninstall Docker')
-        execute_command('sudo rm /etc/yum.repos.d/docker.repo')
+    execute_command("sudo yum -y install haproxy")
+    execute_command("sudo setsebool -P haproxy_connect_any=1")
+    # enable but not start!
+    execute_command("sudo systemctl enable haproxy")

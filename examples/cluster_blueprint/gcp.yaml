@@ -58,6 +58,12 @@ inputs:
   resource_prefix:
     default: cfyk8s
 
+  manager_network:
+    default: default
+
+  install_method:
+    default: remote
+
 dsl_definitions:
 
   client_config: &gcp_config
@@ -90,7 +96,8 @@ node_types:
         default: 1024
       agent_config:
         default:
-          install_method: remote
+          network: { get_input: manager_network }
+          install_method: { get_input: install_method }
           user: { get_input: agent_user }
           port: 22
           key: { get_secret: agent_key_private }
@@ -139,6 +146,19 @@ node_templates:
       cloudify.interfaces.lifecycle:
         create: *instance_ssh_key_prep
 
+  loadbalancerinstance:
+    type: kubernetes_host
+    properties:
+      gcp_config: *gcp_config
+    relationships:
+      - type: cloudify.relationships.depends_on
+        target: subnetwork
+      - type: cloudify.gcp.relationships.instance_connected_to_security_group
+        target: kubernetes_fw
+    interfaces:
+      cloudify.interfaces.lifecycle:
+        create: *instance_ssh_key_prep
+
   kubernetes_fw:
     type: cloudify.gcp.nodes.FirewallRule
     properties:
@@ -158,7 +178,7 @@ node_templates:
           - 9090
           - 10250
           - 3306 # For Wordpress Demo Application
-          - 30080 # For Wordpress Demo Application
+          - 30000-40000 # For Wordpress Demo Application
         udp:
           - 53
           - 6443

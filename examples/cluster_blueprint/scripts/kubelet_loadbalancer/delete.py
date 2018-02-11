@@ -16,7 +16,6 @@
 
 import subprocess
 from cloudify import ctx
-from cloudify.exceptions import OperationRetry
 
 
 def execute_command(_command, extra_args=None):
@@ -49,18 +48,9 @@ def execute_command(_command, extra_args=None):
 
 
 if __name__ == '__main__':
-
-    ctx.logger.info(
-        'Verifying that Docker is not installed on the system.')
-
-    existing_install = \
-        ctx.instance.runtime_properties.get('existing_docker_install', False)
-
-    if not existing_install:
-        stopped = execute_command('sudo systemctl stop docker')
-        if not stopped:
-            OperationRetry('Failed to stop docker.service')
-        uninstalled = execute_command('sudo yum remove -y -q docker-engine')
-        if not uninstalled:
-            OperationRetry('Failed to uninstall Docker')
-        execute_command('sudo rm /etc/yum.repos.d/docker.repo')
+    ctx.instance.runtime_properties["proxy_ports"] = {}
+    ctx.instance.runtime_properties["proxy_nodes"] = {}
+    ctx.instance.runtime_properties["proxy_cluster"] = ""
+    ctx.instance.runtime_properties["proxy_name"] = ""
+    ctx.instance.runtime_properties["proxy_namespace"] = ""
+    execute_command("sudo systemctl stop haproxy")
