@@ -66,9 +66,9 @@ inputs:
     type: string
     default: { get_attribute: [ kubemanager, cloudify_agent, broker_ip ] }
 
-  cfy_ssl:
-    type: boolean
-    default: true
+  cfy_ssl_port:
+    type: integer
+    default: 53333
 
   update_package_manager:
     type: boolean
@@ -121,10 +121,14 @@ node_types:
               default: { get_input: cfy_tenant }
             cfy_host:
               default: { get_input: cfy_host }
-            cfy_ssl:
-              default: { get_input: cfy_ssl }
+            cfy_ssl_port:
+              default: { get_input: cfy_ssl_port }
+            agent_user:
+              default: { get_input: agent_user }
             full_install:
               default: no
+            agent_name:
+              default: { get_attribute: [ SELF, cloudify_agent, name ] }
 
   cloudify.nodes.SoftwareComponent.BuildTools:
     derived_from: cloudify.nodes.SoftwareComponent
@@ -176,22 +180,8 @@ node_types:
           implementation: scripts/cfy_autoscale/install.py
 
   cloudify.nodes.Kubernetes.Kubelet.Volume:
-    derived_from: cloudify.nodes.SoftwareComponent
+    derived_from: cloudify.nodes.ApplicationServer.ConfigShare
     interfaces:
-      cloudify.interfaces.lifecycle:
-        create:
-          implementation: scripts/kubelet_volume/install.py
-          inputs:
-            cfy_user:
-              default: { get_input: cfy_user }
-            cfy_password:
-              default: { get_input: cfy_password }
-            cfy_tenant:
-              default: { get_input: cfy_tenant }
-            cfy_host:
-              default: { get_input: cfy_host }
-            cfy_ssl:
-              default: { get_input: cfy_ssl }
       maintenance:
         mount: scripts/kubelet_volume/mount.py
         unmount: scripts/kubelet_volume/unmount.py
@@ -310,6 +300,7 @@ node_templates:
         create:
           inputs:
             full_install: all
+            agent_name: { get_attribute: [ kubemanager, cloudify_agent, name ] }
     relationships:
     - target: kubernetes_autoscale
       type: cloudify.relationships.contained_in
@@ -330,14 +321,6 @@ node_templates:
     - target: kubernetes_slave_buildtools
       type: cloudify.relationships.depends_on
 
-  kubernetes_slave_cfy_config:
-    type: cloudify.nodes.ApplicationServer.ConfigShare
-    relationships:
-    - target: kubeinstance
-      type: cloudify.relationships.contained_in
-    - target: kubernetes_slave_cfy_go
-      type: cloudify.relationships.depends_on
-
   kubernetes_slave_docker:
     type: cloudify.nodes.ApplicationServer.Docker
     relationships:
@@ -346,10 +329,15 @@ node_templates:
 
   kubernetes_slave_kubelet_volume:
     type: cloudify.nodes.Kubernetes.Kubelet.Volume
+    interfaces:
+      cloudify.interfaces.lifecycle:
+        create:
+          inputs:
+            agent_name: { get_attribute: [ kubeinstance, cloudify_agent, name ] }
     relationships:
     - target: kubeinstance
       type: cloudify.relationships.contained_in
-    - target: kubernetes_slave_cfy_config
+    - target: kubernetes_slave_cfy_go
       type: cloudify.relationships.depends_on
     - target: kubernetes_slave_docker
       type: cloudify.relationships.depends_on

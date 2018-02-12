@@ -34,7 +34,14 @@ CONFIG = ('"deployment": "{0}",' +
           '"tenant": "{2}",' +
           '"password": "{3}",' +
           '"user": "{4}",' +
-          '"host": "{5}"')
+          '"host": "{5}",' +
+          '"agent": "{6}"')
+
+MOUNT = ('#!/bin/bash\n' +
+         'echo $@ >> /var/log/mount-calls.log\n' +
+         '{0} kubernetes $1 $2 $3 -deployment "{1}" -instance "{2}" ' +
+         '-tenant "{3}" -password "{4}" -user "{5}" -host "{6}" ' +
+         '-agent-file "{7}"')
 
 
 def execute_command(command, extra_args=None):
@@ -131,43 +138,66 @@ if __name__ == '__main__':
 
     # create global config
     config_file = os.path.expanduser('~') + "/cfy.json"
+    plugin_directory = inputs.get('plugin_directory',
+                                  '/usr/libexec/kubernetes/kubelet-plugins/'
+                                  'volume/exec/cloudify~mount/')
+
+    linux_distro = inputs.get('linux_distro', 'centos')
+    cfy_deployment = inputs.get('cfy_deployment', ctx.deployment.id)
+    cfy_instance = inputs.get('cfy_instance', ctx.instance.id)
+    cfy_user = inputs.get('cfy_user', 'admin')
+    cfy_pass = inputs.get('cfy_password', 'admin')
+    cfy_tenant = inputs.get('cfy_tenant', 'default_tenant')
+    cfy_host = inputs.get('cfy_host', 'localhost')
+    cfy_ssl_port = inputs.get('cfy_ssl_port', 53333)
+    agent_name = inputs.get('agent_name', ctx.instance.id)
+    agent_user = inputs.get('agent_user', 'centos')
+    cfy_go_binary = inputs.get('cfy_go_binary', '/usr/bin/cfy-go')
+
     if not os.path.isfile(config_file):
         ctx.logger.info("Create config {} file".format(config_file))
 
-        linux_distro = inputs.get('linux_distro', 'centos')
-
-        cfy_deployment = \
-            inputs.get('cfy_deployment', ctx.deployment.id)
-
-        cfy_instance = \
-            inputs.get('cfy_instance', ctx.instance.id)
-
-        cfy_user = \
-            inputs.get('cfy_user', 'admin')
-
-        cfy_pass = \
-            inputs.get('cfy_password', 'admin')
-
-        cfy_tenant = \
-            inputs.get('cfy_tenant', 'default_tenant')
-
-        cfy_host = \
-            inputs.get('cfy_host', 'localhost')
-
-        cfy_ssl = \
-            inputs.get('cfy_ssl', False)
-
-        ctx.logger.info("create cloudify manager config")
-
         # services config
         with open(config_file, 'w') as outfile:
+            agent_file = "/root" if agent_user == "root" else (
+                "/home/" + agent_user
+            )
+            cfy_host_full = cfy_host if not cfy_ssl_port else (
+                    "https://" + cfy_host + ":" + str(cfy_ssl_port)
+            )
             outfile.write("{" + CONFIG.format(
                 cfy_deployment,
                 cfy_instance,
                 cfy_tenant,
                 cfy_pass,
                 cfy_user,
-                cfy_host if not cfy_ssl else "https://" + cfy_host) + "}")
+                cfy_host_full,
+                "{}/.cfy-agent/{}.json".format(agent_file, agent_name)
+            ) + "}")
+
+    if not os.path.isfile(os.path.join(plugin_directory, 'mount')):
+        # volume mount support
+        ctx.logger.info("Update create cfy-mount")
+        _, temp_mount_file = tempfile.mkstemp()
+
+        with open(temp_mount_file, 'w') as outfile:
+            outfile.write(MOUNT.format(
+                cfy_go_binary,
+                cfy_deployment,
+                cfy_instance,
+                cfy_tenant,
+                cfy_pass,
+                cfy_user,
+                cfy_host_full,
+                "{}/.cfy-agent/{}.json".format(agent_file, agent_name)))
+
+        execute_command(['sudo', 'mkdir', '-p', plugin_directory])
+        execute_command(['sudo', 'cp', temp_mount_file,
+                         os.path.join(plugin_directory, 'mount')])
+        execute_command(['sudo', 'chmod', '555',
+                         os.path.join(plugin_directory, 'mount')])
+        execute_command(['sudo', 'chown', 'root:root',
+                         os.path.join(plugin_directory, 'mount')])
 
     if ctx.operation.retry_number == 0:
         if not linux_distro:
@@ -175,29 +205,28 @@ if __name__ == '__main__':
                 platform.linux_distribution(full_distribution_name=False)
             linux_distro = distro.tolower()
 
-        if cfy_ssl:
-            ctx.logger.info("Set certificate as trusted")
+        ctx.logger.info("Set certificate as trusted")
 
-            # cert config
-            _, temp_cert_file = tempfile.mkstemp()
+        # cert config
+        _, temp_cert_file = tempfile.mkstemp()
 
-            with open(temp_cert_file, 'w') as cert_file:
-                cert_file.write("# cloudify certificate\n")
-                try:
-                    cert_file.write(ssl.get_server_certificate((
-                        cfy_host, 443)))
-                except Exception as ex:
-                    ctx.logger.error("Check https connection to manager {}."
-                                     .format(str(ex)))
+        with open(temp_cert_file, 'w') as cert_file:
+            cert_file.write("# cloudify certificate\n")
+            try:
+                cert_file.write(ssl.get_server_certificate((
+                    cfy_host, cfy_ssl_port)))
+            except Exception as ex:
+                ctx.logger.error("Check https connection to manager {}."
+                                 .format(str(ex)))
 
-            if 'centos' in linux_distro:
-                execute_command([
-                    'sudo', 'bash', '-c',
-                    'cat {} >> /etc/pki/tls/certs/ca-bundle.crt'
-                    .format(temp_cert_file)
-                ])
-            else:
-                raise NonRecoverableError('Unsupported platform.')
+        if 'centos' in linux_distro:
+            execute_command([
+                'sudo', 'bash', '-c',
+                'cat {} >> /etc/pki/tls/certs/ca-bundle.crt'
+                .format(temp_cert_file)
+            ])
+        else:
+            raise NonRecoverableError('Unsupported platform.')
 
     full_install = inputs.get('full_install', 'all')
 
