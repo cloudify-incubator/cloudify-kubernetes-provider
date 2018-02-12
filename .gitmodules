@@ -1,7 +1,7 @@
 [submodule "src/k8s.io/kubernetes"]
 	path = src/k8s.io/kubernetes
 	url = git@github.com:cloudify-incubator/kubernetes.git
-	branch = release-1.8
+	branch = release-1.9
 [submodule "src/github.com/golang/glog"]
 	path = src/github.com/golang/glog
 	url = git@github.com:golang/glog.git
@@ -89,7 +89,7 @@
 [submodule "src/k8s.io/autoscaler"]
 	path = src/k8s.io/autoscaler
 	url = git@github.com:cloudify-incubator/kubernetes-autoscaler.git
-	branch = cluster-autoscaler-stable
+	branch = stable-1.1.0
 [submodule "src/github.com/tools/godep"]
 	path = src/github.com/tools/godep
 	url = git@github.com:tools/godep.git

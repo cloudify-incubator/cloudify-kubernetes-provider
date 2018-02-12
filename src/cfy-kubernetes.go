@@ -41,9 +41,7 @@ func addNativeFlags(s *options.CloudControllerManagerServer, fs *flag.FlagSet) *
 	fs.StringVar(&s.Kubeconfig, "kubeconfig", s.Kubeconfig, "Path to kubeconfig file with authorization and master location information.")
 	fs.StringVar(&s.CloudConfigFile, "cloud-config", s.CloudConfigFile, "The path to the cloud provider configuration file.  Empty string for no configuration file.")
 	fs.BoolVar(&versionShow, "version", false, "Path to kubeconfig file with authorization and master location information.")
-
-	// hardcoded use cloudify
-	fs.StringVar(&s.CloudProvider, "cloud-provider", "cloudify", "The provider for cloud services. Empty string for no provider.")
+	fs.StringVar(&s.CloudProvider, "cloud-provider", "", "The provider for cloud services. Empty string for no provider.")
 	return fs
 }
 
@@ -60,7 +58,7 @@ func main() {
 
 	if versionShow {
 		fmt.Printf("Kubernetes %s\n", version.Get())
-		fmt.Printf("CFY Go client: %s\n", versionString)
+		fmt.Printf("CFY Kubernetes Provider: %s\n", versionString)
 		os.Exit(0)
 	}
 
