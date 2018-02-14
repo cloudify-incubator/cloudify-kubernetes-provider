@@ -80,8 +80,8 @@ if __name__ == '__main__':
                 'Failed to disable selinux')
 
         kubernetes_install = execute_command(
-            'sudo yum -y install kubeadm-1.8.4-0.x86_64 '
-            'kubelet-1.8.4-0.x86_64 kubectl-1.8.4-0.x86_64'
+            'sudo yum -y install kubeadm-1.8.5-0 '
+            'kubelet-1.8.5-0 kubectl-1.8.5-0'
         )
         if kubernetes_install is False:
             raise OperationRetry(
@@ -104,7 +104,7 @@ if __name__ == '__main__':
                 'Failed to copy repository description')
 
         execute_command('sudo apt-get update')
-        execute_command('sudo apt-get install -y kubelet=1.8.4-00 '
-                        'kubeadm=1.8.4-00')
+        execute_command('sudo apt-get install -y kubelet=1.8.5-00 '
+                        'kubeadm=1.8.5-00 kubectl=1.8.5-00')
     else:
         raise NonRecoverableError('Unsupported platform.')

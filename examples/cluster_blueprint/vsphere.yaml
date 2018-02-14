@@ -25,11 +25,6 @@ inputs:
        vcenter datacenter
     default: Datacenter
 
-  govc_resource_pool:
-    description: >
-      Resource pool name
-    default: Cluster
-
   vcenter_resource_pool:
     description: >
       Resource pool name

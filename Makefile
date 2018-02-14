@@ -73,6 +73,7 @@ CLOUDIFYCOMMON := \
 	src/${PACKAGEPATH}/cloudify/status.go \
 	src/${PACKAGEPATH}/cloudify/executions.go \
 	src/${PACKAGEPATH}/cloudify/deployments.go \
+	src/${PACKAGEPATH}/cloudify/service.go \
 	src/${PACKAGEPATH}/cloudify/tenants.go
 
 pkg/linux_amd64/${PACKAGEPATH}/cloudify.a: ${CLOUDIFYCOMMON} pkg/linux_amd64/${PACKAGEPATH}/cloudify/rest.a
