@@ -2,7 +2,7 @@
 Description=cfy kubernetes
 
 [Service]
-ExecStart=/usr/bin/cfy-kubernetes --kubeconfig {{ home_dir }}/.kube/config --cloud-config {{ home_dir }}/cfy.json --cloud-provider cloudify --alsologtostderr
+ExecStart=/usr/bin/cfy-kubernetes --kubeconfig /etc/kubernetes/admin.conf --cloud-config {{ home_dir }}/cfy.json --cloud-provider cloudify --alsologtostderr
 KillMode=process
 Restart=on-failure
 RestartSec=60s

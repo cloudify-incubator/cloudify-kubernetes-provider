@@ -15,20 +15,18 @@
 # limitations under the License.
 #
 
-
 import socket
 from cloudify import ctx
 from cloudify.exceptions import NonRecoverableError
 from cloudify.state import ctx_parameters as inputs
-
-TYPE = 'cloudify.nodes.Compute'
-REL_TYPE = 'cloudify.relationships.contained_in'
 
 
 def get_instance_by_target_type(_target_id, _target_type):
     """Get the node instance object by node target type
     and ID for extra granularity.
     """
+
+    REL_TYPE = 'cloudify.relationships.contained_in'
 
     ctx.logger.debug(
         'Attempting to resolve host with id {0} or type {1}'.format(
@@ -53,18 +51,8 @@ def get_instance_by_target_type(_target_id, _target_type):
                 'Ambiguous host resolution data.')
 
 
-if __name__ == '__main__':
-
-    ctx.logger.info(
-        'Setting initial Kubernetes node data')
-
-    # Allow user to provide specific values.
-    target_id = inputs.get('target_id')
-    target_type = inputs.get('target_type', TYPE)
-    hostname = inputs.get('hostname', socket.gethostname())
-    fqdn = inputs.get('fqdn', socket.getfqdn())
-    ip = inputs.get('ip', ctx.instance.host_ip)
-    public_ip = inputs.get('public_ip')
+def update_host_address(target_id, target_type, hostname, fqdn, ip, public_ip):
+    ctx.logger.info('Setting initial Kubernetes node data')
 
     if not public_ip:
         host_instance = \
@@ -89,3 +77,15 @@ if __name__ == '__main__':
 
     ctx.logger.info(
         'Finished setting initial Kubernetes node data.')
+
+
+if __name__ == '__main__':
+    TYPE = 'cloudify.nodes.Compute'
+
+    # Allow user to provide specific values.
+    update_host_address(target_id=inputs.get('target_id'),
+                        target_type=inputs.get('target_type', TYPE),
+                        hostname=inputs.get('hostname', socket.gethostname()),
+                        fqdn=inputs.get('fqdn', socket.getfqdn()),
+                        ip=inputs.get('ip', ctx.instance.host_ip),
+                        public_ip=inputs.get('public_ip'))
