@@ -60,7 +60,7 @@ if __name__ == '__main__':
     if not linux_distro:
         distro, _, _ = \
             platform.linux_distribution(full_distribution_name=False)
-        linux_distro = distro.tolower()
+        linux_distro = distro.lower()
 
     if 'centos' in linux_distro:
 
