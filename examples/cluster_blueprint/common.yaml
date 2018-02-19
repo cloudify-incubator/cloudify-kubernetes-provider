@@ -295,6 +295,9 @@ node_templates:
       type: cloudify.relationships.contained_in
     - target: manager_kubenetes
       type: cloudify.relationships.depends_on
+    # we can start only adter set all properties
+    - target: kubernetes_slave_node
+      type: cloudify.relationships.depends_on
 
 ### KUBERNETES_SLAVE
 
