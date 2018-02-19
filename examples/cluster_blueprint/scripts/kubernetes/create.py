@@ -16,6 +16,7 @@
 #
 
 import platform
+import socket
 import ssl
 import subprocess
 import tempfile
@@ -39,9 +40,9 @@ CONFIG = ('"deployment": "{0}",' +
 
 MOUNT = ('#!/bin/bash\n' +
          'echo $@ >> /var/log/mount-calls.log\n' +
-         '{0} kubernetes $1 $2 $3 -deployment "{1}" -instance "{2}" ' +
-         '-tenant "{3}" -password "{4}" -user "{5}" -host "{6}" ' +
-         '-agent-file "{7}"')
+         '/usr/bin/cfy-go kubernetes $1 $2 $3 -deployment "{0}" ' +
+         '-instance "{1}" -tenant "{2}" -password "{3}" -user "{4}" ' +
+         '-host "{5}" -agent-file "{6}"')
 
 
 def execute_command(command, extra_args=None):
@@ -134,6 +135,43 @@ def start_check(service_name):
         raise OperationRetry('Wait a little more.')
 
 
+def get_instance_host(relationships, rel_type, target_type):
+    for rel in relationships:
+        if rel.type == rel_type or rel_type in rel.type_hierarchy:
+            if target_type in rel.target.node.type_hierarchy:
+                return rel.target.instance
+            instance = get_instance_host(rel.target.instance.relationships,
+                                         rel_type, target_type)
+            if instance:
+                return instance
+    return None
+
+
+def update_host_address(host_instance, hostname, fqdn, ip, public_ip):
+    ctx.logger.info('Setting initial Kubernetes node data')
+
+    if not public_ip:
+        public_ip_prop = host_instance.runtime_properties.get(
+            'public_ip')
+        public_ip_address_prop = host_instance.runtime_properties.get(
+            'public_ip_address')
+        public_ip = public_ip_prop or public_ip_address_prop or ip
+
+    new_runtime_properties = {
+        'name': ctx.instance.id,
+        'hostname': hostname,
+        'fqdn': fqdn,
+        'ip': ip,
+        'public_ip': public_ip
+    }
+
+    for key, value in new_runtime_properties.items():
+        ctx.instance.runtime_properties[key] = value
+
+    ctx.logger.info(
+        'Finished setting initial Kubernetes node data.')
+
+
 if __name__ == '__main__':
 
     # create global config
@@ -142,17 +180,23 @@ if __name__ == '__main__':
                                   '/usr/libexec/kubernetes/kubelet-plugins/'
                                   'volume/exec/cloudify~mount/')
 
-    linux_distro = inputs.get('linux_distro', 'centos')
-    cfy_deployment = inputs.get('cfy_deployment', ctx.deployment.id)
-    cfy_instance = inputs.get('cfy_instance', ctx.instance.id)
+    host_instance = get_instance_host(ctx.instance.relationships,
+                                      'cloudify.relationships.contained_in',
+                                      'cloudify.nodes.Compute')
+    if not host_instance:
+        raise NonRecoverableError('Ambiguous host resolution data.')
+
+    cloudify_agent = host_instance.runtime_properties.get('cloudify_agent', {})
+
+    linux_distro = cloudify_agent.get('distro')
+    cfy_host = cloudify_agent.get('broker_ip')
+    cfy_ssl_port = cloudify_agent.get('rest_port')
+    agent_name = cloudify_agent.get('name')
+
     cfy_user = inputs.get('cfy_user', 'admin')
     cfy_pass = inputs.get('cfy_password', 'admin')
     cfy_tenant = inputs.get('cfy_tenant', 'default_tenant')
-    cfy_host = inputs.get('cfy_host', 'localhost')
-    cfy_ssl_port = inputs.get('cfy_ssl_port', 53333)
-    agent_name = inputs.get('agent_name', ctx.instance.id)
     agent_user = inputs.get('agent_user', 'centos')
-    cfy_go_binary = inputs.get('cfy_go_binary', '/usr/bin/cfy-go')
 
     if not os.path.isfile(config_file):
         ctx.logger.info("Create config {} file".format(config_file))
@@ -166,8 +210,8 @@ if __name__ == '__main__':
                     "https://" + cfy_host + ":" + str(cfy_ssl_port)
             )
             outfile.write("{" + CONFIG.format(
-                cfy_deployment,
-                cfy_instance,
+                ctx.deployment.id,
+                ctx.instance.id,
                 cfy_tenant,
                 cfy_pass,
                 cfy_user,
@@ -182,9 +226,8 @@ if __name__ == '__main__':
 
         with open(temp_mount_file, 'w') as outfile:
             outfile.write(MOUNT.format(
-                cfy_go_binary,
-                cfy_deployment,
-                cfy_instance,
+                ctx.deployment.id,
+                ctx.instance.id,
                 cfy_tenant,
                 cfy_pass,
                 cfy_user,
@@ -200,6 +243,15 @@ if __name__ == '__main__':
                          os.path.join(plugin_directory, 'mount')])
 
     if ctx.operation.retry_number == 0:
+        # Allow user to provide specific values.
+        update_host_address(
+            host_instance=host_instance,
+            hostname=inputs.get('hostname', socket.gethostname()),
+            fqdn=inputs.get('fqdn', socket.getfqdn()),
+            ip=inputs.get('ip', ctx.instance.host_ip),
+            public_ip=inputs.get('public_ip'))
+
+        # certificate logic
         if not linux_distro:
             distro, _, _ = \
                 platform.linux_distribution(full_distribution_name=False)
@@ -231,7 +283,8 @@ if __name__ == '__main__':
     full_install = inputs.get('full_install', 'all')
 
     # download mount tools
-    download_service("cfy-go")
+    if full_install != "loadbalancer":
+        download_service("cfy-go")
 
     if full_install == "all":
         # download scale tools

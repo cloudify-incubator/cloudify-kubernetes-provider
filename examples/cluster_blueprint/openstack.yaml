@@ -330,7 +330,6 @@ groups:
     members:
     - kubernetes_slave_node
     - kubernetes_slave_kubernetes
-    - kubernetes_slave_kubelet_volume
     - kubernetes_slave_docker
     - kubernetes_slave_cfy_go
     - kubernetes_slave_buildtools

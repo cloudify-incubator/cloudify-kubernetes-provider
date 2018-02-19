@@ -106,30 +106,6 @@ node_types:
           implementation: scripts/docker/uninstall.py
 
   # share config
-  cloudify.nodes.ApplicationServer.ConfigShare:
-    derived_from: cloudify.nodes.ApplicationServer
-    interfaces:
-      cloudify.interfaces.lifecycle:
-        create:
-          implementation: scripts/kubernetes/config-create.py
-          inputs:
-            cfy_user:
-              default: { get_input: cfy_user }
-            cfy_password:
-              default: { get_input: cfy_password }
-            cfy_tenant:
-              default: { get_input: cfy_tenant }
-            cfy_host:
-              default: { get_input: cfy_host }
-            cfy_ssl_port:
-              default: { get_input: cfy_ssl_port }
-            agent_user:
-              default: { get_input: agent_user }
-            full_install:
-              default: no
-            agent_name:
-              default: { get_attribute: [ SELF, cloudify_agent, name ] }
-
   cloudify.nodes.SoftwareComponent.BuildTools:
     derived_from: cloudify.nodes.SoftwareComponent
     interfaces:
@@ -180,7 +156,7 @@ node_types:
           implementation: scripts/cfy_autoscale/install.py
 
   cloudify.nodes.Kubernetes.Kubelet.Volume:
-    derived_from: cloudify.nodes.ApplicationServer.ConfigShare
+    derived_from: cloudify.nodes.ApplicationServer.kubernetes.Node
     interfaces:
       maintenance:
         mount: scripts/kubelet_volume/mount.py
@@ -191,14 +167,35 @@ node_types:
     interfaces:
       cloudify.interfaces.lifecycle:
         create:
-          implementation: scripts/kubernetes/node/create.py
+          implementation: scripts/kubernetes/create.py
+          inputs:
+            cfy_user:
+              default: { get_input: cfy_user }
+            cfy_password:
+              default: { get_input: cfy_password }
+            cfy_tenant:
+              default: { get_input: cfy_tenant }
+            agent_user:
+              default: { get_input: agent_user }
+            full_install:
+              default: no
 
   cloudify.nodes.ApplicationServer.kubernetes.LoadBalancer:
-    derived_from: cloudify.nodes.ApplicationServer
+    derived_from: cloudify.nodes.ApplicationServer.kubernetes.Node
     interfaces:
       cloudify.interfaces.lifecycle:
         create:
-          implementation: scripts/kubernetes/node/create.py
+          inputs:
+            cfy_user:
+              default: { get_input: cfy_user }
+            cfy_password:
+              default: { get_input: cfy_password }
+            cfy_tenant:
+              default: { get_input: cfy_tenant }
+            agent_user:
+              default: { get_input: agent_user }
+            full_install:
+              default: loadbalancer
         configure:
           implementation: scripts/kubelet_loadbalancer/create.py
       maintenance:
@@ -238,14 +235,6 @@ node_templates:
     - target: kubemanager
       type: cloudify.relationships.contained_in
     - target: kubernetes_master_cfy_go
-      type: cloudify.relationships.depends_on
-
-  kubernetes_master_node:
-    type: cloudify.nodes.ApplicationServer.kubernetes.Node
-    relationships:
-    - target: kubemanager
-      type: cloudify.relationships.contained_in
-    - target: manager_kubenetes
       type: cloudify.relationships.depends_on
 
   pre_config_export:
@@ -294,7 +283,7 @@ node_templates:
       type: cloudify.relationships.depends_on
 
   cfy_cluster_tools:
-    type: cloudify.nodes.ApplicationServer.ConfigShare
+    type: cloudify.nodes.ApplicationServer.kubernetes.Node
     interfaces:
       cloudify.interfaces.lifecycle:
         create:
@@ -304,6 +293,8 @@ node_templates:
     relationships:
     - target: kubernetes_autoscale
       type: cloudify.relationships.contained_in
+    - target: manager_kubenetes
+      type: cloudify.relationships.depends_on
 
 ### KUBERNETES_SLAVE
 
@@ -327,31 +318,14 @@ node_templates:
     - target: kubeinstance
       type: cloudify.relationships.contained_in
 
-  kubernetes_slave_kubelet_volume:
-    type: cloudify.nodes.Kubernetes.Kubelet.Volume
-    interfaces:
-      cloudify.interfaces.lifecycle:
-        create:
-          inputs:
-            agent_name: { get_attribute: [ kubeinstance, cloudify_agent, name ] }
-    relationships:
-    - target: kubeinstance
-      type: cloudify.relationships.contained_in
-    - target: kubernetes_slave_cfy_go
-      type: cloudify.relationships.depends_on
-    - target: kubernetes_slave_docker
-      type: cloudify.relationships.depends_on
-
   kubernetes_slave_kubernetes:
     type: cloudify.nodes.SoftwareComponent.Kubernetes
     relationships:
-    - target: kubeinstance
-      type: cloudify.relationships.contained_in
     - target: kubernetes_slave_docker
-      type: cloudify.relationships.depends_on
+      type: cloudify.relationships.contained_in
 
   kubernetes_slave_node:
-    type: cloudify.nodes.ApplicationServer.kubernetes.Node
+    type: cloudify.nodes.Kubernetes.Kubelet.Volume
     interfaces:
       cloudify.interfaces.lifecycle:
         configure:
@@ -362,13 +336,11 @@ node_templates:
         start:
           implementation: scripts/kubernetes/node/start.py
     relationships:
-    - target: kubeinstance
-      type: cloudify.relationships.contained_in
     - target: kubernetes_slave_kubernetes
-      type: cloudify.relationships.depends_on
-    - target: kubernetes_slave_kubelet_volume
-      type: cloudify.relationships.depends_on
+      type: cloudify.relationships.contained_in
     - target: config_export
+      type: cloudify.relationships.depends_on
+    - target: kubernetes_slave_cfy_go
       type: cloudify.relationships.depends_on
 
   loadbalancerinstance_proxy:
