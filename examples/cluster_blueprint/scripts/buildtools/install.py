@@ -94,5 +94,3 @@ if __name__ == '__main__':
         execute_command('sudo apt-get install golang-go git')
     else:
         raise NonRecoverableError('Unsupported platform.')
-
-    execute_command('sudo chmod -R 777 /opt')
