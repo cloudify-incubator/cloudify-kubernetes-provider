@@ -140,7 +140,7 @@ bin/cfy-autoscale: pkg/linux_amd64/${PACKAGEPATH}/cloudify.a ${CLUSTERAUTOSCALER
 	go build -v -ldflags "-s -w -X main.ClusterAutoscalerVersion=${VERSION}" -o bin/cfy-autoscale ${CLUSTERAUTOSCALER}
 
 upload:
-	cfy blueprints upload -b kubernetes_cluster examples/cluster_blueprint/${CLOUDPROVIDER}.yaml
+	cfy blueprints upload -b kubernetes_cluster examples/cluster_blueprint/${CLOUDPROVIDER}-blueprint.yaml
 
 create-for-upload: all
 	cp -v bin/cfy-kubernetes examples/cluster_blueprint/resources/cfy-kubernetes
@@ -155,9 +155,3 @@ test:
 	golint ./src/${KUBERNETESPACKAGE}/...
 	golint ./src/cfy-kubernetes.go
 	golint ./src/${AUTOSCALEPACKAGE}/cloudifyprovider/...
-
-	cfy blueprint validate examples/cluster_blueprint/aws.yaml
-	cfy blueprint validate examples/cluster_blueprint/azure.yaml
-	cfy blueprint validate examples/cluster_blueprint/gcp.yaml
-	cfy blueprint validate examples/cluster_blueprint/openstack.yaml
-	cfy blueprint validate examples/cluster_blueprint/vsphere.yaml

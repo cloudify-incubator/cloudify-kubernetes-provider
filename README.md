@@ -120,7 +120,7 @@ cfy secret create kubernetes_master_ip -s "#"
 git clone https://github.com/cloudify-incubator/cloudify-kubernetes-provider.git -b master --depth 1
 cd cloudify-kubernetes-provider
 CLOUDPROVIDER=aws make upload
-cfy deployments create kubernetes_cluster -b kubernetes_cluster -i ../kubenetes.yaml --skip-plugins-validation
+cfy deployments create kubernetes_cluster -b kubernetes_cluster --skip-plugins-validation
 cfy executions start install -d kubernetes_cluster
 
 #delete
