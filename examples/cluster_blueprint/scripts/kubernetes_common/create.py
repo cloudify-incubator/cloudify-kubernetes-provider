@@ -105,12 +105,10 @@ def create_service(service_name):
         except HttpException:
             raise NonRecoverableError(
                 '{}.service not in resources.'.format(service_name))
-        else:
-            execute_command(['sudo', 'cp', cfy_service, service_path])
-            execute_command(['sudo', 'cp',
-                             '/etc/systemd/system/{}.service'
-                             .format(service_name),
-                             '/etc/systemd/system/multi-user.target.wants/'])
+
+        execute_command(['sudo', 'cp', cfy_service, service_path])
+        execute_command(['sudo', 'cp', service_path,
+                         '/etc/systemd/system/multi-user.target.wants/'])
 
         execute_command(['sudo', 'systemctl', 'daemon-reload'])
         execute_command(['sudo', 'systemctl', 'enable',
@@ -120,7 +118,7 @@ def create_service(service_name):
 
 
 def start_check(service_name):
-    status = ''
+    status_string = ''
     systemctl_status = execute_command(['sudo', 'systemctl', 'status',
                                         '{}.service'.format(service_name)])
     if not isinstance(systemctl_status, basestring):
@@ -129,10 +127,17 @@ def start_check(service_name):
     for line in systemctl_status.split('\n'):
         if 'Active:' in line:
             status = line.strip()
-    zstatus = status.split(' ')
-    ctx.logger.info('{} status: {}'.format(zstatus, service_name))
-    if not len(zstatus) > 1 and 'active' not in zstatus[1]:
+            zstatus = status.split(' ')
+            ctx.logger.debug('{} status line: {}'
+                             .format(service_name, repr(zstatus)))
+            if len(zstatus) > 1:
+                status_string = zstatus[1]
+
+    ctx.logger.info('{} status: {}'.format(service_name, repr(status_string)))
+    if 'active' != status_string:
         raise OperationRetry('Wait a little more.')
+    else:
+        ctx.logger.info('Service {} is started.'.format(service_name))
 
 
 def get_instance_host(relationships, rel_type, target_type):
@@ -197,6 +202,7 @@ if __name__ == '__main__':
     cfy_pass = inputs.get('cfy_password', 'admin')
     cfy_tenant = inputs.get('cfy_tenant', 'default_tenant')
     agent_user = inputs.get('agent_user', 'centos')
+    full_install = inputs.get('full_install', 'all')
 
     if not os.path.isfile(config_file):
         ctx.logger.info("Create config {} file".format(config_file))
@@ -273,6 +279,13 @@ if __name__ == '__main__':
 
         if 'centos' in linux_distro:
             execute_command([
+                'sudo', 'cp', temp_cert_file,
+                '/etc/pki/ca-trust/source/anchors/cloudify.crt'
+            ])
+            execute_command([
+                'sudo', 'update-ca-trust', 'extract'
+            ])
+            execute_command([
                 'sudo', 'bash', '-c',
                 'cat {} >> /etc/pki/tls/certs/ca-bundle.crt'
                 .format(temp_cert_file)
@@ -280,20 +293,26 @@ if __name__ == '__main__':
         else:
             raise NonRecoverableError('Unsupported platform.')
 
-    full_install = inputs.get('full_install', 'all')
-
     # download mount tools
     if full_install != "loadbalancer":
         download_service("cfy-go")
+        output = execute_command([
+            '/usr/bin/cfy-go', 'status', 'diag',
+            '-deployment', ctx.deployment.id,
+            '-tenant', cfy_tenant, '-password', cfy_pass,
+            '-user', cfy_user, '-host', cfy_host_full,
+            '-agent-file', "{}/.cfy-agent/{}.json"
+            .format(agent_file, agent_name)])
+        ctx.logger.info("Diagnostic: {}".format(output))
 
     if full_install == "all":
-        # download scale tools
-        download_service("cfy-autoscale")
-        create_service("cfy-autoscale")
-
         # download cluster provider
         download_service("cfy-kubernetes")
         create_service("cfy-kubernetes")
 
-        start_check("cfy-autoscale")
+        # download scale tools
+        download_service("cfy-autoscale")
+        create_service("cfy-autoscale")
+
         start_check("cfy-kubernetes")
+        start_check("cfy-autoscale")

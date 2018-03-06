@@ -1,22 +1,6 @@
 #!/usr/bin/env python
-#
-# Copyright (c) 2017 GigaSpaces Technologies Ltd. All rights reserved
-#
-# Licensed under the Apache License, Version 2.0 (the "License");
-# you may not use this file except in compliance with the License.
-# You may obtain a copy of the License at
-#
-#        http://www.apache.org/licenses/LICENSE-2.0
-#
-# Unless required by applicable law or agreed to in writing, software
-# distributed under the License is distributed on an "AS IS" BASIS,
-# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-# See the License for the specific language governing permissions and
-# limitations under the License.
-#
 
 import os
-import re
 import subprocess
 import pip
 try:
@@ -64,9 +48,7 @@ def check_kubedns_status(_get_pods):
     for pod_line in _get_pods.split('\n'):
         ctx.logger.debug('pod_line: {0} '.format(pod_line))
         try:
-            (
-                _namespace, _name, _ready, _status, _restarts, _age
-            ) = pod_line.split()
+            _namespace, _name, _ready, _status, _restarts, _age = pod_line.split()
         except ValueError:
             pass
         else:
@@ -79,11 +61,10 @@ def check_kubedns_status(_get_pods):
 
 if __name__ == '__main__':
 
-    # Get Cfy Manager Python Rest Client.
     cfy_client = manager.get_rest_client()
 
     # Checking if the Kubernetes DNS service is running (last step).
-    admin_file_dest = os.path.join(os.path.expanduser('~'), '.kube', 'config')
+    admin_file_dest = os.path.join(os.path.expanduser('~'), 'admin.conf')
     os.environ['KUBECONFIG'] = admin_file_dest
     get_pods = execute_command('kubectl get pods --all-namespaces')
     if not check_kubedns_status(get_pods):
@@ -107,43 +88,12 @@ if __name__ == '__main__':
         __name = cluster.get('name')
         _cluster = cluster.get('cluster', {})
         _secret_key = '%s_certificate_authority_data' % __name
-        if cfy_client and len(cfy_client.secrets.list(key=_secret_key)) != 1:
-            cfy_client.secrets.create(
-                key=_secret_key,
-                value=_cluster.get('certificate-authority-data')
-            )
+        if cfy_client and not len(cfy_client.secrets.list(key=_secret_key)) == 1:
+            cfy_client.secrets.create(key=_secret_key, value=_cluster.get('certificate-authority-data'))
             ctx.logger.info('Set secret: {0}.'.format(_secret_key))
         else:
-            cfy_client.secrets.update(
-                key=_secret_key,
-                value=_cluster.get('certificate-authority-data')
-            )
-        ctx.instance.runtime_properties[
-            '%s_certificate_authority_data' % __name
-        ] = _cluster.get('certificate-authority-data')
-
-        _server = _cluster.get('server')
-        _server_protocol, _server_ip, _server_port = re.split('://|:', _server)
-
-        _server_ip_key = 'kubernetes_master_ip'
-        _server_port_key = 'kubernetes_master_port'
-
-        if cfy_client and len(
-            cfy_client.secrets.list(key=_server_ip_key)
-        ) != 1:
-            cfy_client.secrets.create(key=_server_ip_key, value=_server_ip)
-            ctx.logger.info('Set secret: {0}.'.format(_server_ip_key))
-        else:
-            cfy_client.secrets.update(key=_server_ip_key, value=_server_ip)
-
-        if cfy_client and len(
-            cfy_client.secrets.list(key=_server_port_key)
-        ) != 1:
-            cfy_client.secrets.create(key=_server_port_key, value=_server_port)
-            ctx.logger.info('Set secret: {0}.'.format(_server_port_key))
-        else:
-            cfy_client.secrets.update(key=_server_port_key, value=_server_port)
-
+            cfy_client.secrets.update(key=_secret_key, value=_cluster.get('certificate-authority-data'))
+        ctx.instance.runtime_properties['%s_certificate_authority_data' % __name] = _cluster.get('certificate-authority-data')
         _clusters[__name] = _cluster
     del __name
 
@@ -161,39 +111,19 @@ if __name__ == '__main__':
         __name = user.get('name')
         _user = user.get('user', {})
         _secret_key = '%s_client_certificate_data' % __name
-
-        if cfy_client and len(cfy_client.secrets.list(key=_secret_key)) != 1:
-            cfy_client.secrets.create(
-                key=_secret_key,
-                value=_user.get('client-certificate-data')
-            )
+        if cfy_client and not len(cfy_client.secrets.list(key=_secret_key)) == 1:
+            cfy_client.secrets.create(key=_secret_key, value=_user.get('client-certificate-data'))
             ctx.logger.info('Set secret: {0}.'.format(_secret_key))
         else:
-            cfy_client.secrets.update(
-                key=_secret_key,
-                value=_user.get('client-certificate-data')
-            )
-
+            cfy_client.secrets.update(key=_secret_key, value=_user.get('client-certificate-data'))
         _secret_key = '%s_client_key_data' % __name
-
-        if cfy_client and len(cfy_client.secrets.list(key=_secret_key)) != 1:
-            cfy_client.secrets.create(
-                key=_secret_key,
-                value=_user.get('client-key-data')
-            )
+        if cfy_client and not len(cfy_client.secrets.list(key=_secret_key)) == 1:
+            cfy_client.secrets.create(key=_secret_key, value=_user.get('client-key-data'))
             ctx.logger.info('Set secret: {0}.'.format(_secret_key))
         else:
-            cfy_client.secrets.update(
-                key=_secret_key,
-                value=_user.get('client-key-data')
-            )
-
-        ctx.instance.runtime_properties[
-            '%s_client_certificate_data' % __name
-        ] = _user.get('client-certificate-data')
-        ctx.instance.runtime_properties[
-            '%s_client_key_data' % __name
-        ] = _user.get('client-key-data')
+            cfy_client.secrets.update(key=_secret_key, value=_user.get('client-key-data'))
+        ctx.instance.runtime_properties['%s_client_certificate_data' % __name] = _user.get('client-certificate-data')
+        ctx.instance.runtime_properties['%s_client_key_data' % __name] = _user.get('client-key-data')
         _users[__name] = _user
     del __name
 

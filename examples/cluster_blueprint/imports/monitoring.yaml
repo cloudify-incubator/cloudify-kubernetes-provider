@@ -1,7 +1,7 @@
 tosca_definitions_version: cloudify_dsl_1_3
 
 imports:
-  - https://raw.githubusercontent.com/cloudify-incubator/cloudify-kubernetes-plugin/2.0.0/plugin.yaml
+  - plugin:cloudify-kubernetes-plugin
 
 node_templates:
 
@@ -31,7 +31,7 @@ node_templates:
               client-key-data:  { get_secret: kubernetes-admin_client_key_data }
     relationships:
     - type: cloudify.relationships.depends_on
-      target: config_export
+      target: kubernetes_node
 
   influx_deployment:
     type: cloudify.kubernetes.resources.Deployment
