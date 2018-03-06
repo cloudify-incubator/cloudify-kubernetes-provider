@@ -155,6 +155,13 @@ node_types:
         unmount:
           implementation: scripts/kubernetes_common/unmount.py
 
+  cloudify.nodes.Kubernetes.build_node:
+    derived_from: cloudify.nodes.SoftwareComponent
+    interfaces:
+      cloudify.interfaces.lifecycle:
+        create:
+          implementation: scripts/buildtools/install.py
+
   cloudify.nodes.ApplicationServer.kubernetes.LoadBalancer:
     derived_from: cloudify.nodes.Root
     interfaces:
@@ -187,6 +194,12 @@ node_templates:
       - type: cloudify.relationships.contained_in
         target: kubernetes_master_host
 
+  kubernetes_master_build:
+    type: cloudify.nodes.Kubernetes.build_node
+    relationships:
+    - target: kubernetes_master
+      type: cloudify.relationships.contained_in
+
   kubernetes_master_services:
     type: cloudify.nodes.ApplicationServer.kubernetes.Node
     interfaces:
@@ -197,15 +210,25 @@ node_templates:
     relationships:
     - target: kubernetes_master
       type: cloudify.relationships.contained_in
-    # we can start only adter set all properties
+    # we can start only after set all properties
+    - target: kubernetes_master_build
+      type: cloudify.relationships.depends_on
     - target: kubernetes_node
       type: cloudify.relationships.depends_on
+
+  kubernetes_node_build:
+    type: cloudify.nodes.Kubernetes.build_node
+    relationships:
+    - target: kubernetes_node_host
+      type: cloudify.relationships.contained_in
 
   kubernetes_node_services:
     type: cloudify.nodes.ApplicationServer.kubernetes.Node
     relationships:
     - target: kubernetes_node_host
       type: cloudify.relationships.contained_in
+    - target: kubernetes_node_build
+      type: cloudify.relationships.depends_on
 
   kubernetes_node:
     type: cloudify.nodes.Kubernetes.Node
