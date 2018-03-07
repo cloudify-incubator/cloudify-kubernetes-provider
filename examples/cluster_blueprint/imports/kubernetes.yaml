@@ -157,15 +157,20 @@ node_types:
 
   cloudify.nodes.Kubernetes.build_node:
     derived_from: cloudify.nodes.SoftwareComponent
+    properties:
+      full_install:
+        default: no
+      linux_distro:
+        default: centos
     interfaces:
       cloudify.interfaces.lifecycle:
         create:
-          implementation: scripts/buildtools/install.py
+          implementation: scripts/buildtools/create.py
         configure:
-          implementation: scripts/buildtools/build.py
-          inputs:
-            full_install:
-              default: no
+          implementation: scripts/buildtools/configure.py
+        start:
+          implementation: scripts/buildtools/start.py
+
 
   cloudify.nodes.ApplicationServer.kubernetes.LoadBalancer:
     derived_from: cloudify.nodes.Root
@@ -201,11 +206,8 @@ node_templates:
 
   kubernetes_master_build:
     type: cloudify.nodes.Kubernetes.build_node
-    interfaces:
-      cloudify.interfaces.lifecycle:
-        configure:
-          inputs:
-            full_install: all
+    properties:
+      full_install: all
     relationships:
     - target: kubernetes_master
       type: cloudify.relationships.contained_in
