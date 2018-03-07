@@ -86,10 +86,13 @@ def download_service(service_name):
             raise NonRecoverableError(
                 '{} binary not in resources.'.format(service_name))
         ctx.logger.debug('{} downloaded.'.format(service_name))
-        execute_command(['sudo', 'cp', cfy_binary, service_path])
+        if execute_command(['sudo', 'cp', cfy_binary, service_path]) is False:
+            raise NonRecoverableError("Can't copy {}.".format(service_path))
     # fix file attributes
-    execute_command(['sudo', 'chmod', '555', service_path])
-    execute_command(['sudo', 'chown', 'root:root', service_path])
+    if execute_command(['sudo', 'chmod', '555', service_path]) is False:
+        raise NonRecoverableError("Can't chmod {}.".format(service_path))
+    if execute_command(['sudo', 'chown', 'root:root', service_path]) is False:
+        raise NonRecoverableError("Can't chown {}.".format(service_path))
     ctx.logger.debug('{} attributes fixed'.format(service_name))
 
 

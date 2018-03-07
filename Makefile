@@ -140,7 +140,7 @@ bin/cfy-autoscale: pkg/linux_amd64/${PACKAGEPATH}/cloudify.a ${CLUSTERAUTOSCALER
 	go build -v -ldflags "-s -w -X main.ClusterAutoscalerVersion=${VERSION}" -o bin/cfy-autoscale ${CLUSTERAUTOSCALER}
 
 upload:
-	cfy blueprints upload -b kubernetes_cluster examples/cluster_blueprint/${CLOUDPROVIDER}-blueprint.yaml
+	cfy install -b k8s examples/cluster_blueprint/${CLOUDPROVIDER}-blueprint.yaml
 
 create-for-upload: all
 	cp -v bin/cfy-kubernetes examples/cluster_blueprint/resources/cfy-kubernetes

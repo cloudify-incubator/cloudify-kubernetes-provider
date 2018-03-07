@@ -83,18 +83,22 @@ if __name__ == '__main__':
             # download scale tools
             download_service("cfy-autoscale")
     except HttpException:
+        userid = os.getuid()
+        groupid = os.getgid()
         if full_install != "all":
             ctx.logger.info('Download cfy-go repo.')
             cwd = '/opt/cloudify-kubernetes-provider/'
             if not os.path.isdir(cwd):
                 if execute_command(['sudo', 'mkdir', '-p', cwd]) is False:
                     raise NonRecoverableError("Can't create directory.")
-            if execute_command(['sudo', 'chmod', '-R', '777', cwd]) is False:
+            if execute_command(["sudo", "chown", "{0}:{1}"
+                                .format(userid, groupid), cwd]) is False:
                 raise NonRecoverableError("Can't change owner.")
         else:
             ctx.logger.debug('Download provider repo.')
             cwd = '/opt/'
-            if execute_command(['sudo', 'chmod', '-R', '777', cwd]) is False:
+            if execute_command(["sudo", "chown", "{0}:{1}"
+                                .format(userid, groupid), cwd]) is False:
                 raise NonRecoverableError("Can't change owner.")
             extra_args = {'cwd': cwd}
             command = ['git', 'clone', 'https://github.com/cloudify-incubator/'

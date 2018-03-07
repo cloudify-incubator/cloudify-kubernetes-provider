@@ -106,6 +106,7 @@ For additional `cluster-autoscaler` documentation look to [official repository](
 
 ## Upload blueprint to manager (without build sources)
 
+For full documentation about inputs look to official [simple cluster blueprint](https://github.com/cloudify-examples/simple-kubernetes-blueprint/blob/master/README.md) or [copy](/examples/cluster_blueprint/README.md) distributed with repository.
 `CLOUDPROVIDER` can be `aws` or `vsphere`.
 
 ```shell
@@ -124,9 +125,9 @@ cfy deployments create kubernetes_cluster -b kubernetes_cluster --skip-plugins-v
 cfy executions start install -d kubernetes_cluster
 
 #delete
-cfy uninstall kubernetes_cluster -p ignore_failure=true --allow-custom-parameters
+cfy uninstall k8s -p ignore_failure=true --allow-custom-parameters
 ```
 
 Known issues:
 * Q: Many messages like 'Not found instances: Wrong content type: text/html' in logs on kubenetes manager host or 'kube-dns not Running' in cloudify logs.
-* A: Check in /root/cfy.json cloudify manager ip and ssl flag.
+* A: Check in /root/cfy.json cloudify manager ip and port.
