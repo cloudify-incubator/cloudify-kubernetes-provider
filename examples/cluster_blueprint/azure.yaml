@@ -45,6 +45,7 @@ inputs:
   install_method:
     default: remote
 
+
 dsl_definitions:
 
   azure_config: &azure_config
