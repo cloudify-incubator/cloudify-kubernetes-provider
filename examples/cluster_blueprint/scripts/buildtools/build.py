@@ -19,7 +19,10 @@ import os
 import subprocess
 import tempfile
 from cloudify import ctx
-from cloudify.exceptions import HttpException
+from cloudify.exceptions import (
+    HttpException,
+    NonRecoverableError
+)
 from cloudify.state import ctx_parameters as inputs
 
 
@@ -60,10 +63,13 @@ def download_service(service_name):
         cfy_binary = ctx.download_resource('resources/{}'
                                            .format(service_name))
         ctx.logger.debug('{} downloaded.'.format(service_name))
-        execute_command(['sudo', 'cp', cfy_binary, service_path])
+        if execute_command(['sudo', 'cp', cfy_binary, service_path]) is False:
+            raise NonRecoverableError("Can't copy {}.".format(service_path))
     # fix file attributes
-    execute_command(['sudo', 'chmod', '555', service_path])
-    execute_command(['sudo', 'chown', 'root:root', service_path])
+    if execute_command(['sudo', 'chmod', '555', service_path]) is False:
+        raise NonRecoverableError("Can't chmod {}.".format(service_path))
+    if execute_command(['sudo', 'chown', 'root:root', service_path]) is False:
+        raise NonRecoverableError("Can't chown {}.".format(service_path))
     ctx.logger.debug('{} attributes fixed'.format(service_name))
 
 
@@ -82,11 +88,14 @@ if __name__ == '__main__':
             download_service("cfy-autoscale")
     except HttpException:
         if full_install != "all":
-            ctx.logger.debug('Download cfy-go repo.')
+            ctx.logger.info('Download cfy-go repo.')
             cwd = '/opt/cloudify-kubernetes-provider/'
-            execute_command(['sudo', 'mkdir', '-p', cwd])
-            execute_command(['sudo', 'chmod', '-R', '777', cwd])
-            ctx.logger.debug('Download cfy-go repo.')
+            if not os.path.isdir(cwd):
+                if execute_command(['sudo', 'mkdir', '-p', cwd]) is False:
+                    raise NonRecoverableError("Can't create directory.")
+            if execute_command(['sudo', 'chmod', '-R', '777', cwd]) is False:
+                raise NonRecoverableError("Can't change owner.")
+            ctx.logger.info('Download cfy-go repo.')
             extra_args = {
                 'cwd': cwd,
                 'env': {
@@ -98,16 +107,19 @@ if __name__ == '__main__':
             }
             command = ['go', 'get', 'github.com/cloudify-incubator/'
                        'cloudify-rest-go-client/cfy-go']
-            execute_command(command, extra_args=extra_args)
+            if execute_command(command, extra_args=extra_args) is False:
+                raise NonRecoverableError("Can't build cfy-go.")
         else:
             ctx.logger.debug('Download provider repo.')
             cwd = '/opt/'
+            if execute_command(['sudo', 'chmod', '-R', '777', cwd]) is False:
+                raise NonRecoverableError("Can't change owner.")
             extra_args = {'cwd': cwd}
             command = ['git', 'clone', 'https://github.com/cloudify-incubator/'
                        'cloudify-kubernetes-provider.git', '--depth', '1',
                        '-b', 'testing']
-            execute_command(command, extra_args=extra_args)
-
+            if execute_command(command, extra_args=extra_args) is False:
+                raise NonRecoverableError("Can't download sources.")
             cwd = os.path.join(cwd, 'cloudify-kubernetes-provider/')
 
             extra_args = {
@@ -129,18 +141,34 @@ if __name__ == '__main__':
                                 'git@github.com:', 'https://github.com/'))
 
             ctx.logger.debug('Download submodules sources.')
-            execute_command(['sudo', 'cp', temp_git_file, git_modules_file])
-            execute_command(['git', 'submodule', 'init'],
-                            extra_args=extra_args)
-            execute_command(['git', 'submodule', 'update'],
-                            extra_args=extra_args)
+            if execute_command(['sudo', 'cp', temp_git_file,
+                                git_modules_file]) is False:
+                raise NonRecoverableError("Can't update links.")
+            if execute_command(['git', 'submodule', 'init'],
+                               extra_args=extra_args) is False:
+                raise NonRecoverableError("Can't init subsources.")
+            if execute_command(['git', 'submodule', 'update'],
+                               extra_args=extra_args) is False:
+                raise NonRecoverableError("Can't update subsources.")
             command = ['go', 'install', 'src/cfy-kubernetes.go']
-            execute_command(command, extra_args=extra_args)
+            if execute_command(command, extra_args=extra_args) is False:
+                raise NonRecoverableError("Can't build cfy-kubernetes.")
             command = ['go', 'build', '-v', '-o', 'bin/cluster-autoscaler',
                        'src/k8s.io/autoscaler/cluster-autoscaler/main.go',
                        'src/k8s.io/autoscaler/cluster-autoscaler/version.go']
-            execute_command(command, extra_args=extra_args)
+            if execute_command(command, extra_args=extra_args) is False:
+                raise NonRecoverableError("Can't build cfy-autoscale.")
+            command = ['go', 'get', 'github.com/cloudify-incubator/'
+                       'cloudify-rest-go-client/cfy-go']
+            if execute_command(command, extra_args=extra_args) is False:
+                raise NonRecoverableError("Can't build cfy-go.")
 
-        execute_command(['sudo', 'cp',
-                         "/opt/cloudify-kubernetes-provider/bin/*",
-                         '/usr/bin/'])
+        for_copy = ["/opt/cloudify-kubernetes-provider/bin/cfy-go"]
+        if full_install == "all":
+            for_copy += [
+                "/opt/cloudify-kubernetes-provider/bin/cfy-kubernetes",
+                "/opt/cloudify-kubernetes-provider/bin/cfy-autoscale"]
+
+        for path in for_copy:
+            if execute_command(['sudo', 'cp', path, '/usr/bin/']) is False:
+                raise NonRecoverableError("Can't copy {} tool.".format(path))
