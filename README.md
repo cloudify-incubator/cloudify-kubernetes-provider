@@ -70,10 +70,10 @@ kubectl get nodes
 src/k8s.io/autoscaler/cluster-autoscaler/cluster-autoscaler --kubeconfig $HOME/.kube/config --cloud-provider cloudify --cloud-config examples/config.json
 
 # scale
-cfy executions start scale -d kubernetes_cluster -p 'scalable_entity_name=k8s_node_scale_group'
+cfy executions start scale -d k8s -p 'scalable_entity_name=k8s_node_group'
 
 # downscale
-cfy executions start scale -d kubernetes_cluster -p 'scalable_entity_name=k8s_node_scale_group' -p 'delta=-1'
+cfy executions start scale -d k8s -p 'scalable_entity_name=k8s_node_group' -p 'delta=-1'
 
 # create simple pod https://kubernetes.io/docs/tasks/run-application/run-stateless-application-deployment/
 kubectl create -f https://k8s.io/docs/tasks/run-application/deployment.yaml --kubeconfig $HOME/.kube/config
@@ -85,7 +85,8 @@ kubectl describe deployment nginx-deployment --kubeconfig $HOME/.kube/config
 kubectl delete deployment nginx-deployment --kubeconfig $HOME/.kube/config
 
 # check volume
-kubectl create -f examples/nginx.yaml
+wget https://raw.githubusercontent.com/cloudify-incubator/cloudify-kubernetes-provider/master/examples/nginx.yaml
+kubectl create -f nginx.yaml
 watch -n 5 -d kubectl describe pod nginx
 kubectl delete pod nginx
 
@@ -106,6 +107,7 @@ For additional `cluster-autoscaler` documentation look to [official repository](
 
 ## Upload blueprint to manager (without build sources)
 
+For full documentation about inputs look to official [simple cluster blueprint](https://github.com/cloudify-examples/simple-kubernetes-blueprint/blob/master/README.md) or [copy](/examples/cluster_blueprint/README.md) distributed with repository.
 `CLOUDPROVIDER` can be `aws` or `vsphere`.
 
 ```shell
@@ -120,13 +122,11 @@ cfy secret create kubernetes_master_ip -s "#"
 git clone https://github.com/cloudify-incubator/cloudify-kubernetes-provider.git -b master --depth 1
 cd cloudify-kubernetes-provider
 CLOUDPROVIDER=aws make upload
-cfy deployments create kubernetes_cluster -b kubernetes_cluster -i ../kubenetes.yaml --skip-plugins-validation
-cfy executions start install -d kubernetes_cluster
 
 #delete
-cfy uninstall kubernetes_cluster -p ignore_failure=true --allow-custom-parameters
+cfy uninstall k8s -p ignore_failure=true --allow-custom-parameters
 ```
 
 Known issues:
 * Q: Many messages like 'Not found instances: Wrong content type: text/html' in logs on kubenetes manager host or 'kube-dns not Running' in cloudify logs.
-* A: Check in /root/cfy.json cloudify manager ip and ssl flag.
+* A: Check in /root/cfy.json cloudify manager ip and port.
