@@ -7,11 +7,10 @@ description: >
 imports:
   - http://www.getcloudify.org/spec/cloudify/4.3/types.yaml
   - plugin:cloudify-azure-plugin
-  - plugin:cloudify-utilities-plugin
+  - plugin:cloudify-utilities-plugin?version=1.5.0.1
   - plugin:cloudify-diamond-plugin
   - plugin:cloudify-fabric-plugin
   - imports/kubernetes.yaml
-
 
 inputs:
 
@@ -44,9 +43,6 @@ inputs:
     default:
     - path: {concat:[ '/home/', { get_input: agent_user }, '/.ssh/authorized_keys' ]}
       keyData: { get_secret: agent_key_public }
-
-  encode_cloud_config:
-    default: true
 
 dsl_definitions:
 
@@ -150,9 +146,20 @@ node_templates:
       os_family: linux
       azure_config: *azure_config
       resource_config:
-        hardwareProfile: {}
-        storageProfile: {}
-        osProfile: {}
+        hardwareProfile:
+          vmSize: { get_input: size }
+        storageProfile:
+          imageReference: { get_input: image}
+        osProfile:
+          customData: |
+            #!/bin/bash
+            echo "hello"
+          adminUsername: { get_input: agent_user }
+          adminPassword: ''
+          linuxConfiguration:
+            ssh:
+              publicKeys: { get_input: ssh_public_keys }
+            disablePasswordAuthentication: true
       agent_config:
         user: { get_input: agent_user }
         install_method: remote
@@ -167,24 +174,6 @@ node_templates:
       target: availability_set
     - type: cloudify.azure.relationships.connected_to_nic
       target: kubernetes_master_host_nic
-    interfaces:
-      cloudify.interfaces.lifecycle:
-        create:
-          implementation: pkg.cloudify_azure.resources.compute.virtualmachine.create
-          inputs:
-            args:
-              hardwareProfile:
-                vmSize: { get_input: size }
-              storageProfile:
-                imageReference: { get_input: image}
-              osProfile:
-                adminUsername: { get_input: agent_user }
-                adminPassword: ''
-                # customData: { get_attribute: [ cloudify_host_cloud_config, cloud_config ] }
-                linuxConfiguration:
-                  ssh:
-                    publicKeys: { get_input: ssh_public_keys }
-                  disablePasswordAuthentication: true
 
   kubernetes_node_host:
     type: cloudify.azure.nodes.compute.VirtualMachine
@@ -194,9 +183,20 @@ node_templates:
       os_family: linux
       azure_config: *azure_config
       resource_config:
-        hardwareProfile: {}
-        storageProfile: {}
-        osProfile: {}
+        hardwareProfile:
+          vmSize: { get_input: size }
+        storageProfile:
+          imageReference: { get_input: image}
+        osProfile:
+          customData: |
+            #!/bin/bash
+            echo "hello"
+          adminUsername: { get_input: agent_user }
+          adminPassword: ''
+          linuxConfiguration:
+            ssh:
+              publicKeys: { get_input: ssh_public_keys }
+            disablePasswordAuthentication: true
       agent_config:
         user: { get_input: agent_user }
         install_method: remote
@@ -212,23 +212,6 @@ node_templates:
     - type: cloudify.azure.relationships.connected_to_nic
       target: kubernetes_node_host_nic
     interfaces:
-      cloudify.interfaces.lifecycle:
-        create:
-          implementation: pkg.cloudify_azure.resources.compute.virtualmachine.create
-          inputs:
-            args:
-              hardwareProfile:
-                vmSize: { get_input: size }
-              storageProfile:
-                imageReference: { get_input: image}
-              osProfile:
-                adminUsername: { get_input: agent_user }
-                adminPassword: ''
-#                customData: { get_attribute: [ cloudify_host_cloud_config, cloud_config ] }
-                linuxConfiguration:
-                  ssh:
-                    publicKeys: { get_input: ssh_public_keys }
-                  disablePasswordAuthentication: true
       cloudify.interfaces.monitoring_agent:
         install:
           implementation: diamond.diamond_agent.tasks.install
@@ -261,9 +244,20 @@ node_templates:
       os_family: linux
       azure_config: *azure_config
       resource_config:
-        hardwareProfile: {}
-        storageProfile: {}
-        osProfile: {}
+        hardwareProfile:
+          vmSize: { get_input: size }
+        storageProfile:
+          imageReference: { get_input: image}
+        osProfile:
+          customData: |
+            #!/bin/bash
+            echo "hello"
+          adminUsername: { get_input: agent_user }
+          adminPassword: ''
+          linuxConfiguration:
+            ssh:
+              publicKeys: { get_input: ssh_public_keys }
+            disablePasswordAuthentication: true
       agent_config:
         user: { get_input: agent_user }
         install_method: remote
@@ -279,23 +273,6 @@ node_templates:
     - type: cloudify.azure.relationships.connected_to_nic
       target: kubernetes_load_host_nic
     interfaces:
-      cloudify.interfaces.lifecycle:
-        create:
-          implementation: pkg.cloudify_azure.resources.compute.virtualmachine.create
-          inputs:
-            args:
-              hardwareProfile:
-                vmSize: { get_input: size }
-              storageProfile:
-                imageReference: { get_input: image}
-              osProfile:
-                adminUsername: { get_input: agent_user }
-                adminPassword: ''
-#                customData: { get_attribute: [ cloudify_host_cloud_config, cloud_config ] }
-                linuxConfiguration:
-                  ssh:
-                    publicKeys: { get_input: ssh_public_keys }
-                  disablePasswordAuthentication: true
       cloudify.interfaces.monitoring_agent:
         install:
           implementation: diamond.diamond_agent.tasks.install
@@ -525,6 +502,17 @@ node_templates:
             sourceAddressPrefix: '*'
             destinationAddressPrefix: '*'
             priority: 114
+            access: Allow
+            direction: Inbound
+        - name: {concat:[{get_input: resource_prefix},nsg,{get_input: resource_suffix},Apps]}
+          properties:
+            description: Apps TCP access
+            protocol: Tcp
+            sourcePortRange: 30000
+            destinationPortRange: 40000
+            sourceAddressPrefix: '*'
+            destinationAddressPrefix: '*'
+            priority: 115
             access: Allow
             direction: Inbound
     relationships:
