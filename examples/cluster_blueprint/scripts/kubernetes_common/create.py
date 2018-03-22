@@ -30,7 +30,7 @@ from cloudify.exceptions import (
     OperationRetry
 )
 
-CONFIG = ('"deployment": "{0}",' +
+CONFIG = ('"nodeType": "{0}",' +
           '"instance": "{1}",' +
           '"tenant": "{2}",' +
           '"password": "{3}",' +
@@ -40,9 +40,9 @@ CONFIG = ('"deployment": "{0}",' +
 
 MOUNT = ('#!/bin/bash\n' +
          'echo $@ >> /var/log/mount-calls.log\n' +
-         '/usr/bin/cfy-go kubernetes $1 $2 $3 -deployment "{0}" ' +
-         '-instance "{1}" -tenant "{2}" -password "{3}" -user "{4}" ' +
-         '-host "{5}" -agent-file "{6}"')
+         '/usr/bin/cfy-go kubernetes $1 $2 $3 -instance "{0}" ' +
+         '-tenant "{1}" -password "{2}" -user "{3}" -host "{4}" ' +
+         '-agent-file "{5}"')
 
 
 def execute_command(command, extra_args=None):
@@ -219,7 +219,7 @@ if __name__ == '__main__':
                     "https://" + cfy_host + ":" + str(cfy_ssl_port)
             )
             outfile.write("{" + CONFIG.format(
-                ctx.deployment.id,
+                ctx.node.type,
                 ctx.instance.id,
                 cfy_tenant,
                 cfy_pass,
@@ -235,7 +235,6 @@ if __name__ == '__main__':
 
         with open(temp_mount_file, 'w') as outfile:
             outfile.write(MOUNT.format(
-                ctx.deployment.id,
                 ctx.instance.id,
                 cfy_tenant,
                 cfy_pass,
@@ -301,7 +300,6 @@ if __name__ == '__main__':
         download_service("cfy-go")
         output = execute_command([
             '/usr/bin/cfy-go', 'status', 'diag',
-            '-deployment', ctx.deployment.id,
             '-tenant', cfy_tenant, '-password', cfy_pass,
             '-user', cfy_user, '-host', cfy_host_full,
             '-agent-file', "{}/.cfy-agent/{}.json"

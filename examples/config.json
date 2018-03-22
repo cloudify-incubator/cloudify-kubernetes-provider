@@ -4,5 +4,5 @@
 	"user": "admin",
 	"host": "127.0.0.1",
 	"agent": "~/.cfy-agent/kubeinstance_kaevwr.json",
-	"deployment": "kubernetes_cluster"
+	"nodeType": "cloudify.nodes.ApplicationServer.kubernetes.Node"
 }
