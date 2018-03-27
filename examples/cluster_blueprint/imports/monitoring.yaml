@@ -1,8 +1,5 @@
 tosca_definitions_version: cloudify_dsl_1_3
 
-imports:
-  - plugin:cloudify-kubernetes-plugin
-
 node_templates:
 
   kube:
@@ -31,7 +28,7 @@ node_templates:
               client-key-data:  { get_secret: kubernetes-admin_client_key_data }
     relationships:
     - type: cloudify.relationships.depends_on
-      target: kubernetes_node
+      target: k8s_node
 
   influx_deployment:
     type: cloudify.kubernetes.resources.Deployment

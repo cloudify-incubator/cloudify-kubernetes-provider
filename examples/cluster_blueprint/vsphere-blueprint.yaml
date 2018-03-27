@@ -8,8 +8,9 @@ imports:
   - plugin:cloudify-diamond-plugin?version=1.3.8
   - plugin:cloudify-fabric-plugin?version=1.5.1
   - plugin:cloudify-utilities-plugin?version=1.5.2
+  - plugin:cloudify-vsphere-plugin?version=2.6.0
+  - plugin:cloudify-kubernetes-plugin
   - imports/kubernetes.yaml
-  - http://www.getcloudify.org/spec/vsphere-plugin/2.6.0/plugin.yaml
 
 inputs:
 
@@ -85,6 +86,12 @@ inputs:
   agent_group:
     default: root
 
+  ks_node_dep_archive:
+    default: https://github.com/cloudify-incubator/kubernetes-node-blueprints/archive/add-kubernetes-node-blueprints.zip
+
+  ks_load_dep_archive:
+    default: https://github.com/cloudify-incubator/kubernetes-lb-blueprints/archive/add-kubernetes-lb-blueprints.zip
+
 dsl_definitions:
 
   connection_config: &connection_config
@@ -131,67 +138,74 @@ node_types:
 
 node_templates:
 
-  kubernetes_node_base:
-    type: kubernetes_host
-
-  kubernetes_load_host:
-    type: kubernetes_host
-
-  kubernetes_node_host:
-    type: cloudify.nodes.SoftwareComponent
-    interfaces:
-      cloudify.interfaces.lifecycle:
-        start:
-          implementation: scripts/vsphere/kubernetes.sh
-    relationships:
-      - target: kubernetes_node_base
-        type: cloudify.relationships.contained_in
-
-  kubernetes_master_base:
+  k8s_master_host:
     type: kubernetes_host
     capabilities:
       scalable:
         properties:
           default_instances: 1
 
-  kubernetes_master_host:
+  k8s_master_host_service:
     type: cloudify.nodes.SoftwareComponent
     interfaces:
       cloudify.interfaces.lifecycle:
         start:
           implementation: scripts/vsphere/kubernetes.sh
     relationships:
-      - target: kubernetes_master_base
+      - target: k8s_master_host
         type: cloudify.relationships.contained_in
 
-groups:
-
-  k8s_node_group:
-    members:
-      - kubernetes_node_base
-      - kubernetes_node_host
-
-  k8s_load_group:
-    members:
-      - kubernetes_load_host
-
-policies:
-
-  kubernetes_node_vms_scaling_policy:
-    type: cloudify.policies.scaling
+  k8s_node:
+    type: cloudify.nodes.DeploymentProxy
     properties:
-      default_instances:  1
-    targets: [k8s_node_group]
+      resource_config:
+        blueprint:
+          id: k8s_node_blue
+          blueprint_archive: { get_input: ks_node_dep_archive }
+          main_file_name: vsphere.yaml
+        deployment:
+          id: k8s_node_dep
+          inputs:
+            public_master_ip: { get_attribute: [ k8s_master_host, ip ] }
+          outputs:
+            deployment-type: deployment-type
+            deployment-node-data-type: deployment-node-data-type
 
-  kubernetes_load_vms_scaling_policy:
-    type: cloudify.policies.scaling
+    relationships:
+      - type: cloudify.relationships.depends_on
+        target: k8s_master_host_service
+      - type: cloudify.relationships.depends_on
+        target: kubernetes_master
+      - type: cloudify.relationships.depends_on
+        target: kubernetes_master_build
+
+  k8s_load:
+    type: cloudify.nodes.DeploymentProxy
     properties:
-      default_instances:  1
-    targets: [k8s_load_group]
+      resource_config:
+        blueprint:
+          id: k8s_lb_blue
+          blueprint_archive: { get_input: ks_load_dep_archive }
+          main_file_name: vsphere.yaml
+        deployment:
+          id: k8s_lb_dep
+          outputs:
+            deployment-type: deployment-type
+            deployment-node-data-type: deployment-node-data-type
+
+    relationships:
+      - type: cloudify.relationships.depends_on
+        target: k8s_master_host_service
+      - type: cloudify.relationships.depends_on
+        target: k8s_node
+      - type: cloudify.relationships.depends_on
+        target: kubernetes_master
+      - type: cloudify.relationships.depends_on
+        target: kubernetes_master_build
 
 outputs:
 
   kubernetes_master_public_ip:
-    value: { get_attribute: [ kubernetes_master_host, ip ] }
+    value: { get_attribute: [ k8s_master_host, ip ] }
 
 
