@@ -1,6 +1,12 @@
 .PHONY: all
 all: bin/cfy-go bin/cfy-kubernetes bin/cfy-autoscale
 
+ifdef SystemRoot
+OSTYPE := Windows
+else
+OSTYPE ?= $(shell uname -s)
+endif
+
 AUTOSCALEPACKAGE := k8s.io/autoscaler/cluster-autoscaler/cloudprovider
 KUBERNETESPACKAGE := k8s.io/kubernetes/pkg/cloudprovider/providers/cloudifyprovider
 PACKAGEPATH := github.com/cloudify-incubator/cloudify-rest-go-client
@@ -17,6 +23,7 @@ reformat:
 	gofmt -w src/${PACKAGEPATH}/cloudify/utils/*.go
 	gofmt -w src/${PACKAGEPATH}/cloudify/tests/*.go
 	gofmt -w src/${PACKAGEPATH}/cloudify/*.go
+	gofmt -w src/${PACKAGEPATH}/container/*.go
 	gofmt -w src/${PACKAGEPATH}/cfy-go/*.go
 	gofmt -w src/${PACKAGEPATH}/kubernetes/*.go
 	# kubernetes parts
@@ -58,6 +65,17 @@ pkg/linux_amd64/${PACKAGEPATH}/cloudify/utils.a: ${CLOUDIFYUTILS}
 	$(call colorecho,"Build: ", $@)
 	go build -v -i -o pkg/linux_amd64/${PACKAGEPATH}/cloudify/utils.a ${CLOUDIFYUTILS}
 
+# container
+ifeq ($(OSTYPE),Linux)
+CLOUDIFYCONTAINER := src/${PACKAGEPATH}/container/container_linux.go
+else
+CLOUDIFYCONTAINER := src/${PACKAGEPATH}/container/container_darwin.go
+endif
+
+pkg/linux_amd64/${PACKAGEPATH}/container.a: ${CLOUDIFYCONTAINER}
+	$(call colorecho,"Build: ",$@)
+	go build -v -i -o pkg/linux_amd64/${PACKAGEPATH}/container.a ${CLOUDIFYCONTAINER}
+
 # cloudify
 CLOUDIFYCOMMON := \
 	src/${PACKAGEPATH}/cloudify/scalegroup.go \
@@ -83,6 +101,7 @@ pkg/linux_amd64/${PACKAGEPATH}/cloudify.a: ${CLOUDIFYCOMMON} pkg/linux_amd64/${P
 CFYGOLIBS := \
 	pkg/linux_amd64/${PACKAGEPATH}/cloudify/utils.a \
 	pkg/linux_amd64/${PACKAGEPATH}/kubernetes.a \
+	pkg/linux_amd64/${PACKAGEPATH}/container.a \
 	pkg/linux_amd64/${PACKAGEPATH}/cloudify.a
 
 # cfy-go
@@ -98,6 +117,7 @@ CFYGO := \
 	src/${PACKAGEPATH}/cfy-go/nodes.go \
 	src/${PACKAGEPATH}/cfy-go/plugins.go \
 	src/${PACKAGEPATH}/cfy-go/scaling.go \
+	src/${PACKAGEPATH}/cfy-go/container.go \
 	src/${PACKAGEPATH}/cfy-go/tenants.go
 
 bin/cfy-go: ${CFYGO} ${CFYGOLIBS}

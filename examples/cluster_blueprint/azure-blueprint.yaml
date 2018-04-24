@@ -7,7 +7,7 @@ description: >
 imports:
   - http://www.getcloudify.org/spec/cloudify/4.3/types.yaml
   - plugin:cloudify-azure-plugin
-  - plugin:cloudify-utilities-plugin?version=1.5.0.1
+  - plugin:cloudify-utilities-plugin?version=1.5.2
   - plugin:cloudify-diamond-plugin
   - plugin:cloudify-fabric-plugin
   - imports/kubernetes.yaml
@@ -85,7 +85,7 @@ node_templates:
                       EOF
                       setenforce 0
                     - |
-                      yum -t -y install docker-1.12.6 kubelet-1.9.4-0 kubeadm-1.9.4-0 kubectl-1.9.4-0 kubernetes-cni-0.6.0-0 ca-certificates
+                      yum -t -y install docker-1.12.6 kubelet-1.9.6-0 kubeadm-1.9.6-0 kubectl-1.9.6-0 kubernetes-cni-0.6.0-0 ca-certificates
                       sudo update-ca-trust force-enable
                       swapon -s | awk '{print "sudo swapoff " $1}' | grep -v "Filename" | sh -
                       sudo sed -i 's|cgroup-driver=systemd|cgroup-driver=systemd --provider-id='`hostname`'|g' /etc/systemd/system/kubelet.service.d/10-kubeadm.conf
@@ -126,7 +126,7 @@ node_templates:
                       EOF
                       setenforce 0
                     - |
-                      yum -t -y install docker-1.12.6 kubelet-1.9.4-0 kubeadm-1.9.4-0 kubectl-1.9.4-0 kubernetes-cni-0.6.0-0 ca-certificates
+                      yum -t -y install docker-1.12.6 kubelet-1.9.6-0 kubeadm-1.9.6-0 kubectl-1.9.6-0 kubernetes-cni-0.6.0-0 ca-certificates
                       sudo update-ca-trust force-enable
                       swapon -s | awk '{print "sudo swapoff " $1}' | grep -v "Filename" | sh -
                       sudo sed -i 's|cgroup-driver=systemd|cgroup-driver=systemd --provider-id='`hostname`'|g' /etc/systemd/system/kubelet.service.d/10-kubeadm.conf
