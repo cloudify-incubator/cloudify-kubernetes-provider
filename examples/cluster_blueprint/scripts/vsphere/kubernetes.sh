@@ -21,7 +21,7 @@ sudo yum makecache
 
 sudo setenforce 0
 
-sudo yum -y install kubelet-1.9.4-0 kubeadm-1.9.4-0 kubectl-1.9.4-0 kubernetes-cni-0.6.0-0 ca-certificates docker-1.12.6
+sudo yum -y install kubelet-1.9.6-0 kubeadm-1.9.6-0 kubectl-1.9.6-0 kubernetes-cni-0.6.0-0 ca-certificates docker-1.12.6
 sudo update-ca-trust force-enable
 
 sudo groupadd docker
