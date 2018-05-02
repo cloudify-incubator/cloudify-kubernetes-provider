@@ -31,10 +31,10 @@ inputs:
     default: ec2-user
 
   ks_node_dep_archive:
-    default: https://github.com/cloudify-incubator/kubernetes-node-blueprints/archive/add-kubernetes-node-blueprints.zip
+    default: https://github.com/cloudify-incubator/kubernetes-node-blueprints/archive/master.zip
 
   ks_load_dep_archive:
-    default: https://github.com/cloudify-incubator/kubernetes-lb-blueprints/archive/add-kubernetes-lb-blueprints.zip
+    default: https://github.com/cloudify-incubator/kubernetes-lb-blueprints/archive/master.zip
 
 dsl_definitions:
 
