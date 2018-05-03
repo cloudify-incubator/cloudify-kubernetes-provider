@@ -9,8 +9,9 @@ imports:
   - plugin:cloudify-diamond-plugin?version=1.3.8
   - plugin:cloudify-fabric-plugin?version=1.5.1
   - plugin:cloudify-utilities-plugin?version=1.5.2
+  - plugin:cloudify-openstack-plugin?version=2.6.0
+  - plugin:cloudify-kubernetes-plugin
   - imports/kubernetes.yaml
-  - https://raw.githubusercontent.com/cloudify-cosmo/cloudify-openstack-plugin/2.6.0/plugin.yaml
   - imports/cloud-config.yaml
 
 inputs:
@@ -28,6 +29,13 @@ inputs:
       User for connecting to agent VMs
     default: centos
 
+  ks_node_dep_archive:
+    default: https://github.com/cloudify-incubator/kubernetes-node-blueprints/archive/master.zip
+
+  ks_load_dep_archive:
+    default: https://github.com/cloudify-incubator/kubernetes-lb-blueprints/archive/master.zip
+
+
 dsl_definitions:
 
   openstack_config: &openstack_config
@@ -39,7 +47,7 @@ dsl_definitions:
 
 node_templates:
 
-  kubernetes_master_host:
+  k8s_master_host:
     type: cloudify.openstack.nodes.Server
     properties:
       openstack_config: *openstack_config
@@ -66,124 +74,6 @@ node_templates:
         type: cloudify.openstack.server_connected_to_port
       - type: cloudify.relationships.depends_on
         target: cloudify_host_cloud_config
-
-  kubernetes_node_host:
-    type: cloudify.openstack.nodes.Server
-    properties:
-      openstack_config: *openstack_config
-      agent_config:
-          user: { get_input: agent_user }
-          install_method: remote
-          port: 22
-          key: { get_secret: agent_key_private }
-      server:
-        key_name: ''
-        image: ''
-        flavor: ''
-      management_network_name: { get_property: [ public_network, resource_id ] }
-    relationships:
-      - type: cloudify.relationships.contained_in
-        target: k8s_node_scaling_tier
-      - target: kubernetes_node_port
-        type: cloudify.openstack.server_connected_to_port
-    interfaces:
-      cloudify.interfaces.lifecycle:
-        create:
-          inputs:
-            args:
-              image: { get_input: image }
-              flavor: { get_input: flavor }
-              userdata: { get_attribute: [ cloudify_host_cloud_config, cloud_config ] }
-      cloudify.interfaces.monitoring_agent:
-          install:
-            implementation: diamond.diamond_agent.tasks.install
-            inputs:
-              diamond_config:
-                interval: 1
-          start: diamond.diamond_agent.tasks.start
-          stop: diamond.diamond_agent.tasks.stop
-          uninstall: diamond.diamond_agent.tasks.uninstall
-      cloudify.interfaces.monitoring:
-          start:
-            implementation: diamond.diamond_agent.tasks.add_collectors
-            inputs:
-              collectors_config:
-                CPUCollector: {}
-                MemoryCollector: {}
-                LoadAverageCollector: {}
-                DiskUsageCollector:
-                  config:
-                    devices: x?vd[a-z]+[0-9]*$
-                NetworkCollector: {}
-                ProcessResourcesCollector:
-                  config:
-                    enabled: true
-                    unit: B
-                    measure_collector_time: true
-                    cpu_interval: 0.5
-                    process:
-                      hyperkube:
-                        name: hyperkube
-
-  kubernetes_load_host:
-    type: cloudify.openstack.nodes.Server
-    properties:
-      openstack_config: *openstack_config
-      agent_config:
-          user: { get_input: agent_user }
-          install_method: remote
-          port: 22
-          key: { get_secret: agent_key_private }
-      server:
-        key_name: ''
-        image: ''
-        flavor: ''
-      management_network_name: { get_property: [ public_network, resource_id ] }
-    relationships:
-      - type: cloudify.relationships.contained_in
-        target: k8s_node_scaling_tier
-      - type: cloudify.relationships.depends_on
-        target: cloudify_load_cloud_config
-      - target: kubernetes_load_port
-        type: cloudify.openstack.server_connected_to_port
-    interfaces:
-      cloudify.interfaces.lifecycle:
-        create:
-          inputs:
-            args:
-              image: { get_input: image }
-              flavor: { get_input: flavor }
-              userdata: { get_attribute: [ cloudify_load_cloud_config, cloud_config ] }
-      cloudify.interfaces.monitoring_agent:
-          install:
-            implementation: diamond.diamond_agent.tasks.install
-            inputs:
-              diamond_config:
-                interval: 1
-          start: diamond.diamond_agent.tasks.start
-          stop: diamond.diamond_agent.tasks.stop
-          uninstall: diamond.diamond_agent.tasks.uninstall
-      cloudify.interfaces.monitoring:
-          start:
-            implementation: diamond.diamond_agent.tasks.add_collectors
-            inputs:
-              collectors_config:
-                CPUCollector: {}
-                MemoryCollector: {}
-                LoadAverageCollector: {}
-                DiskUsageCollector:
-                  config:
-                    devices: x?vd[a-z]+[0-9]*$
-                NetworkCollector: {}
-                ProcessResourcesCollector:
-                  config:
-                    enabled: true
-                    unit: B
-                    measure_collector_time: true
-                    cpu_interval: 0.5
-                    process:
-                      hyperkube:
-                        name: hyperkube
 
   kubernetes_security_group:
     type: cloudify.openstack.nodes.SecurityGroup
@@ -247,34 +137,6 @@ node_templates:
       - type: cloudify.openstack.port_connected_to_floating_ip
         target: kubernetes_master_ip
 
-  kubernetes_node_port:
-    type: cloudify.openstack.nodes.Port
-    properties:
-      openstack_config: *openstack_config
-    relationships:
-      - type: cloudify.relationships.contained_in
-        target: k8s_node_scaling_tier
-      - type: cloudify.relationships.connected_to
-        target: public_network
-      - type: cloudify.relationships.depends_on
-        target: public_subnet
-      - type: cloudify.openstack.port_connected_to_security_group
-        target: kubernetes_security_group
-
-  kubernetes_load_port:
-    type: cloudify.openstack.nodes.Port
-    properties:
-      openstack_config: *openstack_config
-    relationships:
-      - type: cloudify.relationships.contained_in
-        target: k8s_node_scaling_tier
-      - type: cloudify.relationships.connected_to
-        target: public_network
-      - type: cloudify.relationships.depends_on
-        target: public_subnet
-      - type: cloudify.openstack.port_connected_to_security_group
-        target: kubernetes_security_group
-
   public_subnet:
     type: cloudify.openstack.nodes.Subnet
     properties:
@@ -311,9 +173,6 @@ node_templates:
       use_external_resource: true
       resource_id: { get_secret: external_network_name }
 
-  k8s_node_scaling_tier:
-    type: cloudify.nodes.Root
-
   kubernetes_master_ip:
     type: cloudify.openstack.nodes.FloatingIP
     properties:
@@ -321,31 +180,60 @@ node_templates:
       floatingip:
         floating_network_name: { get_property: [ external_network, resource_id ] }
 
-groups:
-
-  k8s_node_group:
-    members:
-      - kubernetes_node_host
-      - kubernetes_node_port
-
-  k8s_load_group:
-    members:
-      - kubernetes_load_host
-      - kubernetes_load_port
-
-policies:
-
-  kubernetes_node_vms_scaling_policy:
-    type: cloudify.policies.scaling
+  k8s_node:
+    type: cloudify.nodes.DeploymentProxy
     properties:
-      default_instances:  1
-    targets: [k8s_node_group]
+      resource_config:
+        blueprint:
+          id: k8s_node_blue
+          blueprint_archive: { get_input: ks_node_dep_archive }
+          main_file_name: openstack.yaml
+        deployment:
+          id: k8s_node_dep
+          inputs:
+            node_security_group: { get_attribute: [ kubernetes_security_group, external_id ] }
+            public_master_ip: { get_attribute: [ k8s_master_host, ip ] }
+          outputs:
+            deployment-type: deployment-type
+            deployment-node-data-type: deployment-node-data-type
 
-  kubernetes_load_vms_scaling_policy:
-    type: cloudify.policies.scaling
+    relationships:
+      - type: cloudify.relationships.depends_on
+        target: k8s_master_host
+      - type: cloudify.relationships.depends_on
+        target: kubernetes_security_group
+      - type: cloudify.relationships.depends_on
+        target: kubernetes_master
+      - type: cloudify.relationships.depends_on
+        target: kubernetes_master_build
+
+  k8s_load:
+    type: cloudify.nodes.DeploymentProxy
     properties:
-      default_instances:  1
-    targets: [k8s_load_group]
+      resource_config:
+        blueprint:
+          id: k8s_lb_blue
+          blueprint_archive: { get_input: ks_load_dep_archive }
+          main_file_name: openstack.yaml
+        deployment:
+          id: k8s_lb_dep
+          inputs:
+            node_security_group: { get_attribute: [ kubernetes_security_group, external_id ] }
+          outputs:
+            deployment-type: deployment-type
+            deployment-node-data-type: deployment-node-data-type
+
+    relationships:
+      - type: cloudify.relationships.depends_on
+        target: k8s_master_host
+      - type: cloudify.relationships.depends_on
+        target: k8s_node
+      - type: cloudify.relationships.depends_on
+        target: kubernetes_security_group
+      - type: cloudify.relationships.depends_on
+        target: kubernetes_master
+      - type: cloudify.relationships.depends_on
+        target: kubernetes_master_build
 
 outputs:
 
