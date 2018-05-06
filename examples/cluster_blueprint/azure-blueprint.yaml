@@ -512,7 +512,7 @@ node_templates:
           id: k8s_node_dep
           inputs:
             node_storage_account_id: { get_attribute: [ storage_account, name ] }
-            public_master_ip: { get_attribute: [ k8s_master_host, ip ] }
+            public_master_ip: { get_attribute: [ k8s_master_host, public_ip ] }
           outputs:
             deployment-type: deployment-type
             deployment-node-data-type: deployment-node-data-type

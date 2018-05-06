@@ -212,7 +212,7 @@ node_templates:
           inputs:
             node_security_group: { get_attribute: [ kubernetes_security_group, aws_resource_id ] }
             node_ssh_group: { get_attribute: [ ssh_group, aws_resource_id ] }
-            public_master_ip: { get_attribute: [ k8s_master_host, ip ] }
+            public_master_ip: { get_attribute: [ kubernetes_master_ip, aws_resource_id ] }
           outputs:
             deployment-type: deployment-type
             deployment-node-data-type: deployment-node-data-type

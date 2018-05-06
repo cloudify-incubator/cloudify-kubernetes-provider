@@ -226,7 +226,7 @@ node_templates:
           inputs:
             node_firewall_name: { get_attribute: [ kubernetes_fw, resource_id ] }
             ssh_firewall_name: { get_attribute: [ ssh_fw, resource_id ] }
-            public_master_ip: { get_attribute: [ k8s_master_host, ip ] }
+            public_master_ip: { get_attribute: [  k8s_master_host, networkInterfaces, 0, accessConfigs, 0, natIP ] }
           outputs:
             deployment-type: deployment-type
             deployment-node-data-type: deployment-node-data-type
