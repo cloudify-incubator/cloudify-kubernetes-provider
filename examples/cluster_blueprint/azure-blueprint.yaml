@@ -5,12 +5,11 @@ description: >
   It is based on this documentation: https://kubernetes.io/docs/getting-started-guides/kubeadm/
 
 imports:
-  - http://www.getcloudify.org/spec/cloudify/4.3/types.yaml
+  - http://www.getcloudify.org/spec/cloudify/4.3.1/types.yaml
   - plugin:cloudify-azure-plugin
-  - plugin:cloudify-utilities-plugin?version=1.5.2
-  - plugin:cloudify-diamond-plugin?version=1.3.8
-  - plugin:cloudify-fabric-plugin?version=1.5.1
-  - plugin:cloudify-utilities-plugin?version=1.5.2
+  - plugin:cloudify-utilities-plugin
+  - plugin:cloudify-diamond-plugin
+  - plugin:cloudify-fabric-plugin
   - plugin:cloudify-kubernetes-plugin
   - imports/kubernetes.yaml
 
@@ -104,50 +103,7 @@ node_templates:
     - type: cloudify.azure.relationships.vmx_contained_in_vm
       target: k8s_master_host
 
-  kubernetes_node_docker:
-    type: cloudify.azure.nodes.compute.VirtualMachineExtension
-    properties:
-      location: { get_secret: location }
-      retry_after: { get_input: retry_after }
-      azure_config: *azure_config
-    interfaces:
-      cloudify.interfaces.lifecycle:
-        create:
-          inputs:
-            resource_config:
-              publisher: Microsoft.Azure.Extensions
-              type: CustomScript
-              typeHandlerVersion: '2.0'
-              autoUpgradeMinorVersion: true
-              settings:
-                commandToExecute:
-                  concat:
-                    - |
-                      cat <<EOF > /etc/yum.repos.d/kubernetes.repo
-                      [kubernetes]
-                      name=Kubernetes
-                      baseurl=https://packages.cloud.google.com/yum/repos/kubernetes-el7-x86_64
-                      enabled=1
-                      gpgcheck=1
-                      repo_gpgcheck=1
-                      gpgkey=https://packages.cloud.google.com/yum/doc/yum-key.gpg
-                              https://packages.cloud.google.com/yum/doc/rpm-package-key.gpg
-                      EOF
-                      setenforce 0
-                    - |
-                      yum -t -y install docker-1.12.6 kubelet-1.9.6-0 kubeadm-1.9.6-0 kubectl-1.9.6-0 kubernetes-cni-0.6.0-0 ca-certificates
-                      sudo update-ca-trust force-enable
-                      swapon -s | awk '{print "sudo swapoff " $1}' | grep -v "Filename" | sh -
-                      sudo sed -i 's|cgroup-driver=systemd|cgroup-driver=systemd --provider-id='`hostname`'|g' /etc/systemd/system/kubelet.service.d/10-kubeadm.conf
-                      systemctl enable docker && systemctl start docker
-                      systemctl enable kubelet && systemctl start kubelet
-                      mkdir -p /tmp/data
-                      chcon -Rt svirt_sandbox_file_t /tmp/data
-    relationships:
-    - type: cloudify.azure.relationships.vmx_contained_in_vm
-      target: kubernetes_node_host
-
-  kubernetes_master_host:
+  k8s_master_host:
     type: cloudify.azure.nodes.compute.VirtualMachine
     properties:
       location: { get_secret: location }
