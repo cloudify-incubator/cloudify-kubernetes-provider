@@ -192,7 +192,7 @@ node_templates:
           id: k8s_node_dep
           inputs:
             node_security_group: { get_attribute: [ kubernetes_security_group, external_id ] }
-            public_master_ip: { get_attribute: [ k8s_master_host, ip ] }
+            public_master_ip: { get_attribute: [ kubernetes_master_ip, floating_ip_address ] }
           outputs:
             deployment-type: deployment-type
             deployment-node-data-type: deployment-node-data-type
