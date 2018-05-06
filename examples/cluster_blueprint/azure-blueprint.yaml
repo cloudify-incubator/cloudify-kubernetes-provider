@@ -5,12 +5,11 @@ description: >
   It is based on this documentation: https://kubernetes.io/docs/getting-started-guides/kubeadm/
 
 imports:
-  - http://www.getcloudify.org/spec/cloudify/4.3/types.yaml
+  - http://www.getcloudify.org/spec/cloudify/4.3.1/types.yaml
   - plugin:cloudify-azure-plugin
-  - plugin:cloudify-utilities-plugin?version=1.5.2
-  - plugin:cloudify-diamond-plugin?version=1.3.8
-  - plugin:cloudify-fabric-plugin?version=1.5.1
-  - plugin:cloudify-utilities-plugin?version=1.5.2
+  - plugin:cloudify-utilities-plugin
+  - plugin:cloudify-diamond-plugin
+  - plugin:cloudify-fabric-plugin
   - plugin:cloudify-kubernetes-plugin
   - imports/kubernetes.yaml
 
