@@ -4,12 +4,13 @@ description: >
   This blueprint creates a Kubernetes Cluster.
 
 imports:
-  - http://www.getcloudify.org/spec/cloudify/4.3/types.yaml
-  - plugin:cloudify-diamond-plugin?version=1.3.8
-  - plugin:cloudify-fabric-plugin?version=1.5.1
-  - plugin:cloudify-utilities-plugin?version=1.5.2
+  - http://www.getcloudify.org/spec/cloudify/4.3.1/types.yaml
+  - plugin:cloudify-diamond-plugin
+  - plugin:cloudify-fabric-plugin
+  - plugin:cloudify-utilities-plugin
+  - plugin:cloudify-aws-plugin
+  - plugin:cloudify-kubernetes-plugin
   - imports/kubernetes.yaml
-  - https://github.com/cloudify-cosmo/cloudify-aws-plugin/releases/download/1.5.1.2/plugin.yaml
   - imports/cloud-config.yaml
 
 inputs:
@@ -29,6 +30,12 @@ inputs:
       The username of the agent running on the instance created from the image.
     default: ec2-user
 
+  ks_node_dep_archive:
+    default: https://github.com/cloudify-incubator/kubernetes-node-blueprints/archive/master.zip
+
+  ks_load_dep_archive:
+    default: https://github.com/cloudify-incubator/kubernetes-lb-blueprints/archive/master.zip
+
 dsl_definitions:
 
     aws_config: &aws_config
@@ -39,7 +46,7 @@ dsl_definitions:
 
 node_templates:
 
-  kubernetes_master_host:
+  k8s_master_host:
     type: cloudify.aws.nodes.Instance
     properties:
       agent_config:
@@ -69,132 +76,6 @@ node_templates:
         target: kubernetes_master_ip
       - type: cloudify.relationships.depends_on
         target: cloudify_host_cloud_config
-
-  kubernetes_load_host:
-    type: cloudify.aws.nodes.Instance
-    capabilities:
-      scalable:
-        properties:
-          default_instances: 1
-    properties:
-      agent_config:
-        install_method: remote
-        user: { get_input: agent_user }
-        port: 22
-        key: { get_secret: agent_key_private }
-      aws_config: *aws_config
-      image_id: { get_input: ami }
-      instance_type: { get_input: instance_type }
-    relationships:
-      - type: cloudify.relationships.depends_on
-        target: cloudify_load_cloud_config
-      - type: cloudify.aws.relationships.instance_connected_to_eni
-        target: kubernetes_load_nic
-    interfaces:
-      cloudify.interfaces.lifecycle:
-        create:
-          implementation: aws.cloudify_aws.ec2.instance.create
-          inputs:
-            args:
-              placement: { get_secret: availability_zone }
-              user_data: { get_attribute: [ cloudify_load_cloud_config, cloud_config ] }
-      cloudify.interfaces.monitoring_agent:
-        install:
-          implementation: diamond.diamond_agent.tasks.install
-          inputs:
-            diamond_config:
-              interval: 1
-        start: diamond.diamond_agent.tasks.start
-        stop: diamond.diamond_agent.tasks.stop
-        uninstall: diamond.diamond_agent.tasks.uninstall
-      cloudify.interfaces.monitoring:
-        start:
-          implementation: diamond.diamond_agent.tasks.add_collectors
-          inputs:
-            collectors_config:
-              ProcessResourcesCollector:
-                config:
-                  enabled: true
-                  unit: B
-                  measure_collector_time: true
-                  cpu_interval: 0.5
-                  process:
-                    hyperkube:
-                      name: hyperkube
-
-  kubernetes_node_host:
-    type: cloudify.aws.nodes.Instance
-    capabilities:
-      scalable:
-        properties:
-          default_instances: 1
-    properties:
-      agent_config:
-        install_method: remote
-        user: { get_input: agent_user }
-        port: 22
-        key: { get_secret: agent_key_private }
-      aws_config: *aws_config
-      image_id: { get_input: ami }
-      instance_type: { get_input: instance_type }
-    relationships:
-      - type: cloudify.aws.relationships.instance_connected_to_eni
-        target: kubernetes_node_nic
-    interfaces:
-      cloudify.interfaces.lifecycle:
-        create:
-          implementation: aws.cloudify_aws.ec2.instance.create
-          inputs:
-            args:
-              placement: { get_secret: availability_zone }
-              user_data: { get_attribute: [ cloudify_host_cloud_config, cloud_config ] }
-      cloudify.interfaces.monitoring_agent:
-        install:
-          implementation: diamond.diamond_agent.tasks.install
-          inputs:
-            diamond_config:
-              interval: 1
-        start: diamond.diamond_agent.tasks.start
-        stop: diamond.diamond_agent.tasks.stop
-        uninstall: diamond.diamond_agent.tasks.uninstall
-      cloudify.interfaces.monitoring:
-        start:
-          implementation: diamond.diamond_agent.tasks.add_collectors
-          inputs:
-            collectors_config:
-              ProcessResourcesCollector:
-                config:
-                  enabled: true
-                  unit: B
-                  measure_collector_time: true
-                  cpu_interval: 0.5
-                  process:
-                    hyperkube:
-                      name: hyperkube
-
-  kubernetes_node_nic:
-    type: cloudify.aws.nodes.Interface
-    properties:
-      aws_config: *aws_config
-    relationships:
-      - type: cloudify.aws.relationships.connected_to_subnet
-        target: private_subnet
-      - type: cloudify.aws.relationships.connected_to_security_group
-        target: ssh_group
-      - type: cloudify.aws.relationships.connected_to_security_group
-        target: kubernetes_security_group
-
-  kubernetes_load_nic:
-    type: cloudify.aws.nodes.Interface
-    properties:
-      aws_config: *aws_config
-    relationships:
-      - type: cloudify.aws.relationships.connected_to_subnet
-        target: private_subnet
-      - type: cloudify.aws.relationships.connected_to_security_group
-        target: ssh_group
-      - type: cloudify.aws.relationships.connected_to_security_group
-        target: kubernetes_security_group
 
   kubernetes_security_group:
     type: cloudify.aws.nodes.SecurityGroup
@@ -318,31 +199,66 @@ node_templates:
       resource_id: { get_secret: vpc_id }
       cidr_block: N/A
 
-groups:
-
-  k8s_node_group:
-    members:
-      - kubernetes_node_host
-      - kubernetes_node_nic
-
-  k8s_load_group:
-    members:
-      - kubernetes_load_host
-      - kubernetes_load_nic
-
-policies:
-
-  kubernetes_node_vms_scaling_policy:
-    type: cloudify.policies.scaling
+  k8s_node:
+    type: cloudify.nodes.DeploymentProxy
     properties:
-      default_instances:  1
-    targets: [k8s_node_group]
+      resource_config:
+        blueprint:
+          id: k8s_node_blue
+          blueprint_archive: { get_input: ks_node_dep_archive }
+          main_file_name: aws.yaml
+        deployment:
+          id: k8s_node_dep
+          inputs:
+            node_security_group: { get_attribute: [ kubernetes_security_group, aws_resource_id ] }
+            node_ssh_group: { get_attribute: [ ssh_group, aws_resource_id ] }
+            public_master_ip: { get_attribute: [ kubernetes_master_ip, aws_resource_id ] }
+          outputs:
+            deployment-type: deployment-type
+            deployment-node-data-type: deployment-node-data-type
 
-  kubernetes_load_vms_scaling_policy:
-    type: cloudify.policies.scaling
+    relationships:
+      - type: cloudify.relationships.depends_on
+        target: k8s_master_host
+      - type: cloudify.relationships.depends_on
+        target: kubernetes_security_group
+      - type: cloudify.relationships.depends_on
+        target: ssh_group
+      - type: cloudify.relationships.depends_on
+        target: kubernetes_master
+      - type: cloudify.relationships.depends_on
+        target: kubernetes_master_build
+
+  k8s_load:
+    type: cloudify.nodes.DeploymentProxy
     properties:
-      default_instances:  1
-    targets: [k8s_load_group]
+      resource_config:
+        blueprint:
+          id: k8s_lb_blue
+          blueprint_archive: { get_input: ks_load_dep_archive }
+          main_file_name: aws.yaml
+        deployment:
+          id: k8s_lb_dep
+          inputs:
+            node_security_group: { get_attribute: [ kubernetes_security_group, aws_resource_id ] }
+            node_ssh_group: { get_attribute: [ ssh_group, aws_resource_id ] }
+          outputs:
+            deployment-type: deployment-type
+            deployment-node-data-type: deployment-node-data-type
+
+    relationships:
+      - type: cloudify.relationships.depends_on
+        target: k8s_master_host
+      - type: cloudify.relationships.depends_on
+        target: k8s_node
+      - type: cloudify.relationships.depends_on
+        target: kubernetes_security_group
+      - type: cloudify.relationships.depends_on
+        target: ssh_group
+      - type: cloudify.relationships.depends_on
+        target: kubernetes_master
+      - type: cloudify.relationships.depends_on
+        target: kubernetes_master_build
 
 outputs:
 
