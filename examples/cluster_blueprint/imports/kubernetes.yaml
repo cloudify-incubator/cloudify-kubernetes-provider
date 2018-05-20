@@ -2,23 +2,13 @@ tosca_definitions_version: cloudify_dsl_1_3
 
 imports:
   - monitoring.yaml
+  - dashboard.yaml
+  - kubernetes-cni-provider.yaml
 
 inputs:
 
   labels:
     default: {}
-
-  cfy_tenant:
-    type: string
-    default: { get_secret: cfy_tenant }
-
-  cfy_password:
-    type: string
-    default: { get_secret: cfy_password }
-
-  cfy_user:
-    type: string
-    default: { get_secret: cfy_user }
 
 plugins:
 
@@ -65,7 +55,7 @@ workflows:
 
 node_types:
 
-  cloudify.nodes.Kubernetes.Master:
+  cloudify.nodes.Kubernetes.Setup.Master:
     derived_from: cloudify.nodes.Root
     interfaces:
       cloudify.interfaces.lifecycle:
@@ -73,7 +63,15 @@ node_types:
           implementation: scripts/kubernetes_master/create.py
         configure:
           implementation: scripts/kubernetes_master/configure.py
-        start:
+          inputs:
+            cni-provider-blueprint:
+              default: { get_input: kubernetes_cni_provider_blueprint }
+
+  cloudify.nodes.Kubernetes.Config.Master:
+    derived_from: cloudify.nodes.Root
+    interfaces:
+      cloudify.interfaces.lifecycle:
+        create:
           implementation: scripts/kubernetes_master/start.py
 
   cloudify.nodes.ApplicationServer.kubernetes.Node:
@@ -85,11 +83,11 @@ node_types:
           implementation: scripts/kubernetes_master_services/create.py
           inputs:
             cfy_user:
-              default: { get_input: cfy_user }
+              default: { get_secret: cfy_user }
             cfy_password:
-              default: { get_input: cfy_password }
+              default: { get_secret: cfy_password }
             cfy_tenant:
-              default: { get_input: cfy_tenant }
+              default: { get_secret: cfy_tenant }
             agent_user:
               default: { get_input: agent_user }
             full_install:
@@ -118,9 +116,17 @@ node_types:
 
 node_templates:
 
-  kubernetes_master:
-    type: cloudify.nodes.Kubernetes.Master
+  kubernetes_setup_master:
+    type: cloudify.nodes.Kubernetes.Setup.Master
     relationships:
+      - type: cloudify.relationships.contained_in
+        target: k8s_master_host
+
+  kubernetes_config_master:
+    type: cloudify.nodes.Kubernetes.Config.Master
+    relationships:
+      - type: cloudify.relationships.depends_on
+        target: kubernetes_cni
       - type: cloudify.relationships.contained_in
         target: k8s_master_host
 
@@ -129,8 +135,10 @@ node_templates:
     properties:
       full_install: all
     relationships:
-    - target: kubernetes_master
-      type: cloudify.relationships.contained_in
+      - target: k8s_master_host
+        type: cloudify.relationships.contained_in
+      - type: cloudify.relationships.depends_on
+        target: kubernetes_config_master
 
   kubernetes_master_services:
     type: cloudify.nodes.ApplicationServer.kubernetes.Node
@@ -140,33 +148,32 @@ node_templates:
           inputs:
             full_install: all
     relationships:
-    - target: kubernetes_master
-      type: cloudify.relationships.contained_in
-    # we can start only after set all properties
-    - target: kubernetes_master_build
-      type: cloudify.relationships.depends_on
-    - target: k8s_node
-      type: cloudify.relationships.depends_on
-    - target: k8s_load
-      type: cloudify.relationships.depends_on
+      - target: kubernetes_master_build
+        type: cloudify.relationships.depends_on
+      - target: k8s_master_host
+        type: cloudify.relationships.contained_in
+      - target: k8s_node
+        type: cloudify.relationships.depends_on
+      - target: k8s_load
+        type: cloudify.relationships.depends_on
 
 
 outputs:
 
   kubernetes_cluster_bootstrap_token:
-    value: { get_attribute: [ kubernetes_master, bootstrap_token ] }
+    value: { get_attribute: [ kubernetes_setup_master, bootstrap_token ] }
 
   kubernetes_cluster_bootstrap_hash:
-    value: { get_attribute: [ kubernetes_master, bootstrap_hash ] }
+    value: { get_attribute: [ kubernetes_setup_master, bootstrap_hash ] }
 
   kubernetes_cluster_master_ip:
-    value: { get_attribute: [ kubernetes_master, master_ip ] }
+    value: { get_attribute: [ kubernetes_setup_master, master_ip ] }
 
   kubernetes-admin_client_certificate_data:
-    value: { get_attribute: [ kubernetes_master, kubernetes-admin_client_certificate_data ] }
+    value: { get_attribute: [ kubernetes_setup_master, kubernetes-admin_client_certificate_data ] }
 
   kubernetes-admin_client_key_data:
-    value: { get_attribute: [ kubernetes_master, kubernetes-admin_client_key_data ] }
+    value: { get_attribute: [ kubernetes_setup_master, kubernetes-admin_client_key_data ] }
 
   kubernetes_certificate_authority_data:
-    value: { get_attribute: [ kubernetes_master, kubernetes_certificate_authority_data ] }
+    value: { get_attribute: [ kubernetes_setup_master, kubernetes_certificate_authority_data ] }

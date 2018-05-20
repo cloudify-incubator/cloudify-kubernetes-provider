@@ -2,12 +2,6 @@
 
 import os
 import subprocess
-import pip
-try:
-    import yaml
-except ImportError:
-    pip.main(['install', 'pyyaml'])
-    import yaml
 
 from cloudify import ctx
 from cloudify.exceptions import RecoverableError
@@ -69,66 +63,3 @@ if __name__ == '__main__':
     get_pods = execute_command('kubectl get pods --all-namespaces')
     if not check_kubedns_status(get_pods):
         raise RecoverableError('kube-dns not Running')
-
-    # Storing the K master configuration.
-    kubernetes_master_config = {}
-    with open(admin_file_dest, 'r') as outfile:
-        try:
-            kubernetes_master_config = yaml.load(outfile)
-        except yaml.YAMLError as e:
-            RecoverableError(
-                'Unable to read Kubernetes Admin file: {0}: {1}'.format(
-                    admin_file_dest, str(e)))
-    ctx.instance.runtime_properties['configuration_file_content'] = \
-        kubernetes_master_config
-
-    clusters = kubernetes_master_config.get('clusters')
-    _clusters = {}
-    for cluster in clusters:
-        __name = cluster.get('name')
-        _cluster = cluster.get('cluster', {})
-        _secret_key = '%s_certificate_authority_data' % __name
-        if cfy_client and not len(cfy_client.secrets.list(key=_secret_key)) == 1:
-            cfy_client.secrets.create(key=_secret_key, value=_cluster.get('certificate-authority-data'))
-            ctx.logger.info('Set secret: {0}.'.format(_secret_key))
-        else:
-            cfy_client.secrets.update(key=_secret_key, value=_cluster.get('certificate-authority-data'))
-        ctx.instance.runtime_properties['%s_certificate_authority_data' % __name] = _cluster.get('certificate-authority-data')
-        _clusters[__name] = _cluster
-    del __name
-
-    contexts = kubernetes_master_config.get('contexts')
-    _contexts = {}
-    for context in contexts:
-        __name = context.get('name')
-        _context = context.get('context', {})
-        _contexts[__name] = _context
-    del __name
-
-    users = kubernetes_master_config.get('users')
-    _users = {}
-    for user in users:
-        __name = user.get('name')
-        _user = user.get('user', {})
-        _secret_key = '%s_client_certificate_data' % __name
-        if cfy_client and not len(cfy_client.secrets.list(key=_secret_key)) == 1:
-            cfy_client.secrets.create(key=_secret_key, value=_user.get('client-certificate-data'))
-            ctx.logger.info('Set secret: {0}.'.format(_secret_key))
-        else:
-            cfy_client.secrets.update(key=_secret_key, value=_user.get('client-certificate-data'))
-        _secret_key = '%s_client_key_data' % __name
-        if cfy_client and not len(cfy_client.secrets.list(key=_secret_key)) == 1:
-            cfy_client.secrets.create(key=_secret_key, value=_user.get('client-key-data'))
-            ctx.logger.info('Set secret: {0}.'.format(_secret_key))
-        else:
-            cfy_client.secrets.update(key=_secret_key, value=_user.get('client-key-data'))
-        ctx.instance.runtime_properties['%s_client_certificate_data' % __name] = _user.get('client-certificate-data')
-        ctx.instance.runtime_properties['%s_client_key_data' % __name] = _user.get('client-key-data')
-        _users[__name] = _user
-    del __name
-
-    ctx.instance.runtime_properties['kubernetes'] = {
-        'clusters': _clusters,
-        'contexts': _contexts,
-        'users': _users
-    }

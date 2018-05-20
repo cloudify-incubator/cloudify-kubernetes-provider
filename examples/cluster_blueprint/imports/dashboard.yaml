@@ -1,0 +1,34 @@
+tosca_definitions_version: cloudify_dsl_1_3
+
+inputs:
+
+  kubernetes_dashboard_blueprint_id:
+    default: kubernetes_dashboard
+
+  kubernetes_dashboard_deployment_id:
+    default: { get_input: kubernetes_dashboard_blueprint_id }
+
+  kubernetes_dashboard_blueprint_archive:
+    default: https://github.com/cloudify-incubator/kubernetes-dashboard-blueprint/archive/master.zip
+
+node_templates:
+
+  kubernetes_dashboard:
+    type: cloudify.nodes.DeploymentProxy
+    properties:
+      resource_config:
+        blueprint:
+          id: { get_input: kubernetes_dashboard_blueprint_id }
+          blueprint_archive: { get_input: kubernetes_dashboard_blueprint_archive }
+          main_file_name: blueprint.yaml
+        deployment:
+          id: { get_input: kubernetes_dashboard_deployment_id }
+          inputs:
+            dashboard_agent_user: { get_input: agent_user }
+            public_dashboard_ip: { get_input: dashboard_ip }
+          outputs:
+            bearer_token: bearer_token
+            dashboard_url: dashboard_url
+    relationships:
+    - type: cloudify.relationships.depends_on
+      target: kubernetes_cni

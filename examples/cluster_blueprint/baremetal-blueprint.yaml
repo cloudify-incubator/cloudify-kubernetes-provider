@@ -1,0 +1,106 @@
+tosca_definitions_version: cloudify_dsl_1_3
+
+description: >
+  This blueprint creates a Kubernetes Cluster.
+
+imports:
+  - http://www.getcloudify.org/spec/cloudify/4.3.1/types.yaml
+  - plugin:cloudify-diamond-plugin
+  - plugin:cloudify-fabric-plugin
+  - plugin:cloudify-utilities-plugin
+  - plugin:cloudify-kubernetes-plugin
+  - imports/kubernetes.yaml
+
+inputs:
+
+  public_master_ip:
+    type: string
+
+  k8s_node_host_ip:
+    type: string
+
+  k8s_load_host_ip:
+    type: string
+
+  agent_user:
+    description: >
+      The username of the agent running on the instance created from the image.
+    type: string
+
+  dashboard_ip:
+    default: { get_input: public_master_ip }
+
+  ks_node_dep_archive:
+    default: https://github.com/cloudify-incubator/kubernetes-node-blueprints/archive/master.zip
+
+  ks_load_dep_archive:
+    default: https://github.com/cloudify-incubator/kubernetes-lb-blueprints/archive/master.zip
+
+node_templates:
+
+  # Compute Node should be prepared with pre-install.sh
+  k8s_master_host:
+    type: cloudify.nodes.Compute
+    properties:
+      agent_config:
+        install_method: remote
+        user: { get_input: agent_user }
+        port: 22
+        key: { get_secret: agent_key_private }
+      ip: { get_input: public_master_ip }
+
+  k8s_node:
+    type: cloudify.nodes.DeploymentProxy
+    properties:
+      resource_config:
+        blueprint:
+          id: k8s_node_blue
+          blueprint_archive: { get_input: ks_node_dep_archive }
+          main_file_name: baremetal.yaml
+        deployment:
+          id: k8s_node_dep
+          inputs:
+            agent_user: { get_input: agent_user }
+            public_master_ip: { get_input: public_master_ip }
+            k8s_node_host_ip: { get_input: k8s_node_host_ip }
+          outputs:
+            deployment-type: deployment-type
+            deployment-node-data-type: deployment-node-data-type
+    relationships:
+      - type: cloudify.relationships.depends_on
+        target: k8s_master_host
+      - type: cloudify.relationships.depends_on
+        target: kubernetes_setup_master
+      - type: cloudify.relationships.depends_on
+        target: kubernetes_master_build
+
+  k8s_load:
+    type: cloudify.nodes.DeploymentProxy
+    properties:
+      resource_config:
+        blueprint:
+          id: k8s_lb_blue
+          blueprint_archive: { get_input: ks_load_dep_archive }
+          main_file_name: baremetal.yaml
+        deployment:
+          id: k8s_lb_dep
+          inputs:
+            agent_user: { get_input: agent_user }
+            k8s_load_host_ip: { get_input: k8s_load_host_ip }
+          outputs:
+            deployment-type: deployment-type
+            deployment-node-data-type: deployment-node-data-type
+    relationships:
+      - type: cloudify.relationships.depends_on
+        target: k8s_node
+    interfaces:
+      cloudify.interfaces.lifecycle:
+        start:
+          implementation: cfy_util.cloudify_deployment_proxy.tasks.execute_start
+          inputs:
+            timeout: 1800
+
+outputs:
+
+  kubernetes_master_public_ip:
+    value: { get_input: public_master_ip }

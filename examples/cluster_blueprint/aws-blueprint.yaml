@@ -30,6 +30,9 @@ inputs:
       The username of the agent running on the instance created from the image.
     default: ec2-user
 
+  dashboard_ip:
+    default: { get_attribute: [ kubernetes_master_ip, aws_resource_id ] }
+
   ks_node_dep_archive:
     default: https://github.com/cloudify-incubator/kubernetes-node-blueprints/archive/master.zip
 
@@ -91,6 +94,10 @@ node_templates:
           from_port: 53
           to_port: 53
           cidr_ip: 0.0.0.0/0
+        - ip_protocol: udp
+          from_port: 8472
+          to_port: 8472
+          cidr_ip: 0.0.0.0/0
         - ip_protocol: tcp
           from_port: 80
           to_port: 80
@@ -126,6 +133,10 @@ node_templates:
         - ip_protocol: udp
           from_port: 6783
           to_port: 6784
+          cidr_ip: 0.0.0.0/0
+        - ip_protocol: udp
+          from_port: 8285
+          to_port: 8285
           cidr_ip: 0.0.0.0/0
         - ip_protocol: tcp
           from_port: 8080
@@ -229,7 +240,7 @@ node_templates:
       - type: cloudify.relationships.depends_on
         target: ssh_group
       - type: cloudify.relationships.depends_on
-        target: kubernetes_master
+        target: kubernetes_setup_master
       - type: cloudify.relationships.depends_on
         target: kubernetes_master_build
 
@@ -255,14 +266,6 @@ node_templates:
         target: k8s_master_host
       - type: cloudify.relationships.depends_on
         target: k8s_node
-      - type: cloudify.relationships.depends_on
-        target: kubernetes_security_group
-      - type: cloudify.relationships.depends_on
-        target: ssh_group
-      - type: cloudify.relationships.depends_on
-        target: kubernetes_master
-      - type: cloudify.relationships.depends_on
-        target: kubernetes_master_build
 
 outputs:
 
