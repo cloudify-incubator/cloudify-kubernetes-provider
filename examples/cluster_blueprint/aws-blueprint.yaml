@@ -143,6 +143,10 @@ node_templates:
           from_port: 10255
           to_port: 10255
           cidr_ip: 0.0.0.0/0
+        - ip_protocol: tcp
+          from_port: 30000
+          to_port: 40000
+          cidr_ip: 0.0.0.0/0
     relationships:
       - type: cloudify.aws.relationships.security_group_contained_in_vpc
         target: vpc
