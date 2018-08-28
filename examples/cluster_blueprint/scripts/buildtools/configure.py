@@ -103,7 +103,7 @@ if __name__ == '__main__':
             extra_args = {'cwd': cwd}
             command = ['git', 'clone', 'https://github.com/cloudify-incubator/'
                        'cloudify-kubernetes-provider.git', '--depth', '1',
-                       '-b', 'testing']
+                       '-b', 'libvirt']
             if execute_command(command, extra_args=extra_args) is False:
                 raise NonRecoverableError("Can't download sources.")
             cwd = os.path.join(cwd, 'cloudify-kubernetes-provider/')
