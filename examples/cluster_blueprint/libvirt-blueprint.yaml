@@ -1,20 +1,21 @@
-# * cfy secret create agent_user -s "cfyagent" -u
-# * cfy secret create libvirt_cluster_user -s "centos"
-# * cfy secret create libvirt_cluster_key -s "/etc/cloudify/kvm.key"
-# * cfy secret create libvirt_cluster_host -s "192.168.201.195"
-# * cfy secret create libvirt_cluster_external_ip -s "192.168.202.16,192.168.202.17,192.168.202.18,192.168.202.19,192.168.202.20"
-# * cfy secret create libvirt_cluster_external_dev -s "eth0"
-# * cfy secret create agent_key_public -f examples/cluster_blueprint/scripts/libvirt/id_rsa.pub -u
-# * cfy secret create agent_key_private -f examples/cluster_blueprint/scripts/libvirt/id_rsa -u
-# * cfy secret create libvirt_common_network -s "manager_network"
-# * cfy secret create cfy_user -s admin
-# * cfy secret create cfy_password -s admin -u
-# * cfy secret create cfy_tenant -s default_tenant
-# * cfy secret create kubernetes_master_port -s "#"
-# * cfy secret create kubernetes-admin_client_certificate_data -s "#"
-# * cfy secret create kubernetes_master_ip -s "#"
-# * cfy secret create kubernetes_certificate_authority_data -s "#"
-# * cfy secret create kubernetes-admin_client_key_data -s "#"
+# * cfy secret create agent_user -u -s "cfyagent"
+# * cfy secret create agent_use_public_ip -u -s ""
+# * cfy secret create libvirt_cluster_user -u -s "centos"
+# * cfy secret create libvirt_cluster_key -u -s "/etc/cloudify/kvm.key"
+# * cfy secret create libvirt_cluster_host -u -s "192.168.201.195"
+# * cfy secret create libvirt_cluster_external_ip -u -s "192.168.202.16,192.168.202.17,192.168.202.18,192.168.202.19,192.168.202.20"
+# * cfy secret create libvirt_cluster_external_dev -u -s "eth0"
+# * cfy secret create agent_key_public -u -f examples/cluster_blueprint/scripts/libvirt/id_rsa.pub
+# * cfy secret create agent_key_private -u -f examples/cluster_blueprint/scripts/libvirt/id_rsa
+# * cfy secret create libvirt_common_network -u -s "manager_network"
+# * cfy secret create cfy_user -u -s admin
+# * cfy secret create cfy_password -u -s admin
+# * cfy secret create cfy_tenant -u -s default_tenant
+# * cfy secret create kubernetes_master_port -u -s "#"
+# * cfy secret create kubernetes-admin_client_certificate_data -u -s "#"
+# * cfy secret create kubernetes_master_ip -u -s "#"
+# * cfy secret create kubernetes_certificate_authority_data -u -s "#"
+# * cfy secret create kubernetes-admin_client_key_data -u -s "#"
 
 tosca_definitions_version: cloudify_dsl_1_3
 
@@ -115,7 +116,7 @@ node_types:
         # in most cases it must be same as full count of memory on vm
         default: { get_input: memory }
       use_public_ip:
-        default: true
+        default: { get_secret: agent_use_public_ip }
       agent_config:
         default:
           user: { get_secret: agent_user }
