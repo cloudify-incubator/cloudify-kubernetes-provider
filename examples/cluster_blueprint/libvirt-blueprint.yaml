@@ -285,10 +285,6 @@ node_templates:
               - action: sudo yum install -y openssl-1.0.2k deltarpm
               # space fix
               - action: sudo sudo xfs_growfs /
-    capabilities:
-      scalable:
-        properties:
-          default_instances: 1
     relationships:
       - target: base_vm
         type: cloudify.relationships.depends_on
@@ -336,7 +332,7 @@ node_templates:
         blueprint:
           id: k8s_lb_blue
           blueprint_archive: { get_input: ks_load_dep_archive }
-          main_file_name: vsphere.yaml
+          main_file_name: libvirt.yaml
         deployment:
           id: k8s_lb_dep
           outputs:
