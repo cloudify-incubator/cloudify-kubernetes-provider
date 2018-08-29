@@ -62,8 +62,6 @@ def execute_command(command):
 if __name__ == '__main__':
 
     # Check if Docker PS works
-    ctx.logger.info(repr(check_command(['whoami'])))
-    ctx.logger.info(repr(check_command(['ip', 'addr'])))
     docker = check_command(['sudo', 'docker', 'ps'])
     if not docker:
             raise OperationRetry(

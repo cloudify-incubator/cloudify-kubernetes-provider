@@ -5,10 +5,10 @@
 # * cfy secret create libvirt_cluster_external_ip -s "192.168.202.16,192.168.202.17,192.168.202.18,192.168.202.19,192.168.202.20"
 # * cfy secret create libvirt_cluster_external_dev -s "eth0"
 # * cfy secret create agent_key_public -f examples/cluster_blueprint/scripts/libvirt/id_rsa.pub -u
-# * cfy secret create agent_private_key -f examples/cluster_blueprint/scripts/libvirt/id_rsa -u
+# * cfy secret create agent_key_private -f examples/cluster_blueprint/scripts/libvirt/id_rsa -u
 # * cfy secret create libvirt_common_network -s "manager_network"
 # * cfy secret create cfy_user -s admin
-# * cfy secret create cfy_password -s admin
+# * cfy secret create cfy_password -s admin -u
 # * cfy secret create cfy_tenant -s default_tenant
 # * cfy secret create kubernetes_master_port -s "#"
 # * cfy secret create kubernetes-admin_client_certificate_data -s "#"
@@ -119,7 +119,7 @@ node_types:
       agent_config:
         default:
           user: { get_secret: agent_user }
-          key: { get_secret: agent_private_key }
+          key: { get_secret: agent_key_private }
           install_method: remote
 
 node_templates:
@@ -275,7 +275,7 @@ node_templates:
             terminal_auth: &terminal_auth
               user: { get_secret: agent_user }
               ip: { get_attribute: [SELF, ip] }
-              key_content: { get_secret: agent_private_key }
+              key_content: { get_secret: agent_key_private }
               port: 22
               promt_check:
                 - '$'
@@ -312,7 +312,7 @@ node_templates:
         blueprint:
           id: k8s_node_blue
           blueprint_archive: { get_input: ks_node_dep_archive }
-          main_file_name: vsphere.yaml
+          main_file_name: libvirt.yaml
         deployment:
           id: k8s_node_dep
           inputs:
