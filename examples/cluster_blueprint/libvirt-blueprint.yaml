@@ -1,3 +1,21 @@
+# * cfy secret create agent_user -s "cfyagent" -u
+# * cfy secret create libvirt_cluster_user -s "centos"
+# * cfy secret create libvirt_cluster_key -s "/etc/cloudify/kvm.key"
+# * cfy secret create libvirt_cluster_host -s "192.168.201.195"
+# * cfy secret create libvirt_cluster_external_ip -s "192.168.202.16,192.168.202.17,192.168.202.18,192.168.202.19,192.168.202.20"
+# * cfy secret create libvirt_cluster_external_dev -s "eth0"
+# * cfy secret create agent_key_public -f examples/cluster_blueprint/scripts/libvirt/id_rsa.pub -u
+# * cfy secret create agent_private_key -f examples/cluster_blueprint/scripts/libvirt/id_rsa -u
+# * cfy secret create libvirt_common_network -s "manager_network"
+# * cfy secret create cfy_user -s admin
+# * cfy secret create cfy_password -s admin
+# * cfy secret create cfy_tenant -s default_tenant
+# * cfy secret create kubernetes_master_port -s "#"
+# * cfy secret create kubernetes-admin_client_certificate_data -s "#"
+# * cfy secret create kubernetes_master_ip -s "#"
+# * cfy secret create kubernetes_certificate_authority_data -s "#"
+# * cfy secret create kubernetes-admin_client_key_data -s "#"
+
 tosca_definitions_version: cloudify_dsl_1_3
 
 imports:
@@ -9,19 +27,11 @@ imports:
   - imports/kubernetes.yaml
 
 inputs:
-  # agent settings
   agent_user:
-    default: { get_secret: libvirt_agent_user }
-
-  # you should use such key for kvm host
-  agent_public_key:
-    default: { get_secret: libvirt_agent_public_key }
+    default: { get_secret: agent_user }
 
   disk_size:
     default: 24GB
-
-  agent_private_key:
-    default: { get_secret: libvirt_agent_private_key }
 
   # cluster(kvm) settings
   cluster_user:
@@ -108,8 +118,8 @@ node_types:
         default: true
       agent_config:
         default:
-          user: { get_input: agent_user }
-          key: { get_input: agent_private_key }
+          user: { get_secret: agent_user }
+          key: { get_secret: agent_private_key }
           install_method: remote
 
 node_templates:
@@ -125,12 +135,12 @@ node_templates:
               user: { get_input: cluster_user }
               key_filename: { get_input: cluster_key }
               host_string: { get_input: cluster_host }
-            script_path: cluster/libvirt_install.sh
+            script_path: scripts/libvirt/libvirt_install.sh
         configure:
           implementation: fabric.fabric_plugin.tasks.run_script
           inputs:
             fabric_env: *fab_env
-            script_path: scripts/download_vm.sh
+            script_path: scripts/libvirt/download_vm.sh
             CATALOG_URL: https://cloud.centos.org/centos/7/images/
             DISK: CentOS-7-x86_64-GenericCloud-1805.qcow2
 
@@ -168,16 +178,16 @@ node_templates:
     properties:
       resource_config:
         groups:
-          - { get_input: agent_user }
+          - { get_secret: agent_user }
         users:
-          - name: { get_input: agent_user }
+          - name: { get_secret: agent_user }
             # group with same name as username required for agent running
-            primary_group: { get_input: agent_user }
-            groups: wheel
+            primary_group: { get_secret: agent_user }
+            groups: wheel, docker
             shell: /bin/bash
             sudo: ['ALL=(ALL) NOPASSWD:ALL']
             ssh-authorized-keys:
-              - { get_input: agent_public_key }
+              - { get_secret: agent_key_public }
 
   disk_clone:
     type: cloudify.nodes.ApplicationServer
@@ -194,12 +204,12 @@ node_templates:
           implementation: fabric.fabric_plugin.tasks.run_script
           inputs:
             fabric_env: *fab_env
-            script_path: scripts/copy_disk.py
+            script_path: scripts/libvirt/copy_disk.py
         delete:
           implementation: fabric.fabric_plugin.tasks.run_script
           inputs:
             fabric_env: *fab_env
-            script_path: scripts/remove_disk.sh
+            script_path: scripts/libvirt/remove_disk.sh
     relationships:
     - target: vm_download
       type: cloudify.relationships.depends_on
@@ -224,7 +234,7 @@ node_templates:
                   dev: vnet0
         configure:
           inputs:
-            domain_file: templates/domain-x86.xml
+            domain_file: resources/domain-x86.xml
     relationships:
       - target: common_network
         type: cloudify.libvirt.relationships.connected_to
@@ -242,17 +252,17 @@ node_templates:
             EXTERNAL_INTERFACE: { get_input: external_dev }
             EXTERNAL_IP: { get_input: external_ip }
             INTERNAL_IP: { get_attribute: [base_vm, ip] }
-            script_path: cluster/floating_ip.py
+            script_path: scripts/libvirt/floating_ip.py
         delete:
           implementation: fabric.fabric_plugin.tasks.run_script
           inputs:
             fabric_env: *fab_env
-            script_path: cluster/floating_ip_delete.py
+            script_path: scripts/libvirt/floating_ip_delete.py
     relationships:
     - target: base_vm
       type: cloudify.relationships.connected_to
 
-  k8s_master_host:
+  k8s_master_base:
     type: kubernetes_host
     interfaces:
       cloudify.interfaces.lifecycle:
@@ -263,9 +273,9 @@ node_templates:
           implementation: terminal.cloudify_terminal.tasks.run
           inputs:
             terminal_auth: &terminal_auth
-              user: { get_input: agent_user }
+              user: { get_secret: agent_user }
               ip: { get_attribute: [SELF, ip] }
-              key_content: { get_input: agent_private_key }
+              key_content: { get_secret: agent_private_key }
               port: 22
               promt_check:
                 - '$'
@@ -285,14 +295,14 @@ node_templates:
       - target: floating_ip
         type: cloudify.relationships.depends_on
 
-  k8s_master_host_service:
+  k8s_master_host:
     type: cloudify.nodes.SoftwareComponent
     interfaces:
       cloudify.interfaces.lifecycle:
         start:
           implementation: scripts/vsphere/kubernetes.sh
     relationships:
-      - target: k8s_master_host
+      - target: k8s_master_base
         type: cloudify.relationships.contained_in
 
   k8s_node:
@@ -313,7 +323,7 @@ node_templates:
 
     relationships:
       - type: cloudify.relationships.depends_on
-        target: k8s_master_host_service
+        target: k8s_master_host
       - type: cloudify.relationships.depends_on
         target: kubernetes_master
       - type: cloudify.relationships.depends_on
@@ -335,7 +345,7 @@ node_templates:
 
     relationships:
       - type: cloudify.relationships.depends_on
-        target: k8s_master_host_service
+        target: k8s_master_host
       - type: cloudify.relationships.depends_on
         target: k8s_node
       - type: cloudify.relationships.depends_on

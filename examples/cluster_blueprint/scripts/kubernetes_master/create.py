@@ -9,19 +9,22 @@ from cloudify.exceptions import OperationRetry
 
 def check_command(command):
 
-    try:
-        process = subprocess.Popen(
-            command.split()
-        )
-    except OSError:
-        return False
+    ctx.logger.debug('command {0}.'.format(repr(command)))
 
+    subprocess_args = {
+        'args': command,
+        'stdout': subprocess.PIPE,
+        'stderr': subprocess.PIPE
+    }
+
+    ctx.logger.debug('subprocess_args {0}.'.format(repr(subprocess_args)))
+
+    process = subprocess.Popen(**subprocess_args)
     output, error = process.communicate()
 
-    ctx.logger.debug('command: {0} '.format(command))
-    ctx.logger.debug('output: {0} '.format(output))
-    ctx.logger.debug('error: {0} '.format(error))
-    ctx.logger.debug('process.returncode: {0} '.format(process.returncode))
+    ctx.logger.debug('output: {0} '.format(repr(output)))
+    ctx.logger.debug('error: {0} '.format(repr(error)))
+    ctx.logger.debug('process.returncode: {0} '.format(repr(process.returncode)))
 
     if process.returncode:
         ctx.logger.error('Running `{0}` returns error.'.format(command))
@@ -40,13 +43,14 @@ def execute_command(command):
         'stderr': subprocess.PIPE
     }
 
-    ctx.logger.debug('subprocess_args {0}.'.format(subprocess_args))
+    ctx.logger.debug('subprocess_args {0}.'.format(repr(subprocess_args)))
 
     process = subprocess.Popen(**subprocess_args)
     output, error = process.communicate()
 
-    ctx.logger.debug('error: {0} '.format(error))
-    ctx.logger.debug('process.returncode: {0} '.format(process.returncode))
+    ctx.logger.debug('output: {0} '.format(repr(output)))
+    ctx.logger.debug('error: {0} '.format(repr(error)))
+    ctx.logger.debug('process.returncode: {0} '.format(repr(process.returncode)))
 
     if process.returncode:
         ctx.logger.error('Running `{0}` returns error.'.format(repr(command)))
@@ -58,7 +62,9 @@ def execute_command(command):
 if __name__ == '__main__':
 
     # Check if Docker PS works
-    docker = check_command('docker ps')
+    ctx.logger.info(repr(check_command(['whoami'])))
+    ctx.logger.info(repr(check_command(['ip', 'addr'])))
+    docker = check_command(['sudo', 'docker', 'ps'])
     if not docker:
             raise OperationRetry(
                 'Docker is not present on the system.')
