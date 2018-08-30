@@ -1,5 +1,5 @@
 # * cfy secret create agent_user -u -s "cfyagent"
-# * cfy secret create agent_use_public_ip -u -s ""
+# * cfy secret create agent_use_public_ip -u -s "private"
 # * cfy secret create libvirt_cluster_user -u -s "centos"
 # * cfy secret create libvirt_cluster_key -u -s "/etc/cloudify/kvm.key"
 # * cfy secret create libvirt_cluster_host -u -s "192.168.201.195"

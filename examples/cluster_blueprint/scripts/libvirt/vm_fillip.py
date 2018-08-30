@@ -36,7 +36,7 @@ if __name__ == '__main__':
             elif ip:
                 runtime_properties['public_ip'] = ip
 
-    if ctx.node.properties.get("use_public_ip"):
+    if ctx.node.properties.get("use_public_ip") == 'public':
         runtime_properties['ip'] = runtime_properties['public_ip']
     else:
         runtime_properties['ip'] = runtime_properties['private_ip']
