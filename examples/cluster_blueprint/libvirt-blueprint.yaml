@@ -1,5 +1,4 @@
 # * cfy secret create agent_user -u -s "cfyagent"
-# * cfy secret create agent_use_public_ip -u -s "private"
 # * cfy secret create libvirt_cluster_user -u -s "centos"
 # * cfy secret create libvirt_cluster_key -u -s "/etc/cloudify/kvm.key"
 # * cfy secret create libvirt_cluster_host -u -s "192.168.201.195"
@@ -116,7 +115,7 @@ node_types:
         # in most cases it must be same as full count of memory on vm
         default: { get_input: memory }
       use_public_ip:
-        default: { get_secret: agent_use_public_ip }
+        default: "private"
       agent_config:
         default:
           user: { get_secret: agent_user }
@@ -242,27 +241,6 @@ node_templates:
       - target: disk_clone
         type: vm_connected_to_storage
 
-  floating_ip:
-    type: cloudify.nodes.VirtualIP
-    interfaces:
-      cloudify.interfaces.lifecycle:
-        create:
-          implementation: fabric.fabric_plugin.tasks.run_script
-          inputs:
-            fabric_env: *fab_env
-            EXTERNAL_INTERFACE: { get_input: external_dev }
-            EXTERNAL_IP: { get_input: external_ip }
-            INTERNAL_IP: { get_attribute: [base_vm, ip] }
-            script_path: scripts/libvirt/floating_ip.py
-        delete:
-          implementation: fabric.fabric_plugin.tasks.run_script
-          inputs:
-            fabric_env: *fab_env
-            script_path: scripts/libvirt/floating_ip_delete.py
-    relationships:
-    - target: base_vm
-      type: cloudify.relationships.connected_to
-
   k8s_master_base:
     type: kubernetes_host
     interfaces:
@@ -288,8 +266,6 @@ node_templates:
               - action: sudo sudo xfs_growfs /
     relationships:
       - target: base_vm
-        type: cloudify.relationships.depends_on
-      - target: floating_ip
         type: cloudify.relationships.depends_on
 
   k8s_master_host:
