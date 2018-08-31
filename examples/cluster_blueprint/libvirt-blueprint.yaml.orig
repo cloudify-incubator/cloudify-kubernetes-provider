@@ -1,6 +1,7 @@
 # * cfy secret create agent_user -u -s "cfyagent"
 # * cfy secret create libvirt_cluster_user -u -s "centos"
 # * cfy secret create libvirt_cluster_key -u -s "/etc/cloudify/kvm.key"
+# * cfy secret create agent_use_public_ip -u -s "private"
 # * cfy secret create libvirt_cluster_host -u -s "192.168.201.195"
 # * cfy secret create agent_key_public -u -f examples/cluster_blueprint/scripts/libvirt/id_rsa.pub
 # * cfy secret create agent_key_private -u -f examples/cluster_blueprint/scripts/libvirt/id_rsa
@@ -20,7 +21,7 @@ imports:
   - http://www.getcloudify.org/spec/cloudify/4.3.1/types.yaml
   - http://www.getcloudify.org/spec/fabric-plugin/1.5.1/plugin.yaml
   - https://raw.githubusercontent.com/cloudify-incubator/cloudify-utilities-plugin/1.9.2/plugin.yaml
-  - https://raw.githubusercontent.com/cloudify-incubator/cloudify-libvirt-plugin/0.5.0/plugin.yaml
+  - https://raw.githubusercontent.com/cloudify-incubator/cloudify-libvirt-plugin/0.4.1/plugin.yaml
   - https://raw.githubusercontent.com/cloudify-incubator/cloudify-kubernetes-plugin/2.3.1/plugin.yaml
   - imports/kubernetes.yaml
 
@@ -158,8 +159,15 @@ node_templates:
         create:
           inputs:
             params:
-              resource_id: { get_secret: libvirt_common_network }
-              use_external_resource: true
+              dev: virbr1
+              forwards:
+                - mode: nat
+              ips:
+                - address: 192.168.141.1
+                  netmask: 255.255.255.0
+                  dhcp:
+                    start: 192.168.141.2
+                    end: 192.168.141.254
     relationships:
     - target: vm_download
       type: cloudify.relationships.depends_on
