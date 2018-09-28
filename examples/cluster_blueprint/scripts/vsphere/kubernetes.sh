@@ -21,7 +21,7 @@ sudo yum makecache
 
 sudo setenforce 0
 
-sudo yum -y install kubelet-1.9.6-0 kubeadm-1.9.6-0 kubectl-1.9.6-0 kubernetes-cni-0.6.0-0 ca-certificates docker-1.12.6
+sudo yum -y install kubelet-1.9.6-0 kubeadm-1.9.6-0 kubectl-1.9.6-0 kubernetes-cni-0.6.0-0 ca-certificates docker-1.13.1
 sudo update-ca-trust force-enable
 
 sudo groupadd docker
@@ -40,12 +40,12 @@ sudo systemctl stop kubelet && sleep 20 && sudo systemctl start kubelet
 
 for retry_count in {1..10}
 do
-	status=`sudo systemctl status kubelet | grep "Active:"| awk '{print $2}'`
-	ctx logger info "#${retry_count}: Kubelet state: ${status}"
-	if [ "z$status" == 'zactive' ]; then
-		break
-	else
-		ctx logger info "Wait little more."
-		sleep 10
-	fi
+    status=`sudo systemctl status kubelet | grep "Active:"| awk '{print $2}'`
+    ctx logger info "#${retry_count}: Kubelet state: ${status}"
+    if [ "z$status" == 'zactive' ]; then
+        break
+    else
+        ctx logger info "Wait little more."
+        sleep 10
+    fi
 done

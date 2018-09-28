@@ -124,7 +124,7 @@ node_templates:
               chmod 0444 /etc/yum.repos.d/kubernetes.repo
               setenforce 0
             - |
-              yum -t -y install docker-1.12.6 kubelet-1.9.6-0 kubeadm-1.9.6-0 kubectl-1.9.6-0 kubernetes-cni-0.6.0-0 ca-certificates
+              yum -t -y install docker-1.13.1 kubelet-1.9.6-0 kubeadm-1.9.6-0 kubectl-1.9.6-0 kubernetes-cni-0.6.0-0 ca-certificates
               sudo update-ca-trust force-enable
               swapon -s | awk '{print "sudo swapoff " $1}' | grep -v "Filename" | sh -
               sudo sed -i 's|cgroup-driver=systemd|cgroup-driver=systemd --provider-id='`hostname`'|g' /etc/systemd/system/kubelet.service.d/10-kubeadm.conf
