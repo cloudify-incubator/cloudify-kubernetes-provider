@@ -7,7 +7,7 @@ This blueprint creates an example Kubernetes cluster. It is intended as an examp
 
 Regardless of your infrastructure choice, this blueprint installs and configures on each VM:
 - The Kubernetes Yum repo will be installed on your VMs.
-- Docker, version 1.12.6-28.git1398f24.el7.centos
+- Docker, version 1.13.1
 - kubelet, version 1.9.6-0.
 - kubeadm, version 1.9.6-0.
 - kubernetes-cni, version 0.6.0-0.

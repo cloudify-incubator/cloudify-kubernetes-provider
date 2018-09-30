@@ -1,0 +1,325 @@
+tosca_definitions_version: cloudify_dsl_1_3
+
+description: >
+  This blueprint creates a Kubernetes Cluster.
+
+imports:
+  - http://www.getcloudify.org/spec/cloudify/4.3.1/types.yaml
+  - plugin:cloudify-diamond-plugin
+  - plugin:cloudify-fabric-plugin
+  - plugin:cloudify-utilities-plugin
+  - plugin:cloudify-libvirt-plugin
+  - plugin:cloudify-kubernetes-plugin
+  - imports/kubernetes.yaml
+
+inputs:
+  agent_user:
+    default: { get_secret: agent_user }
+
+  disk_size:
+    default: 24GB
+
+  # cluster(kvm) settings
+  cluster_user:
+    type: string
+    description: >
+      Cluster user name.
+    default: { get_secret: libvirt_cluster_user }
+
+  cluster_key:
+    type: string
+    description: >
+      SSH key for cluster user.
+    default: { get_secret: libvirt_cluster_key }
+
+  manager_network:
+    type: string
+    description: >
+      Manager network.
+    default: { get_secret: libvirt_common_network }
+
+  cluster_host:
+    type: string
+    description: >
+      LibVirt computer ip address.
+    default: { get_secret: libvirt_cluster_host }
+
+  external_ip:
+    type: string
+    description: >
+      List external ip's separated by comma.
+    default: { get_secret: libvirt_cluster_external_ip }
+
+  external_dev:
+    type: string
+    description: >
+      Device with external access (same device as used for cluster_host ip)
+    default: { get_secret: libvirt_cluster_external_dev }
+
+  cpus:
+    type: integer
+    default: 2
+
+  memory:
+    type: integer
+    description: RAM in MB
+    default: 4096
+
+  memory_size:
+    type: integer
+    description: RAM in KB (real size)
+    default: 4194304
+
+  ks_node_dep_archive:
+    default: https://github.com/cloudify-incubator/kubernetes-node-blueprints/archive/master.zip
+
+  ks_load_dep_archive:
+    default: https://github.com/cloudify-incubator/kubernetes-lb-blueprints/archive/master.zip
+
+relationships:
+
+  vm_connected_to_storage:
+    derived_from: cloudify.relationships.contained_in
+    target_interfaces:
+      cloudify.interfaces.relationship_lifecycle:
+        preconfigure:
+          implementation: scripts/libvirt/vm_preconfigure.py
+          executor: central_deployment_agent
+          inputs: {}
+
+node_types:
+
+  kubernetes_host:
+    derived_from: cloudify.nodes.Compute
+    properties:
+      kubecpu:
+        # by default: amount of cpu's on vm avaible for kubepods,
+        # in most cases it must be same as full count of cpu on vm
+        default: { get_input: cpus }
+      kubemem:
+        # by default: amount of memory on vm avaible for kubepods,
+        # in most cases it must be same as full count of memory on vm
+        default: { get_input: memory }
+      use_public_ip:
+        default: "private"
+      agent_config:
+        default:
+          user: { get_secret: agent_user }
+          key: { get_secret: agent_key_private }
+          install_method: remote
+
+dsl_definitions:
+
+  libvirt_auth: &libvirt_auth
+    concat:
+     - "qemu+ssh://"
+     - { get_input: cluster_user }
+     - "@"
+     - { get_input: cluster_host }
+     - "/system?sshauth=privkey&keyfile="
+     - { get_input: cluster_key }
+
+  fabric_env: &fab_env
+    user: { get_input: cluster_user }
+    key_filename: { get_input: cluster_key }
+    host_string: { get_input: cluster_host }
+
+node_templates:
+
+  vm_download:
+    type: cloudify.nodes.WebServer
+    interfaces:
+      cloudify.interfaces.lifecycle:
+        create:
+          implementation: fabric.fabric_plugin.tasks.run_script
+          inputs:
+            fabric_env: *fab_env
+            script_path: scripts/libvirt/download_vm.sh
+            CATALOG_URL: https://cloud.centos.org/centos/7/images/
+            DISK: CentOS-7-x86_64-GenericCloud-1805.qcow2
+
+  common_network:
+    type: cloudify.libvirt.network
+    properties:
+      libvirt_auth: *libvirt_auth
+    interfaces:
+      cloudify.interfaces.lifecycle:
+        create:
+          inputs:
+            params:
+              resource_id: { get_secret: libvirt_common_network }
+              use_external_resource: true
+    relationships:
+    - target: vm_download
+      type: cloudify.relationships.depends_on
+
+  cloud_init:
+    type: cloudify.nodes.CloudInit.CloudConfig
+    properties:
+      resource_config:
+        groups:
+          - { get_secret: agent_user }
+          - docker
+        users:
+          - name: { get_secret: agent_user }
+            # group with same name as username required for agent running
+            primary_group: { get_secret: agent_user }
+            groups: wheel, docker
+            shell: /bin/bash
+            sudo: ['ALL=(ALL) NOPASSWD:ALL']
+            ssh-authorized-keys:
+              - { get_secret: agent_key_public }
+
+  disk_clone:
+    type: cloudify.nodes.ApplicationServer
+    interfaces:
+      cloudify.interfaces.lifecycle:
+        create:
+          implementation: scripts/libvirt/disk_prepere.py
+          executor: central_deployment_agent
+          inputs:
+            disk_image: { get_attribute: [vm_download, vm_image] }
+            cloud_init: { get_attribute: [cloud_init, cloud_config ] }
+            disk_size: { get_input: disk_size }
+        configure:
+          implementation: fabric.fabric_plugin.tasks.run_script
+          inputs:
+            fabric_env: *fab_env
+            script_path: scripts/libvirt/copy_disk.py
+        delete:
+          implementation: fabric.fabric_plugin.tasks.run_script
+          inputs:
+            fabric_env: *fab_env
+            script_path: scripts/libvirt/remove_disk.sh
+    relationships:
+    - target: vm_download
+      type: cloudify.relationships.depends_on
+    - target: cloud_init
+      type: cloudify.relationships.depends_on
+
+  base_vm:
+    type: cloudify.libvirt.domain
+    properties:
+      libvirt_auth: *libvirt_auth
+      agent_config:
+        install_method: none
+    interfaces:
+      cloudify.interfaces.lifecycle:
+        create:
+          inputs:
+            params:
+              vcpu: { get_input: cpus }
+              memory_size: { get_input: memory_size }
+              domain_type: kvm
+              networks:
+                - network: { get_attribute: [common_network, resource_id] }
+                  dev: vnet0
+    relationships:
+      - target: common_network
+        type: cloudify.libvirt.relationships.connected_to
+      - target: disk_clone
+        type: vm_connected_to_storage
+
+  k8s_master_base:
+    type: kubernetes_host
+    interfaces:
+      cloudify.interfaces.lifecycle:
+        create:
+          implementation: scripts/libvirt/vm_fillip.py
+          executor: central_deployment_agent
+        start:
+          implementation: terminal.cloudify_terminal.tasks.run
+          inputs:
+            terminal_auth: &terminal_auth
+              user: { get_secret: agent_user }
+              ip: { get_attribute: [SELF, ip] }
+              key_content: { get_secret: agent_key_private }
+              port: 22
+              promt_check:
+                - '$'
+            calls:
+              # network fix
+              - action: sudo ip link set dev eth0 mtu 1400
+              - action: sudo yum install -y openssl-1.0.2k deltarpm
+              # space fix
+              - action: sudo sudo xfs_growfs /
+    relationships:
+      - target: base_vm
+        type: cloudify.relationships.depends_on
+
+  k8s_master_host:
+    type: cloudify.nodes.SoftwareComponent
+    interfaces:
+      cloudify.interfaces.lifecycle:
+        start:
+          implementation: scripts/vsphere/kubernetes.sh
+    relationships:
+      - target: k8s_master_base
+        type: cloudify.relationships.contained_in
+
+  k8s_node:
+    type: cloudify.nodes.DeploymentProxy
+    properties:
+      resource_config:
+        blueprint:
+          id: k8s_node_blue
+          blueprint_archive: { get_input: ks_node_dep_archive }
+          main_file_name: libvirt.yaml
+        deployment:
+          id: k8s_node_dep
+          inputs:
+            public_master_ip: { get_attribute: [ k8s_master_host, ip ] }
+          outputs:
+            deployment-type: deployment-type
+            deployment-node-data-type: deployment-node-data-type
+    interfaces:
+      cloudify.interfaces.lifecycle:
+        start:
+          inputs:
+            timeout: 3600
+        stop:
+          inputs:
+            timeout: 3600
+    relationships:
+      - type: cloudify.relationships.depends_on
+        target: k8s_master_host
+      - type: cloudify.relationships.depends_on
+        target: kubernetes_master
+      - type: cloudify.relationships.depends_on
+        target: kubernetes_master_build
+
+  k8s_load:
+    type: cloudify.nodes.DeploymentProxy
+    properties:
+      resource_config:
+        blueprint:
+          id: k8s_lb_blue
+          blueprint_archive: { get_input: ks_load_dep_archive }
+          main_file_name: libvirt.yaml
+        deployment:
+          id: k8s_lb_dep
+          outputs:
+            deployment-type: deployment-type
+            deployment-node-data-type: deployment-node-data-type
+    interfaces:
+      cloudify.interfaces.lifecycle:
+        start:
+          inputs:
+            timeout: 3600
+        stop:
+          inputs:
+            timeout: 3600
+    relationships:
+      - type: cloudify.relationships.depends_on
+        target: k8s_master_host
+      - type: cloudify.relationships.depends_on
+        target: k8s_node
+      - type: cloudify.relationships.depends_on
+        target: kubernetes_master
+      - type: cloudify.relationships.depends_on
+        target: kubernetes_master_build
+
+outputs:
+
+  kubernetes_master_public_ip:
+    value: { get_attribute: [ k8s_master_host, ip ] }

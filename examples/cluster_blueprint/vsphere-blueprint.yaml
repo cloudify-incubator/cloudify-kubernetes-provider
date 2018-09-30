@@ -83,9 +83,6 @@ inputs:
     default: root
     type: string
 
-  agent_group:
-    default: root
-
   ks_node_dep_archive:
     default: https://github.com/cloudify-incubator/kubernetes-node-blueprints/archive/master.zip
 
