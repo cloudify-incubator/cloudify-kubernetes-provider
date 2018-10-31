@@ -14,10 +14,10 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #
+import os
 
 from cloudify import ctx
 from cloudify.state import ctx_parameters as inputs
-import os
 
 ctx.logger.info('Inputs : {0}'.format(repr(inputs)))
 

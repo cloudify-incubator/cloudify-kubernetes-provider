@@ -4,8 +4,11 @@ node_templates:
     type: cloudify.nodes.CloudInit.CloudConfig
     properties:
       resource_config:
+        bootcmd:
+        - "mkdir -p /etc/systemd/system"
         groups:
           - docker
+          - { get_input: agent_user }
         users:
           - name: { get_input: agent_user }
             primary-group: wheel
@@ -15,6 +18,17 @@ node_templates:
             ssh-authorized-keys:
               - { get_secret: agent_key_public }
         write_files:
+          - path: /etc/yum.repos.d/docker.repo
+            owner: root:root
+            permissions: '0444'
+            content: |
+              # installed by cloud-init
+              [dockerrepo]
+              name=Docker Repository
+              baseurl=https://yum.dockerproject.org/repo/main/centos/7
+              enabled=1
+              gpgcheck=1
+              gpgkey=https://yum.dockerproject.org/gpg
           - path: /etc/yum.repos.d/kubernetes.repo
             owner: root:root
             permissions: '0444'
@@ -30,7 +44,7 @@ node_templates:
                      https://packages.cloud.google.com/yum/doc/rpm-package-key.gpg
         packages:
           - [ca-certificates, 2017.2.14]
-          - [docker, 1.13.1]
+          - [docker-engine, 1.13.1]
           - [kubelet, 1.9.6-0]
           - [kubeadm, 1.9.6-0]
           - [kubectl, 1.9.6-0]
@@ -38,10 +52,14 @@ node_templates:
         runcmd:
           - [ setenforce, 0 ]
           - [ update-ca-trust, force-enable ]
+          - "sed -i 's|/usr/bin/dockerd|/usr/bin/dockerd --exec-opt native.cgroupdriver=systemd|g' /usr/lib/systemd/system/docker.service"
           - [ systemctl, enable, docker ]
           - [ systemctl, start, docker ]
+          - [ chmod, 655, /etc/systemd/system/kubelet.service ]
+          - [ chmod, 655, /etc/systemd/system/kubelet.service.d/10-kubeadm.conf ]
           - [ systemctl, enable, kubelet ]
           - [ systemctl, start, kubelet ]
+          - [ iptables, --flush ]
+          - [ iptables, -tnat, --flush ]
           - [ mkdir, '-p', /tmp/data ]
           - [ chcon, '-Rt', svirt_sandbox_file_t, /tmp/data ]
-

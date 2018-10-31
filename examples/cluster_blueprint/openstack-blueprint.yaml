@@ -5,11 +5,11 @@ description: >
   It is based on this documentation: https://kubernetes.io/docs/getting-started-guides/kubeadm/
 
 imports:
-  - http://www.getcloudify.org/spec/cloudify/4.3/types.yaml
-  - plugin:cloudify-diamond-plugin?version=1.3.8
-  - plugin:cloudify-fabric-plugin?version=1.5.1
-  - plugin:cloudify-utilities-plugin?version=1.5.2
-  - plugin:cloudify-openstack-plugin?version=2.6.0
+  - http://www.getcloudify.org/spec/cloudify/4.3.1/types.yaml
+  - plugin:cloudify-diamond-plugin
+  - plugin:cloudify-fabric-plugin
+  - plugin:cloudify-utilities-plugin
+  - plugin:cloudify-openstack-plugin
   - plugin:cloudify-kubernetes-plugin
   - imports/kubernetes.yaml
   - imports/cloud-config.yaml
@@ -28,6 +28,9 @@ inputs:
     description: >
       User for connecting to agent VMs
     default: centos
+
+  dashboard_ip:
+    default: { get_attribute: [ kubernetes_master_ip, floating_ip_address ] }
 
   ks_node_dep_archive:
     default: https://github.com/cloudify-incubator/kubernetes-node-blueprints/archive/master.zip
@@ -91,6 +94,9 @@ node_templates:
         port: 53
         protocol: udp
       - remote_ip_prefix: 0.0.0.0/0
+        port: 8472
+        protocol: udp
+      - remote_ip_prefix: 0.0.0.0/0
         port: 80
       - remote_ip_prefix: 0.0.0.0/0
         port: 443
@@ -122,6 +128,9 @@ node_templates:
         port: 9090
       - remote_ip_prefix: 0.0.0.0/0
         port: 10250
+      - remote_ip_prefix: 0.0.0.0/0
+        port_range_min: 30000
+        port_range_max: 40000
 
   kubernetes_master_port:
     type: cloudify.openstack.nodes.Port
@@ -203,7 +212,7 @@ node_templates:
       - type: cloudify.relationships.depends_on
         target: kubernetes_security_group
       - type: cloudify.relationships.depends_on
-        target: kubernetes_master
+        target: kubernetes_setup_master
       - type: cloudify.relationships.depends_on
         target: kubernetes_master_build
 
@@ -225,15 +234,7 @@ node_templates:
 
     relationships:
       - type: cloudify.relationships.depends_on
-        target: k8s_master_host
-      - type: cloudify.relationships.depends_on
         target: k8s_node
-      - type: cloudify.relationships.depends_on
-        target: kubernetes_security_group
-      - type: cloudify.relationships.depends_on
-        target: kubernetes_master
-      - type: cloudify.relationships.depends_on
-        target: kubernetes_master_build
 
 outputs:
 

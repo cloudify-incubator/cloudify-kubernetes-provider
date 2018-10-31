@@ -1,0 +1,33 @@
+tosca_definitions_version: cloudify_dsl_1_3
+
+inputs:
+
+  kubernetes_cni_blueprint_id:
+    default: kubernetes_cni
+
+  kubernetes_cni_deployment_id:
+    default: { get_input: kubernetes_cni_blueprint_id }
+
+  kubernetes_cni_provider_blueprint:
+    default: weave.yaml
+
+  kubernetes_cni_blueprint_archive:
+    default: https://github.com//cloudify-incubator/kubernetes-cni-provider/archive/master.zip
+
+node_templates:
+
+  kubernetes_cni:
+    type: cloudify.nodes.DeploymentProxy
+    properties:
+      resource_config:
+        blueprint:
+          id: { get_input: kubernetes_cni_blueprint_id }
+          blueprint_archive: { get_input: kubernetes_cni_blueprint_archive }
+          main_file_name: { get_input: kubernetes_cni_provider_blueprint }
+        deployment:
+          id: { get_input: kubernetes_cni_deployment_id }
+          inputs:
+            agent_user: { get_input: agent_user }
+    relationships:
+    - type: cloudify.relationships.depends_on
+      target: kubernetes_setup_master

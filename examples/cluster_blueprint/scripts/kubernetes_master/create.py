@@ -3,6 +3,7 @@
 import subprocess
 import socket
 import time
+
 from cloudify import ctx
 from cloudify.exceptions import OperationRetry
 
@@ -58,7 +59,7 @@ def execute_command(command):
 if __name__ == '__main__':
 
     # Check if Docker PS works
-    docker = check_command('docker ps')
+    docker = check_command('sudo docker ps')
     if not docker:
             raise OperationRetry(
                 'Docker is not present on the system.')
